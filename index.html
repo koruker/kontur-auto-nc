@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ShopTurn v20 – Fanuc CNC Editor</title>
+<style>
+:root {
+  --bg:#0b0d0f; --panel:#13161a; --panel2:#1a1d22;
+  --accent:#00aaff; --green:#27ae60; --orange:#ff9500;
+  --red:#e74c3c; --purple:#9b59b6; --text:#e8e8e8;
+  --border:#2a2d33; --grid:#1a1d22;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:12px;}
+
+/* ── TOP BAR ── */
+#topbar{background:#0d0f12;border-bottom:1px solid var(--border);padding:4px 10px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+#topbar span{color:var(--accent);font-weight:bold;font-size:13px;letter-spacing:1px;}
+.tbtn{background:#1e2228;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;}
+.tbtn:hover{background:#2a2f38;border-color:var(--accent);}
+#statusbar{margin-left:auto;color:#555;font-size:10px;}
+
+/* ── MAIN LAYOUT ── */
+#app{flex:1;display:flex;overflow:hidden;}
+
+/* ── VIEWPORT ── */
+#viewport{flex:1.4;position:relative;background:#000;border-right:1px solid var(--border);cursor:crosshair;}
+canvas{display:block;width:100%;height:100%;}
+#coords{position:absolute;bottom:6px;left:8px;font-size:10px;color:#444;pointer-events:none;}
+#zoominfo{position:absolute;top:6px;right:8px;font-size:10px;color:#333;pointer-events:none;}
+
+/* ── RIGHT SIDE ── */
+#right{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ── TABS ── */
+#tabs{display:flex;background:#0d0f12;border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{padding:7px 14px;cursor:pointer;font-size:11px;color:#555;border-right:1px solid var(--border);transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom:2px solid var(--accent);background:#13161a;}
+.tab:hover:not(.active){color:#999;}
+
+/* ── TAB CONTENT ── */
+.tabcontent{display:none;flex:1;overflow:hidden;}
+.tabcontent.active{display:flex;flex-direction:column;}
+
+/* ────────── SHOPTURN INPUT UI ────────── */
+#tab-input{padding:0;flex-direction:row;overflow:hidden;}
+
+/* Feature List (sol) */
+#feature-list{width:160px;background:#0d0f12;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+#feature-list-header{padding:6px 8px;font-size:9px;color:#444;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+#feature-list-body{flex:1;overflow-y:auto;}
+.feat-item{padding:7px 8px;border-bottom:1px solid #1a1d22;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .1s;}
+.feat-item:hover{background:#1a1d22;}
+.feat-item.active{background:#1a2a3a;border-left:2px solid var(--accent);}
+.feat-item.start-feat{border-left:2px solid var(--green);}
+.feat-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.feat-info{flex:1;min-width:0;}
+.feat-type{font-size:9px;color:#555;text-transform:uppercase;}
+.feat-coords{font-size:10px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.feat-item.active .feat-type{color:var(--accent);}
+.feat-item.active .feat-coords{color:#fff;}
+
+/* Feature Editor (sağ) */
+#feature-editor{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#feat-editor-title{padding:6px 10px;font-size:9px;color:#444;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+#feat-editor-title span{color:var(--accent);font-size:11px;}
+
+/* Feature type selector butonları */
+#feat-type-bar{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ftype-btn{flex:1;background:#1a1d22;border:1px solid var(--border);border-radius:6px;color:#666;cursor:pointer;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s;font-family:'Courier New',monospace;}
+.ftype-btn svg{width:22px;height:22px;}
+.ftype-btn span{font-size:8px;text-transform:uppercase;letter-spacing:.5px;}
+.ftype-btn:hover{background:#1e2228;border-color:#444;color:#aaa;}
+.ftype-btn.active{background:#0d2040;border-color:var(--accent);color:var(--accent);}
+.ftype-btn.arc-cw.active{background:#2a1500;border-color:var(--orange);color:var(--orange);}
+.ftype-btn.arc-ccw.active{background:#001a40;border-color:#7788ff;color:#7788ff);}
+.ftype-btn.chamfer.active{background:#1a1a00;border-color:#ffff44;color:#ffff44;}
+
+/* Giriş alanları */
+#feat-fields{flex:1;overflow-y:auto;padding:8px;}
+.feat-field-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.feat-field-row label{color:#555;font-size:10px;width:90px;flex-shrink:0;}
+.feat-field-row input{flex:1;background:#1e2228;border:1px solid var(--border);color:#00ff88;text-align:right;padding:5px 8px;font-size:13px;border-radius:4px;outline:none;font-family:'Courier New',monospace;}
+.feat-field-row input:focus{border-color:var(--accent);color:#fff;}
+.feat-field-row .unit{color:#333;font-size:10px;width:20px;text-align:left;flex-shrink:0;}
+.feat-separator{border:none;border-top:1px solid #1a1d22;margin:8px 0;}
+
+/* OK butonu */
+#feat-ok-bar{padding:8px;border-top:1px solid var(--border);flex-shrink:0;}
+.feat-ok-btn{width:100%;background:linear-gradient(135deg,#1a4a7a,#006699);border:none;border-radius:6px;color:#fff;font-size:12px;font-weight:bold;padding:10px;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .15s;}
+.feat-ok-btn:hover{filter:brightness(1.2);}
+.feat-ok-btn:active{transform:translateY(1px);}
+
+.btn{border:none;border-radius:5px;padding:8px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;transition:all .15s;line-height:1.2;}
+.btn:hover{filter:brightness(1.2);}
+.btn.active-mode{outline:2px solid #fff;box-shadow:0 0 8px currentColor;}
+
+.mode-btn{background:#1e4a7a;}
+.mode-btn.g02{background:#7a3a00;}
+.mode-btn.g03{background:#003a7a;}
+.mode-btn.pah{background:#3a3a00;}
+.mode-btn.undo{background:#2a2a2a;}
+
+.comp-btn{background:#2a1a5a;}
+.comp-btn.g40{background:#222;}
+
+.btn-generate{background:linear-gradient(135deg,#1a6b35,#27ae60);font-size:13px;padding:11px;box-shadow:0 3px 0 #1a5a28;letter-spacing:1px;}
+.btn-generate:active{transform:translateY(2px);box-shadow:none;}
+
+.params-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.param-mini{background:#1e2228;border:1px solid var(--border);border-radius:4px;padding:4px 6px;display:flex;gap:4px;align-items:center;}
+.param-mini label{color:#555;font-size:9px;}
+.param-mini input{background:transparent;border:none;color:#ffaa00;width:45px;font-size:12px;outline:none;font-family:'Courier New',monospace;text-align:right;}
+
+/* ────────── GCODE TAB ────────── */
+#tab-gcode{flex-direction:column;}
+#gcodeToolbar{background:#0d0f12;padding:5px 8px;display:flex;gap:5px;border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;}
+#gcodeDisplay{flex:1;background:#030505;border:none;color:#00ff44;font-size:12px;resize:none;outline:none;line-height:1.6;padding:8px 10px;font-family:'Courier New',monospace;}
+#gcodeDisplay.editable{color:#ffff99;background:#050505;}
+
+/* ────────── COORDS TAB ────────── */
+#tab-coords{flex-direction:column;}
+#coordsTable{flex:1;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;}
+th{background:#0d0f12;color:#555;font-size:10px;padding:5px 8px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border);}
+td{padding:4px 8px;font-size:11px;border-bottom:1px solid #1a1d22;color:#ccc;}
+tr:hover td{background:#1a1d22;}
+tr.active-row td{color:#00ff88;}
+td.type-G01{color:#00aaff;}
+td.type-G02{color:#ff9500;}
+td.type-G03{color:#aa88ff;}
+td.type-PAH{color:#ffff00;}
+.del-btn{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:12px;padding:0 4px;}
+.cell-edit{background:#0d0f12;border:1px solid #2a2d33;color:#ccc;width:58px;padding:1px 3px;font-size:10px;text-align:right;border-radius:2px;}
+.cell-edit:focus{border-color:#00aaff;outline:none;}
+.cell-edit-sel{background:#0d0f12;border:1px solid #2a2d33;color:#ccc;padding:1px 2px;font-size:10px;border-radius:2px;max-width:52px;}
+
+/* ────────── PARAMS TAB ────────── */
+#tab-params{padding:10px;gap:8px;flex-direction:column;}
+.p-group{background:#1e2228;border:1px solid var(--border);border-radius:6px;padding:10px;}
+.p-group h4{color:var(--accent);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.p-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.p-row label{color:#888;font-size:11px;}
+.p-row input{background:#0d0f12;border:1px solid var(--border);color:#ffaa00;width:90px;text-align:right;font-size:13px;padding:4px 6px;border-radius:4px;outline:none;font-family:'Courier New',monospace;}
+.p-row input:focus{border-color:var(--accent);}
+.p-row select{background:#0d0f12;border:1px solid var(--border);color:#ffaa00;font-size:12px;padding:4px 6px;border-radius:4px;outline:none;font-family:'Courier New',monospace;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:#0d0f12;}
+::-webkit-scrollbar-thumb{background:#2a2d33;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <span>⚙ SHOPTURN v20</span>
+  <button class="tbtn" onclick="resetAll()">🗑 SIFIRLA</button>
+  <button class="tbtn" onclick="saveNC()">💾 .NC KAYDET</button>
+  <button class="tbtn" onclick="loadNC()">📂 .NC YÜKLE</button>
+  <input type="file" id="fileInput" accept=".nc,.txt" style="display:none" onchange="loadNCFile(event)">
+  <button class="tbtn" onclick="fitView()">⊡ FIT</button>
+  <div id="statusbar">Fanuc Uyumlu | G-kod Editör</div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- CANVAS VIEWPORT -->
+  <div id="viewport">
+    <canvas id="cv2d"></canvas>
+    <div id="coords">X: 0.000 | Z: 0.000</div>
+    <div id="zoominfo">x1.0</div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="right">
+    <div id="tabs">
+      <div class="tab active" onclick="showTab('input')">GİRİŞ</div>
+      <div class="tab" onclick="showTab('gcode')">G-KOD</div>
+      <div class="tab" onclick="showTab('coords')">NOKTA LİSTESİ</div>
+      <div class="tab" onclick="showTab('params')">PARAMETRELER</div>
+    </div>
+
+    <!-- ── INPUT TAB ── -->
+    <div id="tab-input" class="tabcontent active">
+
+      <!-- Sol: Feature Listesi -->
+      <div id="feature-list">
+        <div id="feature-list-header">
+          <span>KONTUR</span>
+          <button style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:11px;padding:0" onclick="if(confirm('Tüm noktaları sil?')){elements=[];startPoint=null;lastPoint=null;generateGCode();redraw();renderFeatureList();}">✕</button>
+        </div>
+        <div id="feature-list-body"></div>
+      </div>
+
+      <!-- Sağ: Feature Editörü -->
+      <div id="feature-editor">
+        <div id="feat-editor-title">
+          <span id="feat-editor-label">YENİ NOKTA</span>
+          <span style="margin-left:auto;color:#333;font-size:9px" id="feat-editor-idx"></span>
+        </div>
+
+        <!-- Tip seçici butonları -->
+        <div id="feat-type-bar">
+        <!-- Düz -->
+          <button class="ftype-btn active" id="fb-G01" onclick="selectFeatType('G01')" title="Düz Çizgi">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="2" y1="20" x2="20" y2="4"/>
+              <polyline points="14,4 20,4 20,10" stroke-width="1.5"/>
+            </svg>
+            <span>Düz</span>
+          </button>
+          <!-- Açılı -->
+          <button class="ftype-btn" id="fb-ANG" onclick="selectFeatType('ANG')" title="Açılı Çizgi">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="2" y1="20" x2="11" y2="20"/>
+              <line x1="11" y1="20" x2="20" y2="4"/>
+              <text x="6" y="12" font-size="7" fill="currentColor" stroke="none">A°</text>
+            </svg>
+            <span>AÇILI</span>
+          </button>
+          <!-- YAY (G02/G03 birleşik) -->
+          <button class="ftype-btn arc-cw" id="fb-G02" onclick="selectFeatType('G02')" title="Yay (+R=CW, -R=CCW)">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 19 Q11 3 19 11"/>
+              <polyline points="14,8 19,11 16,16" stroke-width="1.5"/>
+            </svg>
+            <span>YAY ±R</span>
+          </button>
+          <!-- PAH -->
+          <button class="ftype-btn chamfer" id="fb-PAH" onclick="selectFeatType('PAH')" title="Pah (Chamfer)">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="2,20 2,8 10,2 20,2"/>
+              <line x1="2" y1="8" x2="10" y2="2" stroke-width="2.5"/>
+            </svg>
+            <span>PAH</span>
+          </button>
+        </div>
+
+        <!-- Giriş alanları -->
+        <div id="feat-fields">
+          <!-- START alanları (sadece ilk nokta) -->
+          <div id="ff-start" style="display:none">
+            <div class="feat-field-row">
+              <label>X Başlangıç (Ø)</label>
+              <input type="number" id="ff-startX" placeholder="0">
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row">
+              <label>Z Başlangıç</label>
+              <input type="number" id="ff-startZ" placeholder="0">
+              <span class="unit">mm</span>
+            </div>
+          </div>
+
+          <!-- G01 / ANG alanları -->
+          <div id="ff-line" style="display:none">
+            <div class="feat-field-row" id="ff-row-X">
+              <label>X Hedef (Ø)</label>
+              <input type="number" id="ff-X" placeholder="—">
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row" id="ff-row-Z">
+              <label>Z Hedef</label>
+              <input type="number" id="ff-Z" placeholder="—">
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row" id="ff-row-A" style="display:none">
+              <label>A° Açı</label>
+              <input type="number" id="ff-A" placeholder="—">
+              <span class="unit">°</span>
+            </div>
+          </div>
+
+          <!-- G02/G03 ek alanı -->
+          <div id="ff-arc" style="display:none">
+            <div class="feat-field-row">
+              <label>R Radüs</label>
+              <input type="number" id="ff-R" placeholder="+CW / -CCW">
+              <span class="unit">mm</span>
+            </div>
+            <div style="color:#444;font-size:9px;margin-top:-4px;padding-left:96px">+ → CW (konveks) &nbsp; − → CCW (konkav)</div>
+          </div>
+
+          <!-- PAH ek alanı -->
+          <div id="ff-pah" style="display:none">
+            <div class="feat-field-row">
+              <label>C Pah</label>
+              <input type="number" id="ff-C" placeholder="0" min="0">
+              <span class="unit">mm</span>
+            </div>
+          </div>
+
+          <hr class="feat-separator">
+          <div style="color:#333;font-size:9px;line-height:1.6;padding:2px 0">
+            TNR: <span id="ff-tnr-show" style="color:#ffaa00">0.8</span> mm &nbsp;|&nbsp;
+            <span id="ff-dir-show" style="color:#888">Dış</span>
+          </div>
+        </div>
+
+        <!-- OK butonu -->
+        <div id="feat-ok-bar" style="display:flex;gap:6px;">
+          <button class="feat-ok-btn" style="flex:1" onclick="featOK()">✓ ONAYLA</button>
+          <button class="feat-ok-btn" style="flex:0 0 42px;background:#1e1e1e;font-size:15px;" onclick="undo()" title="Geri Al (Ctrl+Z)">↩</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GCODE TAB ── -->
+    <div id="tab-gcode" class="tabcontent">
+      <div id="gcodeToolbar">
+        <button class="tbtn" id="editBtn" onclick="toggleEdit()">✏ DÜZENLE</button>
+        <button class="tbtn" onclick="copyGcode()">📋 KOPYALA</button>
+        <button class="tbtn" onclick="simulateGcode()">▶ SİMÜLE ET</button>
+        <span id="editStatus" style="color:#555;font-size:10px;margin-left:auto;">Salt Okunur</span>
+      </div>
+      <textarea id="gcodeDisplay" readonly>G21 G40 G90 G95...</textarea>
+    </div>
+
+    <!-- ── COORDS TAB ── -->
+    <div id="tab-coords" class="tabcontent">
+      <div style="display:flex;gap:4px;padding:6px 0;border-bottom:1px solid #1a1d22;margin-bottom:4px">
+        <button class="tbtn" onclick="copyPointList()" title="Nokta listesini panoya kopyala">📋 KOPYALA</button>
+        <button class="tbtn" onclick="pastePointList()" title="Panodaki nokta listesini yükle">📥 YAPIŞTITR</button>
+        <button class="tbtn" style="margin-left:auto;color:#ff6666" onclick="if(confirm('Tüm noktaları sil?')){elements=[];startPoint=null;lastPoint=null;generateGCode();redraw();updateCoordsTable();}">🗑 TEMİZLE</button>
+      </div>
+      <div id="coordsTable">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Tip</th>
+            <th>X (Ø)</th><th>Z</th>
+            <th>R/C</th><th>Komp</th><th></th>
+          </tr></thead>
+          <tbody id="coordsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PARAMS TAB ── -->
+    <div id="tab-params" class="tabcontent">
+      <div class="p-group">
+        <h4>Program Başlığı</h4>
+        <div class="p-row"><label>Program No</label><input type="text" id="pProg" value="O1000"></div>
+        <div class="p-row"><label>Takım No</label><input type="text" id="pTool" value="T0101"></div>
+        <div class="p-row"><label>Dönüş Yönü</label>
+          <select id="pSpin"><option value="M03">M03 (İleri)</option><option value="M04">M04 (Geri)</option></select>
+        </div>
+      </div>
+      <div class="p-group">
+        <h4>Kesme Parametreleri</h4>
+        <div class="p-row"><label>Devir (S)</label><input type="number" id="pS" value="1200"></div>
+        <div class="p-row"><label>İlerleme F (mm/dev)</label><input type="number" id="pF" value="0.15" step="0.01"></div>
+        <div class="p-row"><label>Hızlı Çekim G00</label><input type="text" id="pRetract" value="X200 Z100"></div>
+      </div>
+      <div class="p-group">
+        <h4>Takım Uç Radüsü Telafisi</h4>
+        <div class="p-row"><label>Uç Radüsü (TNR)</label><input type="number" id="pToolR" value="0.8" step="0.1" min="0"></div>
+        <div class="p-row"><label>Telafi Yönü</label>
+          <select id="pToolDir">
+            <option value="outer">Dış Torna (X+)</option>
+            <option value="inner">İç Torna (X-)</option>
+          </select>
+        </div>
+        <div class="p-row"><label>TNR Telafisi</label>
+          <select id="pTNRmode">
+            <option value="on">Aktif (G-koda uygula)</option>
+            <option value="off">Kapalı (ham koordinat)</option>
+          </select>
+        </div>
+        <div style="color:#666;font-size:9px;line-height:1.5;margin-top:6px;padding:6px;background:#0d0f12;border-radius:4px;">
+          Köşe koordinatları değişmez.<br>
+          Pah/radüs giriş noktaları takım<br>
+          uç radüsüne göre otomatik hesaplanır.
+        </div>
+      </div>
+      <div class="p-group">
+        <h4>Teğet Uzatma</h4>
+        <div style="color:#666;font-size:9px;line-height:1.5;margin-bottom:6px;">
+          Kontur başına/sonuna aynı yönde teğet uzatma.<br>Düz→düz, açılı→aynı açıda.
+        </div>
+        <div class="p-row"><label>Giriş Teğet (mm)</label><input type="number" id="pApproach" value="2" step="0.5" min="0"></div>
+        <div class="p-row"><label>Çıkış Teğet (mm)</label><input type="number" id="pRetractLen" value="2" step="0.5" min="0"></div>
+      </div>
+      <div class="p-group">
+        <h4>Görüntü Ayarları</h4>
+        <div class="p-row"><label>Kontur Rengi</label>
+          <select id="pColor" onchange="redraw()">
+            <option value="#00aaff">Mavi</option>
+            <option value="#00ff88">Yeşil</option>
+            <option value="#ff9500">Turuncu</option>
+            <option value="#ff4444">Kırmızı</option>
+          </select>
+        </div>
+        <div class="p-row"><label>Telafi Çizgisi</label>
+          <select id="pShowComp" onchange="redraw()">
+            <option value="1">Göster</option>
+            <option value="0">Gizle</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-generate" onclick="generateGCode();alert('Parametreler güncellendi!')">UYGULA & G-KOD GÜNCELLE</button>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let elements = [], startPoint = null, lastPoint = null;
+let activeMode = 'G01', activeComp = 'G40';
+let scale = 15, offsetX = 0, offsetY = 0;
+let isPanning = false, panStart = {x:0,y:0}, panOffset = {x:0,y:0};
+let gcodeEditable = false;
+
+const canvas = document.getElementById('cv2d');
+const ctx = canvas.getContext('2d');
+
+/* ═══════════════════════════════════════════════════
+   RESIZE
+═══════════════════════════════════════════════════ */
+function resize() {
+  canvas.width  = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+  if (!offsetX && !offsetY) {
+    offsetX = canvas.width  * 0.75;
+    offsetY = canvas.height * 0.5;
+  }
+  redraw();
+}
+
+window.addEventListener('resize', resize);
+window.onload = () => {
+  resize();
+  initFeatureUI();
+  const pToolREl = document.getElementById('pToolR');
+  if (pToolREl) {
+    pToolREl.addEventListener('input', syncTNRshow);
+  }
+};
+
+/* ═══════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════ */
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const names=['input','gcode','coords','params'];
+    t.classList.toggle('active', names[i]===name);
+  });
+  document.querySelectorAll('.tabcontent').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name==='coords') updateCoordsTable();
+}
+
+/* ═══════════════════════════════════════════════════
+   SHOPTURN FEATURE UI
+═══════════════════════════════════════════════════ */
+let activeFeatType = 'G01';
+let editingIdx = null;
+
+function initFeatureUI() {
+  renderFeatureList();
+  openNewFeature();
+  syncTNRshow();
+  document.getElementById('feat-fields').addEventListener('input', liveUpdate);
+}
+
+function liveUpdate() {
+  if (editingIdx === -1 && startPoint) {
+    const sx = parseFloat(document.getElementById('ff-startX').value);
+    const sz = parseFloat(document.getElementById('ff-startZ').value);
+    if (!isNaN(sx)) startPoint.x = sx/2;
+    if (!isNaN(sz)) startPoint.z = sz;
+    elements.forEach((e,i) => { e.from = i===0?startPoint:elements[i-1].to; });
+    lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+    generateGCode(); redraw();
+    return;
+  }
+  if (editingIdx === null || editingIdx < 0) return;
+  const el = elements[editingIdx];
+  if (!el) return;
+  const xv = parseFloat(document.getElementById('ff-X').value);
+  const zv = parseFloat(document.getElementById('ff-Z').value);
+  const rv = parseFloat(document.getElementById('ff-R').value);
+  const cv = parseFloat(document.getElementById('ff-C').value);
+  if (!isNaN(xv)) el.to.x = xv/2;
+  if (!isNaN(zv)) el.to.z = zv;
+  if (!isNaN(rv) && (el.type==='G02'||el.type==='G03')) {
+    el.type = rv >= 0 ? 'G02' : 'G03';
+    el.r = Math.abs(rv);
+  }
+  if (!isNaN(cv) && el.type==='PAH') el.c = cv;
+  elements.forEach((e,i) => { e.from = i===0?startPoint:elements[i-1].to; });
+  lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  generateGCode(); redraw(); updateCoordsTable();
+}
+
+function syncTNRshow() {
+  const r = getParamFloat('pToolR', 0.8);
+  const d = getParam('pToolDir', 'outer');
+  const el1 = document.getElementById('ff-tnr-show');
+  const el2 = document.getElementById('ff-dir-show');
+  if (el1) el1.textContent = r;
+  if (el2) el2.textContent = d === 'outer' ? 'Dış' : 'İç';
+}
+
+function hideAllFields() {
+  ['ff-start','ff-line','ff-arc','ff-pah'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('ff-row-A').style.display = 'none';
+  document.getElementById('feat-ok-bar').style.display = 'none';
+}
+
+function selectFeatType(type) {
+  if (!startPoint) { return; }
+  activeFeatType = type;
+  ['G01','ANG','G02','PAH'].forEach(t => {
+    const b = document.getElementById('fb-'+t);
+    if (b) b.classList.toggle('active', t === type || (t==='G02' && type==='G03'));
+  });
+  hideAllFields();
+  document.getElementById('ff-line').style.display = (type !== 'PAH') ? '' : 'none';
+  document.getElementById('ff-arc').style.display  = (type === 'G02' || type === 'G03') ? '' : 'none';
+  document.getElementById('ff-pah').style.display  = (type === 'PAH') ? '' : 'none';
+  document.getElementById('ff-row-A').style.display = (type === 'ANG') ? '' : 'none';
+  document.getElementById('feat-ok-bar').style.display = '';
+  const labels = {G01:'Düz', ANG:'Açılı', G02:'Yay ±R', PAH:'Pah'};
+  document.getElementById('feat-editor-label').textContent = labels[type] || type;
+  const first = document.querySelector('#ff-line input, #ff-arc input, #ff-pah input');
+  if (first) setTimeout(() => first.focus(), 30);
+}
+
+function openNewFeature() {
+  editingIdx = null;
+  window._pendingInsertAfter = undefined;
+  ['ff-startX','ff-startZ','ff-X','ff-Z','ff-A','ff-R','ff-C'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+  document.getElementById('feat-editor-idx').textContent = '';
+  ['G01','ANG','G02','PAH'].forEach(t => {
+    const b = document.getElementById('fb-'+t); if(b) b.classList.remove('active');
+  });
+  hideAllFields();
+  if (!startPoint) {
+    document.getElementById('ff-start').style.display = '';
+    document.getElementById('feat-ok-bar').style.display = '';
+    document.getElementById('feat-editor-label').textContent = 'BAŞLANGIÇ';
+  } else {
+    document.getElementById('feat-editor-label').textContent = 'TİP SEÇİN';
+  }
+  highlightFeatureList(-1);
+}
+
+function openEditFeature(idx) {
+  editingIdx = idx;
+  hideAllFields();
+  ['ff-startX','ff-startZ','ff-X','ff-Z','ff-A','ff-R','ff-C'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+
+  if (idx === -1) {
+    document.getElementById('ff-start').style.display = '';
+    document.getElementById('ff-startX').value = startPoint ? fmt(startPoint.x*2) : '';
+    document.getElementById('ff-startZ').value = startPoint ? fmt(startPoint.z) : '';
+    document.getElementById('feat-ok-bar').style.display = '';
+    document.getElementById('feat-editor-label').textContent = 'BAŞLANGIÇ';
+    document.getElementById('feat-editor-idx').textContent = '#0';
+    ['G01','ANG','G02','PAH'].forEach(t=>{const b=document.getElementById('fb-'+t);if(b)b.classList.remove('active');});
+    highlightFeatureList(idx);
+    return;
+  }
+
+  const el = elements[idx];
+  if (!el) return;
+
+  const type = (el.type==='PAH') ? 'PAH' : (el.type==='G02'||el.type==='G03') ? 'G02' : el.type;
+  const isAng = type==='G01' && el._ang != null;
+  const selType = isAng ? 'ANG' : type;
+  activeFeatType = selType;
+
+  ['G01','ANG','G02','PAH'].forEach(t=>{
+    const b=document.getElementById('fb-'+t);
+    if(b) b.classList.toggle('active', t===selType||(t==='G02'&&selType==='G03'));
+  });
+
+  document.getElementById('ff-line').style.display = (selType !== 'PAH') ? '' : 'none';
+  document.getElementById('ff-arc').style.display  = (selType==='G02'||selType==='G03') ? '' : 'none';
+  document.getElementById('ff-pah').style.display  = (selType==='PAH') ? '' : 'none';
+  document.getElementById('ff-row-A').style.display = (selType==='ANG') ? '' : 'none';
+  document.getElementById('feat-ok-bar').style.display = '';
+
+  document.getElementById('ff-X').value = fmt(el.to.x*2);
+  document.getElementById('ff-Z').value = fmt(el.to.z);
+  if (isAng) document.getElementById('ff-A').value = fmt(el._ang||0);
+  if (el.type==='G02'||el.type==='G03') {
+    document.getElementById('ff-R').value = fmt(el.type==='G03' ? -Math.abs(el.r) : Math.abs(el.r));
+  }
+  if (type==='PAH') document.getElementById('ff-C').value = fmt(el.c||0);
+
+  const labels = {G01:'Düz Çizgi', ANG:'Açılı Çizgi', G02:'Yay ±R', PAH:'Pah'};
+  document.getElementById('feat-editor-label').textContent = labels[selType]||selType;
+  document.getElementById('feat-editor-idx').textContent = '#'+(idx+1);
+  highlightFeatureList(idx);
+}
+
+function highlightFeatureList(idx) {
+  document.querySelectorAll('.feat-item').forEach((item, i) => {
+    const itemIdx = i === 0 ? -1 : i-1;
+    item.classList.toggle('active', itemIdx === idx);
+  });
+}
+
+function renderFeatureList() {
+  const body = document.getElementById('feature-list-body');
+  if (!body) return;
+  body.innerHTML = '';
+
+  const typeIcons = {G01:'→', ANG:'↗', G02:'◜', G03:'◝', PAH:'⌐', START:'◎'};
+  const typeColors = {G01:'#00aaff', ANG:'#00ddaa', G02:'#ff9500', G03:'#7788ff', PAH:'#ffff44', START:'#27ae60'};
+
+  const startEl = document.createElement('div');
+  startEl.className = 'feat-item start-feat' + (editingIdx === -1 ? ' active' : '');
+  startEl.onclick = () => openEditFeature(-1);
+  const sx = startPoint ? fmt(startPoint.x*2) : '—';
+  const sz = startPoint ? fmt(startPoint.z) : '—';
+  startEl.innerHTML = `<span class="feat-icon" style="color:#27ae60">◎</span>
+    <div class="feat-info">
+      <div class="feat-type" style="color:#27ae60">START</div>
+      <div class="feat-coords">X${sx} Z${sz}</div>
+    </div>`;
+  body.appendChild(startEl);
+
+  elements.forEach((el, i) => {
+    const t = el.type;
+    const icon = typeIcons[t] || '→';
+    const color = typeColors[t] || '#ccc';
+    const div = document.createElement('div');
+    div.className = 'feat-item' + (editingIdx === i ? ' active' : '');
+    div.onclick = () => openEditFeature(i);
+    const xv = fmt(el.to.x*2), zv = fmt(el.to.z);
+    const extra = (t==='G02'||t==='G03') ? ` R${fmt(el.r)}` : (t==='PAH'?` C${fmt(el.c)}`:'');
+    div.innerHTML = `<span class="feat-icon" style="color:${color}">${icon}</span>
+      <div class="feat-info">
+        <div class="feat-type" style="color:${color}">${t}</div>
+        <div class="feat-coords">X${xv} Z${zv}${extra}</div>
+      </div>
+      <button style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:10px;padding:2px 4px;flex-shrink:0" onclick="event.stopPropagation();deletePoint(${i})">✕</button>`;
+    body.appendChild(div);
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.style.cssText='padding:8px;text-align:center;border-top:1px solid #1a1d22;cursor:pointer;color:#333;font-size:10px;';
+  addBtn.textContent = '+ YENİ NOKTA';
+  addBtn.onmouseover = ()=>addBtn.style.color='#555';
+  addBtn.onmouseout  = ()=>addBtn.style.color='#333';
+  addBtn.onclick = () => openNewFeature();
+  body.appendChild(addBtn);
+}
+
+function featOK() {
+  const type = activeFeatType;
+
+  if (!startPoint) {
+    const sx = parseFloat(document.getElementById('ff-startX').value);
+    const sz = parseFloat(document.getElementById('ff-startZ').value);
+    startPoint = {x: (isNaN(sx)?0:sx)/2, z: isNaN(sz)?0:sz};
+    lastPoint  = {...startPoint};
+    generateGCode(); autoFit(); renderFeatureList();
+    openNewFeature();
+    return;
+  }
+
+  if (editingIdx !== null) {
+    if (editingIdx === -1) {
+      const sx = parseFloat(document.getElementById('ff-startX').value);
+      const sz = parseFloat(document.getElementById('ff-startZ').value);
+      if (!isNaN(sx)) startPoint.x = sx/2;
+      if (!isNaN(sz)) startPoint.z = sz;
+    } else {
+      const el = elements[editingIdx];
+      const xv = parseFloat(document.getElementById('ff-X').value);
+      const zv = parseFloat(document.getElementById('ff-Z').value);
+      const av = parseFloat(document.getElementById('ff-A').value);
+      const rv = parseFloat(document.getElementById('ff-R').value);
+      const cv = parseFloat(document.getElementById('ff-C').value);
+      if (!isNaN(xv)) el.to.x = xv/2;
+      if (!isNaN(zv)) el.to.z = zv;
+      if (type === 'G02') {
+        const signedR = isNaN(rv) ? 0 : rv;
+        el.type = signedR >= 0 ? 'G02' : 'G03';
+        el.r = Math.abs(signedR);
+      } else if (type === 'G03') { el.type = 'G03'; el.r = isNaN(rv)?0:Math.abs(rv); }
+      if (type === 'PAH') { el.c = isNaN(cv)?0:cv; }
+      if (type === 'ANG') el._ang = isNaN(av)?null:av;
+    }
+    elements.forEach((el, i) => { el.from = i===0?startPoint:elements[i-1].to; });
+    lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+    generateGCode(); redraw(); renderFeatureList(); updateCoordsTable();
+    editingIdx = null;
+    hideAllFields();
+    ['G01','ANG','G02','PAH'].forEach(t=>{const b=document.getElementById('fb-'+t);if(b)b.classList.remove('active');});
+    document.getElementById('feat-editor-label').textContent = 'TİP SEÇİN';
+    document.getElementById('feat-editor-idx').textContent = '';
+    highlightFeatureList(-1);
+    return;
+  }
+
+  const toolR = getParamFloat('pToolR', 0.8);
+  let xv = parseFloat(document.getElementById('ff-X').value);
+  let zv = parseFloat(document.getElementById('ff-Z').value);
+  const av = parseFloat(document.getElementById('ff-A').value);
+  const rv = parseFloat(document.getElementById('ff-R').value);
+  const cv = parseFloat(document.getElementById('ff-C').value);
+
+  if (!isNaN(xv)) xv = xv/2; else xv = null;
+  if (isNaN(zv)) zv = null;
+
+  if (type === 'ANG' && !isNaN(av)) {
+    const rad = av*(Math.PI/180);
+    if (zv !== null && xv === null) xv = lastPoint.x + Math.tan(rad)*(zv - lastPoint.z);
+    else if (xv !== null && zv === null) zv = lastPoint.z + (xv - lastPoint.x)/Math.tan(rad);
+  }
+
+  if (xv === null) xv = lastPoint.x;
+  if (zv === null) zv = lastPoint.z;
+
+  const elType = (type==='ANG') ? 'G01' : (type==='G03') ? 'G03' : type;
+  let arcType = elType;
+  let arcR = isNaN(rv) ? 0 : rv;
+  if (type === 'G02') {
+    arcType = arcR >= 0 ? 'G02' : 'G03';
+    arcR = Math.abs(arcR);
+  }
+
+  if (type === 'PAH') {
+    const pahVal = isNaN(cv)?0:cv;
+    if (pahVal > 0) {
+      const dx=xv-lastPoint.x, dz=zv-lastPoint.z, len=Math.sqrt(dx*dx+dz*dz);
+      if (len > 0) {
+        const ratio=pahVal/len;
+        const midX=xv-dx*ratio, midZ=zv-dz*ratio;
+        elements.push({type:'PAH',to:{x:midX,z:midZ},r:0,c:pahVal,comp:'G40',tR:toolR,from:{x:lastPoint.x,z:lastPoint.z}});
+        lastPoint={x:midX,z:midZ};
+      }
+    }
+    elements.push({type:'G01',to:{x:xv,z:zv},r:0,c:0,comp:'G40',tR:toolR,from:{x:lastPoint.x,z:lastPoint.z}});
+    lastPoint={x:xv,z:zv};
+  } else {
+    elements.push({type:arcType,to:{x:xv,z:zv},r:arcR,c:0,comp:'G40',tR:toolR,from:{x:lastPoint.x,z:lastPoint.z},_ang:type==='ANG'?(isNaN(av)?null:av):undefined});
+    lastPoint={x:xv,z:zv};
+  }
+
+  generateGCode(); autoFit(); renderFeatureList(); updateCoordsTable();
+  editingIdx = null;
+  ['ff-X','ff-Z','ff-A','ff-R','ff-C'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('feat-editor-label').textContent = 'TİP SEÇİN';
+  hideAllFields();
+  ['G01','ANG','G02','PAH'].forEach(t=>{const b=document.getElementById('fb-'+t);if(b)b.classList.remove('active');});
+  document.getElementById('feat-editor-idx').textContent='';
+  highlightFeatureList(-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   MODE / COMP (eski uyumluluk)
+═══════════════════════════════════════════════════ */
+function setMode(m) {
+  activeMode = m;
+  selectFeatType(m === 'PAH' ? 'PAH' : m);
+}
+
+function setComp(c) { activeComp = c; }
+function processGeometry() { featOK(); }
+
+function getVal(id) {
+  const v = document.getElementById(id).value;
+  return v !== '' ? parseFloat(v) : null;
+}
+
+function clearInputs() {
+  ['ff-X','ff-Z','ff-A','ff-R','ff-C','ff-startX','ff-startZ'].forEach(id => {
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   SEGMENT YARDIMCILARI
+═══════════════════════════════════════════════════ */
+function segDir(p1, p2) {
+  const dx = p2.x - p1.x, dz = p2.z - p1.z;
+  const len = Math.sqrt(dx*dx + dz*dz);
+  if (len < 1e-10) return {x:1, z:0};
+  return {x: dx/len, z: dz/len};
+}
+
+function outerNormal(dir) { return {x: -dir.z, z:  dir.x}; }
+function innerNormal(dir) { return {x:  dir.z, z: -dir.x}; }
+
+/*
+  bisectorCenter: köşede takım dairesinin merkezini hesaplar.
+  Gelen ve giden segmentlerin dış normallerinin bisektörü
+  üzerinde, toolR mesafede olan nokta.
+*/
+function bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
+  const nIn = normalFn(dIn), nOut = normalFn(dOut);
+  const bx = nIn.x + nOut.x, bz = nIn.z + nOut.z;
+  const bl = Math.sqrt(bx*bx + bz*bz);
+  if (bl < 1e-10) return {x: pt.x + nIn.x*toolR, z: pt.z + nIn.z*toolR};
+  const bnx = bx/bl, bnz = bz/bl;
+  const dot  = nIn.x*bnx + nIn.z*bnz;
+  const dist = toolR / Math.max(Math.abs(dot), 0.1);
+  return {x: pt.x + bnx*dist, z: pt.z + bnz*dist};
+}
+
+/* ═══════════════════════════════════════════════════
+   TNR TEMAS NOKTASI HESAPLAMA — DÜZELTİLMİŞ v2.11
+   
+   Her köşe ptIdx için:
+   
+   G01/PAH köşeleri:
+     - Bisektör ile takım dairesi merkezi (c) hesaplanır
+     - Gelen segmentteki temas noktası = c - nIn * toolR
+       Bu, Fanuc'un G-kodda gördüğü "exit" koordinatıdır.
+   
+   G02/G03 yay segmentleri:
+     - Offset yay merkezi hesaplanır (kontur merkezi ± toolR)
+     - Sonraki segmentin offset hattıyla kesişim noktası
+═══════════════════════════════════════════════════ */
+/*
+  tnrExit — v2.12 DÜZELTİLMİŞ
+  
+  Fanuc manuel TNR mantığı:
+  ─ G01 / PAH segmentleri: hedef koordinat AYNEN G-koda yazılır (offset uygulanmaz)
+  ─ G02 / G03 yay: offset yay kullanılır (Roff = R ± toolR)
+      Yay GİRİŞ noktası: önceki segmentin dış-normal offsetli hattı ∩ offset yay
+      Yay ÇIKIŞ noktası: offset yay ∩ sonraki segmentin dış-normal offsetli hattı
+      
+  "Önceki/sonraki segmentin offsetli hattı":
+    Düz Z hareketi  (dx≈0): x_hat = köşe.x + toolR (dış)
+    Düz X hareketi  (dz≈0): z_hat sabit, offset yok (z_hat = köşe.z)
+    Eğik segment   : hat = köşeden dış-normal*toolR kaydırılmış paralel hat
+*/
+function arcOffsetIntersect(pt, dir, normalFn, toolR, cx, cz, Roff, elType) {
+  // Offset hat: pt + normalFn(dir)*toolR + t*dir (parametrik)
+  const n = normalFn(dir);
+  const hx = pt.x + n.x * toolR;
+  const hz = pt.z + n.z * toolR;
+  // (hx + t*dir.x - cx)^2 + (hz + t*dir.z - cz)^2 = Roff^2
+  const fx = hx - cx, fz = hz - cz;
+  const a2 = dir.x*dir.x + dir.z*dir.z; // =1
+  const b2 = 2*(fx*dir.x + fz*dir.z);
+  const c2 = fx*fx + fz*fz - Roff*Roff;
+  const disc = b2*b2 - 4*a2*c2;
+  if (disc < 0) return null;
+  const t1 = (-b2 - Math.sqrt(disc)) / (2*a2);
+  const t2 = (-b2 + Math.sqrt(disc)) / (2*a2);
+  // Her iki çözüm arasında geometrik olarak doğru olanı seç:
+  // Yay giriş için: yay başlangıç açısına göre en yakın → t küçük olmalı
+  // En küçük mutlak t'yi al
+  const t = (Math.abs(t1) <= Math.abs(t2)) ? t1 : t2;
+  return {x: hx + dir.x*t, z: hz + dir.z*t};
+}
+
+function tnrExit(ptIdx, pts, elements, toolR, normalFn, tnrOn) {
+  // TNR kapalıysa veya toolR=0 → ham kontur koordinatı
+  if (!tnrOn || toolR === 0) return {x: pts[ptIdx].x, z: pts[ptIdx].z};
+
+  const pt    = pts[ptIdx];
+  const prev  = pts[ptIdx - 1];
+  const next  = pts[ptIdx + 1] || null;
+  const elCur = elements[ptIdx - 1];
+
+  // ── G01 / PAH: koordinat değişmez ──
+  if (elCur.type === 'G01' || elCur.type === 'PAH') {
+    return {x: pt.x, z: pt.z};
+  }
+
+  // ── G02 / G03: offset yay giriş/çıkış kesişimi ──
+  if ((elCur.type === 'G02' || elCur.type === 'G03') && Math.abs(elCur.r) > 0) {
+    const x1 = prev.x, z1 = prev.z, x2 = pt.x, z2 = pt.z;
+    const R  = Math.abs(elCur.r);
+    const dx = x2-x1, dz = z2-z1, dist = Math.sqrt(dx*dx+dz*dz);
+    if (dist < 1e-10 || dist > 2*R + 1e-10) return {x: pt.x, z: pt.z};
+
+    // Kontur yay merkezi
+    const mx=(x1+x2)/2, mz=(z1+z2)/2;
+    const h = Math.sqrt(Math.max(0, R*R-(dist/2)**2));
+    const nx=-dz/dist, nz=dx/dist;
+    const sign = elCur.type==='G02' ? 1 : -1;
+    const cx = mx+sign*h*nx, cz = mz+sign*h*nz;
+
+    // Offset yay yarıçapı
+    // Dış torna (outer): G02 konveks → Roff=R-toolR, G03 konkav → Roff=R+toolR
+    // İç torna (inner): G02 konkav → Roff=R+toolR, G03 konveks → Roff=R-toolR
+    const isOuter = normalFn === outerNormal;
+    let Roff;
+    if (isOuter) {
+      Roff = (elCur.type==='G02') ? Math.max(R - toolR, 0.01) : R + toolR;
+    } else {
+      Roff = (elCur.type==='G03') ? Math.max(R - toolR, 0.01) : R + toolR;
+    }
+
+    // Yay ÇIKIŞ noktası: offset yay ∩ sonraki segment offsetli hattı
+    if (next) {
+      const dOut = segDir(pt, next);
+      const res = arcOffsetIntersect(pt, dOut, normalFn, toolR, cx, cz, Roff, elCur.type);
+      if (res) return res;
+    }
+    // Kesişim bulunamazsa: kontur yay bitiş noktasını offsetli hatta yansıt
+    const endA = Math.atan2(x2-cx, z2-cz);
+    return {
+      x: cx + Roff * Math.sin(endA),
+      z: cz + Roff * Math.cos(endA)
+    };
+  }
+
+  return {x: pt.x, z: pt.z};
+}
+
+/*
+  tnrArcEntry — Yay GİRİŞ noktasını hesaplar (G-koda ayrı satır olarak yazılır)
+  Önceki segmentin offsetli hattı ∩ offset yay
+*/
+function tnrArcEntry(ptIdx, pts, elements, toolR, normalFn) {
+  const pt   = pts[ptIdx];
+  const prev = pts[ptIdx - 1];
+  const elCur = elements[ptIdx - 1];
+  if ((elCur.type !== 'G02' && elCur.type !== 'G03') || Math.abs(elCur.r) === 0) return null;
+
+  const x1 = prev.x, z1 = prev.z, x2 = pt.x, z2 = pt.z;
+  const R  = Math.abs(elCur.r);
+  const dx = x2-x1, dz = z2-z1, dist = Math.sqrt(dx*dx+dz*dz);
+  if (dist < 1e-10 || dist > 2*R + 1e-10) return null;
+
+  const mx=(x1+x2)/2, mz=(z1+z2)/2;
+  const h = Math.sqrt(Math.max(0, R*R-(dist/2)**2));
+  const nx=-dz/dist, nz=dx/dist;
+  const sign = elCur.type==='G02' ? 1 : -1;
+  const cx = mx+sign*h*nx, cz = mz+sign*h*nz;
+
+  const isOuter = normalFn === outerNormal;
+  let Roff;
+  if (isOuter) {
+    Roff = (elCur.type==='G02') ? Math.max(R - toolR, 0.01) : R + toolR;
+  } else {
+    Roff = (elCur.type==='G03') ? Math.max(R - toolR, 0.01) : R + toolR;
+  }
+
+  // Önceki segment yönü → offsetli hat
+  const dIn = segDir(prev, pt);
+  const res = arcOffsetIntersect(prev, dIn, normalFn, toolR, cx, cz, Roff, elCur.type);
+  if (res) return {pt: res, Roff};
+
+  // Fallback: yay başı tangent noktası
+  const startA = Math.atan2(x1-cx, z1-cz);
+  return {
+    pt: {x: cx + Roff * Math.sin(startA), z: cz + Roff * Math.cos(startA)},
+    Roff
+  };
+}
+
+/* ═══════════════════════════════════════════════════
+   G-KOD ÜRETIMI (FANUC)
+═══════════════════════════════════════════════════ */
+function generateGCode() {
+  const prog    = getParam('pProg', 'O1000');
+  const tool    = getParam('pTool', 'T0101');
+  const spin    = getParam('pSpin', 'M03');
+  const speed   = getParam('pS', '1200');
+  const feed    = getParam('pF', '0.15');
+  const retract = getParam('pRetract', 'X200 Z100');
+  const toolR   = getParamFloat('pToolR', 0.8);
+  const tnrDir  = getParam('pToolDir', 'outer');
+  const tnrOn   = getParam('pTNRmode', 'on') === 'on';
+  const normalFn = tnrDir === 'inner' ? innerNormal : outerNormal;
+
+  let g = `${prog}\n(FANUC UYUMLU KONTUR PROGRAMI)\n`;
+  if (tnrOn && toolR > 0) g += `(TNR TELAFISI AKTIF - R${toolR} ${tnrDir==='outer'?'DIS':'IC'} TORNA)\n`;
+  g += `G21 G40 G90 G95\n${tool} ${spin} S${speed}\n`;
+
+  if (!startPoint) {
+    document.getElementById('gcodeDisplay').value = g + 'M30\n%';
+    return;
+  }
+
+  const pts = [{x: startPoint.x, z: startPoint.z}];
+  elements.forEach(el => pts.push({x: el.to.x, z: el.to.z, type: el.type, r: el.r||0, c: el.c||0, comp: el.comp}));
+
+  const approachLen = getParamFloat('pApproach', 2);
+  const retractLen  = getParamFloat('pRetractLen', 2);
+
+  let approachPt = null, retractPt = null;
+  if (elements.length > 0) {
+    const d0 = segDir(pts[0], pts[1]);
+    if (approachLen > 0) {
+      approachPt = {x: pts[0].x - d0.x*approachLen, z: pts[0].z - d0.z*approachLen};
+    }
+    const prevLast = pts[pts.length-2];
+    const dLast = segDir(prevLast, pts[pts.length-1]);
+    if (retractLen > 0) {
+      retractPt = {x: pts[pts.length-1].x + dLast.x*retractLen, z: pts[pts.length-1].z + dLast.z*retractLen};
+    }
+  }
+
+  // G00 → start noktası, G01 F, sonra kontur
+  g += `G00 X${fmt(pts[0].x * 2)} Z${fmt(pts[0].z)}\n`;
+  g += `G01 F${feed}\n`;
+
+  // ── TNR temas noktası hesabı ──────────────────────────────────────────
+  // TNR kapalıysa ham kontur koordinatı yazılır.
+  // Açıksa: bisektör merkezinden (c) eksen bazında R geri çekme.
+  // Özel kural: gelen X-sabit (dikey) + giden 45° → exit.z = pt.z + dIn.z * R
+  // G02/G03: offset yay ∩ sonraki segment offset hattı → merkez; merkez - (R,R)
+  function tnrExitPoint(ptIdx) {
+    if (!tnrOn || toolR === 0 || ptIdx <= 0 || ptIdx >= pts.length - 1) {
+      return { x: pts[ptIdx].x, z: pts[ptIdx].z };
+    }
+    const pt   = pts[ptIdx];
+    const prev = pts[ptIdx - 1];
+    const next = pts[ptIdx + 1];
+    const dIn  = segDir(prev, pt);
+    const dOut = segDir(pt, next);
+    const c    = bisectorCenter(pt, dIn, dOut, toolR, outerNormal);
+
+    const sx = (c.x >= pt.x) ? 1 : -1;
+    const sz = (c.z >= pt.z) ? 1 : -1;
+    let ex = c.x - sx * toolR;
+    let ez = c.z - sz * toolR;
+
+    // Özel kural: gelen tam dikey (|dIn.x|≈0) + giden 45° (|dOut.x|≈|dOut.z|)
+    const incomingVertical = Math.abs(dIn.x) < 0.01;
+    const outgoing45       = Math.abs(Math.abs(dOut.x) - Math.abs(dOut.z)) < 0.01 && Math.abs(dOut.x) > 0.01;
+    if (incomingVertical && outgoing45) {
+      ez = pt.z + dIn.z * toolR;   // gelen yönde R daha ilerle
+    }
+
+    // G02/G03 için: yay çıkış temas noktası (offset yay ∩ sonraki segment offset)
+    const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : 'G01';
+    if ((curType === 'G02' || curType === 'G03') && ptIdx < pts.length - 1) {
+      const arcEl = elements[ptIdx - 1];
+      const arcR  = Math.abs(arcEl.r) || 0;
+      const R_off = (tnrDir === 'outer') ? arcR - toolR : arcR + toolR;
+      // Yay merkezini hesapla (CW için G02)
+      const p1 = pts[ptIdx - 1], p2 = pts[ptIdx];
+      const mx = (p1.x + p2.x) / 2, mz = (p1.z + p2.z) / 2;
+      const dx_ = p2.x - p1.x, dz_ = p2.z - p1.z;
+      const L_  = Math.sqrt(dx_*dx_ + dz_*dz_);
+      const d_half = L_ / 2;
+      const h_ = Math.sqrt(Math.max(0, arcR*arcR - d_half*d_half));
+      // G02: saat yönü → merkez segmentin sağında
+      const nx_ = dz_/L_, nz_ = -dx_/L_;
+      const arc_cx = mx + h_*nx_, arc_cz = mz + h_*nz_;
+      // Sonraki segment offset hattı
+      const dNext = segDir(pt, next);
+      const nNext = outerNormal(dNext);
+      const x_line = pt.x + nNext.x * toolR;
+      const z_sq   = R_off*R_off - (x_line - arc_cx)*(x_line - arc_cx);
+      if (z_sq >= 0) {
+        const z_m = arc_cz - Math.sqrt(z_sq);  // alt kesişim (dış torna)
+        ex = x_line - toolR;
+        ez = z_m    - toolR;
+      }
+    }
+
+    return { x: ex, z: ez };
+  }
+
+  let lastComp = 'G40';
+  let prevX = parseFloat((pts[0].x * 2).toFixed(3));
+  let prevZ = parseFloat(pts[0].z.toFixed(3));
+
+  elements.forEach((el, i) => {
+    if (el.comp !== lastComp) { g += el.comp + '\n'; lastComp = el.comp; }
+
+    const ptIdx = i + 1; // pts dizisindeki indeks
+
+    // Hedef koordinat: TNR açıksa exit noktası, değilse ham
+    const ep = tnrExitPoint(ptIdx);
+    const tx = parseFloat((ep.x * 2).toFixed(3));
+    const tz = parseFloat(ep.z.toFixed(3));
+
+    if (Math.abs(tx - prevX) < 0.0005 && Math.abs(tz - prevZ) < 0.0005) return;
+
+    if (el.type === 'PAH') {
+      // PAH: temas noktası değil, ham koordinat (pah köşesi özel)
+      let line = 'G01';
+      if (Math.abs(parseFloat((el.to.x*2).toFixed(3)) - prevX) >= 0.0005) line += ` X${fmt(el.to.x * 2)}`;
+      if (Math.abs(parseFloat(el.to.z.toFixed(3)) - prevZ) >= 0.0005) line += ` Z${fmt(el.to.z)}`;
+      line += ` ,C${fmt(el.c)} F${feed}`;
+      g += line + '\n';
+      prevX = parseFloat((el.to.x*2).toFixed(3));
+      prevZ = parseFloat(el.to.z.toFixed(3));
+    } else if (el.type === 'G01') {
+      let line = 'G01';
+      if (Math.abs(tx - prevX) >= 0.0005) line += ` X${fmt(ep.x * 2)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) line += ` Z${fmt(ep.z)}`;
+      line += ` F${feed}`;
+      g += line + '\n';
+      prevX = tx; prevZ = tz;
+    } else {
+      // G02 / G03: exit koordinatı + Roff
+      let rVal = Math.abs(el.r) || 0;
+      if (tnrOn && toolR > 0) {
+        const isOuter = (tnrDir === 'outer');
+        if (isOuter) {
+          rVal = (el.type === 'G02') ? Math.max(rVal - toolR, 0.01) : rVal + toolR;
+        } else {
+          rVal = (el.type === 'G03') ? Math.max(rVal - toolR, 0.01) : rVal + toolR;
+        }
+      }
+      let line = el.type;
+      if (Math.abs(tx - prevX) >= 0.0005) line += ` X${fmt(ep.x * 2)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) line += ` Z${fmt(ep.z)}`;
+      line += ` R${fmt(rVal)} F${feed}`;
+      g += line + '\n';
+      prevX = tx; prevZ = tz;
+    }
+  });
+
+  if (lastComp !== 'G40') g += 'G40\n';
+
+  g += `G00 ${retract}\nM30\n%`;
+  document.getElementById('gcodeDisplay').value = g;
+}
+
+function getParam(id, fallback) {
+  const el = document.getElementById(id);
+  return el ? (el.value || fallback) : fallback;
+}
+function getParamFloat(id, fallback) {
+  const el = document.getElementById(id);
+  if (!el) return fallback;
+  const v = parseFloat(el.value);
+  return isNaN(v) ? fallback : v;
+}
+function fmt(n) { return parseFloat(n).toFixed(3); }
+
+/* ═══════════════════════════════════════════════════
+   CANVAS ÇIZIMI
+═══════════════════════════════════════════════════ */
+function redraw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 1;
+  const gStep = scale * 5;
+  if (gStep > 10) {
+    for (let x = offsetX % gStep; x < W; x += gStep) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = offsetY % gStep; y < H; y += gStep) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  }
+
+  ctx.strokeStyle = '#2a2d33';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, offsetY); ctx.lineTo(W, offsetY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(offsetX, 0); ctx.lineTo(offsetX, H); ctx.stroke();
+
+  ctx.fillStyle = '#2a2d33';
+  ctx.font = '10px Courier New';
+  ctx.fillText('Z+', W - 20, offsetY - 6);
+  ctx.fillText('X+', offsetX + 4, 14);
+
+  if (!startPoint) return;
+
+  const color    = document.getElementById('pColor')?.value || '#00aaff';
+  const toolR2   = getParamFloat('pToolR', 0.8);
+  const tnrDir2  = getParam('pToolDir', 'outer');
+  const tnrOn2   = getParam('pTNRmode', 'on') === 'on';
+  const showComp = getParam('pShowComp', '1') === '1';
+  const approachLen2 = getParamFloat('pApproach', 2);
+  const retractLen2  = getParamFloat('pRetractLen', 2);
+
+  let canvasApproach = null, canvasRetract = null;
+  if (elements.length > 0) {
+    const p0 = {x:startPoint.x, z:startPoint.z}, p1 = elements[0].to;
+    const d0 = segDir(p0, p1);
+    if (approachLen2 > 0) canvasApproach = {x: p0.x - d0.x*approachLen2, z: p0.z - d0.z*approachLen2};
+
+    const pLast = elements[elements.length-1].to;
+    const pPrev = elements.length>1 ? elements[elements.length-2].to : startPoint;
+    const dL = segDir(pPrev, pLast);
+    if (retractLen2 > 0) canvasRetract = {x: pLast.x + dL.x*retractLen2, z: pLast.z + dL.z*retractLen2};
+  }
+
+  ctx.strokeStyle = 'rgba(100,180,255,0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,5]);
+  if (canvasApproach) {
+    ctx.beginPath();
+    ctx.moveTo(toSX(canvasApproach.z), toSY(canvasApproach.x));
+    ctx.lineTo(toSX(startPoint.z), toSY(startPoint.x));
+    ctx.stroke();
+  }
+  if (canvasRetract && elements.length > 0) {
+    const pLast = elements[elements.length-1].to;
+    ctx.beginPath();
+    ctx.moveTo(toSX(pLast.z), toSY(pLast.x));
+    ctx.lineTo(toSX(canvasRetract.z), toSY(canvasRetract.x));
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(toSX(startPoint.z), toSY(startPoint.x));
+
+  elements.forEach(el => {
+    if (el.type === 'G01' || el.type === 'PAH') {
+      ctx.lineTo(toSX(el.to.z), toSY(el.to.x));
+    } else if (el.type === 'G02' || el.type === 'G03') {
+      drawArc(el);
+    }
+  });
+  ctx.stroke();
+
+  // Takım merkezi yolu (TNR offset hayalet çizgisi)
+  if (showComp && tnrOn2 && toolR2 > 0 && elements.length > 0) {
+    const nFn2 = tnrDir2 === 'inner' ? innerNormal : outerNormal;
+    const allPts = [{x:startPoint.x, z:startPoint.z}, ...elements.map(e=>e.to)];
+
+    function arcTangentDir(el, atEnd) {
+      const prevPt = el.from || startPoint;
+      const x1=prevPt.x,z1=prevPt.z,x2=el.to.x,z2=el.to.z,R=Math.abs(el.r);
+      const dx=x2-x1,dz=z2-z1,dist=Math.sqrt(dx*dx+dz*dz);
+      if(dist<1e-10||dist>2*R+1e-10) return segDir(prevPt,el.to);
+      const mx=(x1+x2)/2,mz=(z1+z2)/2,h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
+      const nx=-dz/dist,nz=dx/dist;
+      const sign=el.type==='G02'?1:-1;
+      const cx=mx+sign*h*nx,cz=mz+sign*h*nz;
+      const a = atEnd ? Math.atan2(x2-cx,z2-cz) : Math.atan2(x1-cx,z1-cz);
+      return el.type==='G02'
+        ? {x: -Math.cos(a), z:  Math.sin(a)}
+        : {x:  Math.cos(a), z: -Math.sin(a)};
+    }
+
+    const offsetPts = allPts.map((pt, i) => {
+      if (i === 0) {
+        const el0 = elements[0];
+        const d = el0.type==='G02'||el0.type==='G03' ? arcTangentDir(el0,false) : segDir(allPts[0],allPts[1]);
+        const n = nFn2(d);
+        return {x: pt.x+n.x*toolR2, z: pt.z+n.z*toolR2};
+      }
+      const el = elements[i-1];
+      const dIn = el.type==='G02'||el.type==='G03' ? arcTangentDir(el,true) : segDir(allPts[i-1],allPts[i]);
+      if (i === allPts.length-1) {
+        const n = nFn2(dIn);
+        return {x: pt.x+n.x*toolR2, z: pt.z+n.z*toolR2};
+      }
+      const elNext = elements[i];
+      const dOut = elNext.type==='G02'||elNext.type==='G03' ? arcTangentDir(elNext,false) : segDir(allPts[i],allPts[i+1]);
+      return bisectorCenter(pt, dIn, dOut, toolR2, nFn2);
+    });
+
+    ctx.strokeStyle = 'rgba(255,149,0,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(toSX(offsetPts[0].z), toSY(offsetPts[0].x));
+
+    elements.forEach((el, i) => {
+      const gStart = offsetPts[i];
+      const gEnd   = offsetPts[i+1];
+
+      if (el.type === 'G01' || el.type === 'PAH') {
+        ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x));
+      } else if (el.type === 'G02' || el.type === 'G03') {
+        const prevPt = el.from || (i===0 ? startPoint : elements[i-1].to);
+        const x1=prevPt.x, z1=prevPt.z, x2=el.to.x, z2=el.to.z;
+        const R = Math.abs(el.r);
+        const dx=x2-x1, dz=z2-z1, dist=Math.sqrt(dx*dx+dz*dz);
+        if (dist < 1e-10 || dist > 2*R+1e-10) {
+          ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x)); return;
+        }
+        const mx=(x1+x2)/2, mz=(z1+z2)/2;
+        const h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
+        const nx=-dz/dist, nz=dx/dist;
+        const sign = el.type==='G02' ? 1 : -1;
+        const cx=mx+sign*h*nx, cz=mz+sign*h*nz;
+
+        const Roff = tnrDir2==='outer'
+          ? (el.type==='G02' ? Math.max(R-toolR2,0.01) : R+toolR2)
+          : (el.type==='G03' ? Math.max(R-toolR2,0.01) : R+toolR2);
+
+        const startA = Math.atan2(x1-cx, z1-cz);
+        const endA   = Math.atan2(x2-cx, z2-cz);
+        let totalAngle = el.type==='G02' ? startA-endA : endA-startA;
+        if (totalAngle <= 0) totalAngle += 2*Math.PI;
+
+        const steps = Math.max(Math.ceil(totalAngle*Roff*scale/2), Math.ceil(totalAngle*180/Math.PI));
+        ctx.lineTo(toSX(gStart.z), toSY(gStart.x));
+        for (let s=1; s<steps; s++) {
+          const t=s/steps;
+          const angle = el.type==='G02' ? startA-totalAngle*t : startA+totalAngle*t;
+          ctx.lineTo(toSX(cz+Roff*Math.cos(angle)), toSY(cx+Roff*Math.sin(angle)));
+        }
+        ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x));
+      }
+    });
+
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const lp = offsetPts[offsetPts.length-1];
+    ctx.strokeStyle = 'rgba(255,149,0,0.3)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(toSX(lp.z), toSY(lp.x), toolR2*scale, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  elements.forEach((el, i) => {
+    const sx = toSX(el.to.z), sy = toSY(el.to.x);
+    ctx.fillStyle = el.type==='PAH' ? '#ffff00' : el.type==='G01' ? color : '#ff9500';
+    ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI*2); ctx.fill();
+  });
+
+  ctx.fillStyle = '#00ff88';
+  ctx.beginPath(); ctx.arc(toSX(startPoint.z), toSY(startPoint.x), 5, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = '#e74c3c';
+  ctx.beginPath(); ctx.arc(toSX(lastPoint.z), toSY(lastPoint.x), 4.5, 0, Math.PI*2); ctx.fill();
+
+  document.getElementById('zoominfo').textContent = `x${(scale/15).toFixed(1)}`;
+}
+
+function toSX(z) { return offsetX + z * scale; }
+function toSY(x) { return offsetY - x * scale; }
+function fromSX(px) { return (px - offsetX) / scale; }
+function fromSY(py) { return -(py - offsetY) / scale; }
+
+function drawArc(el) {
+  const x1 = el.from ? el.from.x : lastPoint.x;
+  const z1 = el.from ? el.from.z : lastPoint.z;
+  const x2 = el.to.x, z2 = el.to.z;
+  const R  = Math.abs(el.r);
+
+  if (R === 0) { ctx.lineTo(toSX(z2), toSY(x2)); return; }
+
+  const dx = x2 - x1, dz = z2 - z1;
+  const dist = Math.sqrt(dx*dx + dz*dz);
+  if (dist < 1e-10 || dist > 2 * R + 1e-10) {
+    ctx.lineTo(toSX(z2), toSY(x2));
+    return;
+  }
+
+  const mx = (x1+x2)/2, mz = (z1+z2)/2;
+  const h   = Math.sqrt(Math.max(0, R*R - (dist/2)**2));
+  const nx = -dz/dist, nz = dx/dist;
+  const sign = el.type === 'G02' ? 1 : -1;
+  const cx = mx + sign*h*nx;
+  const cz = mz + sign*h*nz;
+
+  const startA = Math.atan2(x1-cx, z1-cz);
+  const endA   = Math.atan2(x2-cx, z2-cz);
+
+  let totalAngle;
+  if (el.type === 'G02') {
+    totalAngle = startA - endA;
+    if (totalAngle <= 0) totalAngle += 2*Math.PI;
+  } else {
+    totalAngle = endA - startA;
+    if (totalAngle <= 0) totalAngle += 2*Math.PI;
+  }
+
+  const steps = Math.max(Math.ceil(totalAngle * R * scale / 2), Math.ceil(totalAngle * 180/Math.PI));
+  ctx.lineTo(toSX(z1), toSY(x1));
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const angle = el.type === 'G02'
+      ? startA - totalAngle * t
+      : startA + totalAngle * t;
+    const px = cx + R * Math.sin(angle);
+    const pz = cz + R * Math.cos(angle);
+    ctx.lineTo(toSX(pz), toSY(px));
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   AUTO FIT
+═══════════════════════════════════════════════════ */
+function autoFit() {
+  if (!startPoint) return;
+  const pts = [{x: startPoint.x, z: startPoint.z}, ...elements.map(e => e.to)];
+  const minZ = Math.min(...pts.map(p=>p.z)), maxZ = Math.max(...pts.map(p=>p.z));
+  const minX = Math.min(...pts.map(p=>p.x)), maxX = Math.max(...pts.map(p=>p.x));
+  const rangeZ = Math.max(Math.abs(maxZ - minZ), 5);
+  const rangeX = Math.max(Math.abs(maxX - minX), 5);
+  scale = Math.min((canvas.width*0.7)/rangeZ, (canvas.height*0.7)/rangeX, 60);
+  scale = Math.max(scale, 2);
+  offsetX = canvas.width/2  - ((minZ + maxZ)/2 * scale);
+  offsetY = canvas.height/2 + ((minX + maxX)/2 * scale);
+  redraw();
+}
+
+function fitView() { autoFit(); }
+
+/* ═══════════════════════════════════════════════════
+   ZOOM & PAN
+═══════════════════════════════════════════════════ */
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.15 : 0.87;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const wz = fromSX(mx), wx = fromSY(my);
+  scale *= factor;
+  scale = Math.max(1, Math.min(scale, 500));
+  offsetX = mx - wz * scale;
+  offsetY = my + wx * scale;
+  redraw();
+}, {passive: false});
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button === 1 || e.button === 2) {
+    isPanning = true;
+    panStart = {x: e.clientX - offsetX, y: e.clientY - offsetY};
+    canvas.style.cursor = 'grabbing';
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const wz = fromSX(e.clientX - rect.left);
+  const wx = fromSY(e.clientY - rect.top);
+  document.getElementById('coords').textContent =
+    `X: ${(wx*2).toFixed(3)} (Ø${(wx*2).toFixed(3)}) | Z: ${wz.toFixed(3)}`;
+  if (isPanning) {
+    offsetX = e.clientX - panStart.x;
+    offsetY = e.clientY - panStart.y;
+    redraw();
+  }
+});
+
+canvas.addEventListener('mouseup', () => { isPanning = false; canvas.style.cursor = 'crosshair'; });
+canvas.addEventListener('mouseleave', () => { isPanning = false; canvas.style.cursor = 'crosshair'; });
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+let lastTouchDist = 0, lastTouchCenter = {x:0,y:0};
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    const t = e.touches;
+    lastTouchDist = Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+    lastTouchCenter = {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2};
+  }
+}, {passive:true});
+
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const t = e.touches;
+    const dist = Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+    const center = {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2};
+    const factor = dist / lastTouchDist;
+    const rect = canvas.getBoundingClientRect();
+    const mx = center.x - rect.left, my = center.y - rect.top;
+    const wz = fromSX(mx), wx = fromSY(my);
+    scale *= factor;
+    scale = Math.max(1, Math.min(scale, 500));
+    offsetX = mx - wz * scale;
+    offsetY = my + wx * scale;
+    lastTouchDist = dist;
+    lastTouchCenter = center;
+    redraw();
+    e.preventDefault();
+  }
+}, {passive:false});
+
+/* ═══════════════════════════════════════════════════
+   KOORDINAT TABLOSU
+═══════════════════════════════════════════════════ */
+function updateCoordsTable() {
+  const tbody = document.getElementById('coordsBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (startPoint) {
+    const tr = document.createElement('tr');
+    tr.className = 'active-row';
+    tr.innerHTML = `<td>0</td><td class="type-G01">START</td>
+      <td><input class="cell-edit" value="${fmt(startPoint.x*2)}" onchange="editPoint(-1,'x',this.value)"></td>
+      <td><input class="cell-edit" value="${fmt(startPoint.z)}" onchange="editPoint(-1,'z',this.value)"></td>
+      <td>—</td><td>—</td><td></td>`;
+    tbody.appendChild(tr);
+  }
+
+  elements.forEach((el, i) => {
+    const tr = document.createElement('tr');
+    const rval = el.r !== 0 ? fmt(el.r) : '';
+    const cval = el.c > 0   ? fmt(el.c) : '';
+    tr.innerHTML = `<td>${i+1}</td>
+      <td class="type-${el.type}">
+        <select class="cell-edit-sel" onchange="editPoint(${i},'type',this.value)">
+          ${['G01','G02','G03','PAH'].map(t=>`<option${el.type===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="cell-edit" value="${fmt(el.to.x*2)}" onchange="editPoint(${i},'x',this.value)"></td>
+      <td><input class="cell-edit" value="${fmt(el.to.z)}"   onchange="editPoint(${i},'z',this.value)"></td>
+      <td><input class="cell-edit" style="width:54px" placeholder="R veya C"
+            value="${rval||cval}" onchange="editPoint(${i},'rc',this.value)"></td>
+      <td>
+        <select class="cell-edit-sel" onchange="editPoint(${i},'comp',this.value)">
+          ${['G40','G41','G42'].map(c=>`<option${el.comp===c?' selected':''}>${c}</option>`).join('')}
+        </select>
+      </td>
+      <td><button class="del-btn" onclick="deletePoint(${i})">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function editPoint(i, field, val) {
+  const v = parseFloat(val);
+  if (i === -1) {
+    if (field === 'x') startPoint.x = v / 2;
+    if (field === 'z') startPoint.z = v;
+  } else {
+    const el = elements[i];
+    if (field === 'x')    el.to.x = v / 2;
+    if (field === 'z')    el.to.z = v;
+    if (field === 'type') el.type = val;
+    if (field === 'comp') el.comp = val;
+    if (field === 'rc') {
+      if (el.type === 'PAH') { el.c = v || 0; el.r = 0; }
+      else { el.r = v || 0; el.c = 0; }
+    }
+  }
+  lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  generateGCode(); redraw(); updateCoordsTable();
+}
+
+function deletePoint(i) {
+  elements.splice(i, 1);
+  elements.forEach((el, j) => { el.from = j===0?startPoint:elements[j-1].to; });
+  lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
+}
+
+function copyPointList() {
+  const data = {
+    startPoint,
+    elements: elements.map(el => ({
+      type: el.type, x: el.to.x*2, z: el.to.z,
+      r: el.r||0, c: el.c||0, comp: el.comp
+    }))
+  };
+  const json = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(json).catch(() => {});
+  document.getElementById('pasteArea').value = json;
+  document.getElementById('pasteModal').style.display = 'flex';
+}
+
+function pastePointList() {
+  document.getElementById('pasteModal').style.display = 'flex';
+}
+
+function loadFromPasteArea() {
+  const raw = document.getElementById('pasteArea').value.trim();
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    if (data.startPoint) {
+      startPoint = { x: parseFloat(data.startPoint.x), z: parseFloat(data.startPoint.z) };
+    }
+    if (data.elements && Array.isArray(data.elements)) {
+      elements = data.elements.map((el, i) => ({
+        type: el.type,
+        from: null,
+        to: { x: parseFloat(el.x)/2, z: parseFloat(el.z) },
+        r: parseFloat(el.r)||0,
+        c: parseFloat(el.c)||0,
+        comp: el.comp || 'G40'
+      }));
+      elements.forEach((el, i) => {
+        el.from = i === 0 ? startPoint : elements[i-1].to;
+      });
+      lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+    }
+    document.getElementById('pasteModal').style.display = 'none';
+    generateGCode(); redraw(); updateCoordsTable(); autoFit();
+  } catch(e) {
+    alert('Geçersiz format: ' + e.message);
+  }
+}
+
+function closePasteModal() {
+  document.getElementById('pasteModal').style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════════
+   G-KOD DÜZENLEME & SİMÜLASYON
+═══════════════════════════════════════════════════ */
+function toggleEdit() {
+  gcodeEditable = !gcodeEditable;
+  const ta = document.getElementById('gcodeDisplay');
+  const btn = document.getElementById('editBtn');
+  const status = document.getElementById('editStatus');
+  ta.readOnly = !gcodeEditable;
+  ta.classList.toggle('editable', gcodeEditable);
+  btn.textContent = gcodeEditable ? '🔒 KİLİTLE' : '✏ DÜZENLE';
+  status.textContent = gcodeEditable ? '✏ Düzenleme Modu' : 'Salt Okunur';
+}
+
+function copyGcode() {
+  const ta = document.getElementById('gcodeDisplay');
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    const btn = document.querySelector('#gcodeToolbar .tbtn');
+    btn.textContent = '✓ KOPYALANDI';
+    setTimeout(()=>btn.textContent='📋 KOPYALA', 1500);
+  });
+}
+
+function simulateGcode() {
+  const lines = document.getElementById('gcodeDisplay').value.split('\n');
+  const pts = [];
+  lines.forEach(line => {
+    const xm = line.match(/X([-\d.]+)/);
+    const zm = line.match(/Z([-\d.]+)/);
+    if (xm && zm && (line.includes('G01') || line.includes('G02') || line.includes('G03') || line.includes('G00'))) {
+      pts.push({x: parseFloat(xm[1])/2, z: parseFloat(zm[1]), type: line.match(/G0[012300]+/)?.[0]});
+    }
+  });
+
+  let i = 0;
+  ctx.strokeStyle = '#ff0066';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,3]);
+
+  function step() {
+    if (i >= pts.length - 1) { ctx.setLineDash([]); return; }
+    ctx.beginPath();
+    ctx.moveTo(toSX(pts[i].z), toSY(pts[i].x));
+    ctx.lineTo(toSX(pts[i+1].z), toSY(pts[i+1].x));
+    ctx.stroke();
+    i++;
+    setTimeout(step, 60);
+  }
+  step();
+}
+
+/* ═══════════════════════════════════════════════════
+   DOSYA KAYDET / YÜKLE
+═══════════════════════════════════════════════════ */
+function saveNC() {
+  const content = document.getElementById('gcodeDisplay').value;
+  const prog = document.getElementById('pProg')?.value || 'O1000';
+  const blob = new Blob([content], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = prog + '.nc';
+  a.click();
+}
+
+function loadNC() { document.getElementById('fileInput').click(); }
+
+function loadNCFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('gcodeDisplay').value = ev.target.result;
+    gcodeEditable = true;
+    const ta = document.getElementById('gcodeDisplay');
+    ta.readOnly = false;
+    ta.classList.add('editable');
+    document.getElementById('editStatus').textContent = '📂 Dosya Yüklendi (Düzenleme Modu)';
+    showTab('gcode');
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+/* ═══════════════════════════════════════════════════
+   UNDO / RESET
+═══════════════════════════════════════════════════ */
+function undo() {
+  if (elements.length === 0) { startPoint = null; lastPoint = null; generateGCode(); redraw(); renderFeatureList(); openNewFeature(); return; }
+  elements.pop();
+  lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
+}
+
+function resetAll() {
+  if (!confirm('Tüm noktalar silinsin mi?')) return;
+  elements = []; startPoint = null; lastPoint = null;
+  generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
+  document.getElementById('gcodeDisplay').value = '(Program boş)';
+}
+
+/* ═══════════════════════════════════════════════════
+   KLAVYE KISAYOLLARI
+═══════════════════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (e.key === 'Enter') featOK();
+  if (e.key === 'z' && e.ctrlKey) undo();
+  if (e.key === 'f') fitView();
+  if (e.key === '1') selectFeatType('G01');
+  if (e.key === '2') selectFeatType('G02');
+  if (e.key === '3') selectFeatType('G03');
+  if (e.key === '4') selectFeatType('PAH');
+  if (e.key === '5') selectFeatType('ANG');
+});
+</script>
+
+<!-- PASTE MODAL -->
+<div id="pasteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#1a1d22;border:1px solid #2a2d33;border-radius:8px;padding:16px;width:420px;max-width:95vw;display:flex;flex-direction:column;gap:8px;">
+    <div style="color:#00aaff;font-size:12px;font-weight:bold;">📋 Nokta Listesi — Kopyala / Yapıştır</div>
+    <div style="color:#666;font-size:10px;">JSON'u buraya yapıştırın veya kopyalayıp başka oturumda kullanın:</div>
+    <textarea id="pasteArea" style="background:#0d0f12;border:1px solid #2a2d33;color:#ccc;font-family:monospace;font-size:10px;height:220px;padding:8px;border-radius:4px;resize:vertical;outline:none;" placeholder='{"startPoint":{"x":0,"z":0},"elements":[...]}'></textarea>
+    <div style="display:flex;gap:6px;justify-content:flex-end;">
+      <button class="tbtn" onclick="closePasteModal()">İPTAL</button>
+      <button class="tbtn" style="background:#1a3040;color:#00aaff;" onclick="loadFromPasteArea()">✅ YÜKLE</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
