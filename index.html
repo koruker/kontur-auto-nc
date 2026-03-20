@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kontur Auto NC</title>
+<title>Kontur Auto NC – Fanuc CNC Editör</title>
 <style>
 :root {
   --bg:#0b0d0f; --panel:#13161a; --panel2:#1a1d22;
@@ -28,6 +28,8 @@ body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;
 #viewport{flex:1.4;position:relative;background:#000;border-right:1px solid var(--border);cursor:crosshair;}
 canvas{display:block;width:100%;height:100%;}
 #coords{position:absolute;bottom:6px;left:8px;font-size:10px;color:#444;pointer-events:none;}
+#fit-cv-btn{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);border:1px solid #2a2d33;color:#00aaff;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;}
+#fit-cv-btn:hover{border-color:#00aaff;}
 #zoominfo{position:absolute;top:6px;right:8px;font-size:10px;color:#333;pointer-events:none;}
 
 /* ── RIGHT SIDE ── */
@@ -43,7 +45,7 @@ canvas{display:block;width:100%;height:100%;}
 .tabcontent{display:none;flex:1;overflow:hidden;}
 .tabcontent.active{display:flex;flex-direction:column;}
 
-/* ────────── Kontur INPUT UI ────────── */
+/* ────────── SHOPTURN INPUT UI ────────── */
 #tab-input{padding:0;flex-direction:row;overflow:hidden;}
 
 /* Feature List (sol) */
@@ -150,19 +152,306 @@ td.type-PAH{color:#ffff00;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:#0d0f12;}
 ::-webkit-scrollbar-thumb{background:#2a2d33;border-radius:2px;}
+
+/* ═══════════════════════════════════════════════════
+   MOBİL RESPONSIVE — Telefon UI
+═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Topbar: sadece ikonlar göster, yazılar gizle */
+  body { font-size: 13px; }
+
+  #topbar {
+    padding: 4px 6px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  #topbar > span { display: none; }
+  #statusbar { display: none; }
+  .tbtn {
+    padding: 6px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Ana layout: dikey yığın */
+  #app {
+    flex-direction: column;
+  }
+
+  /* Canvas: ekranın yarısı */
+  #viewport {
+    flex: 0 0 42vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Sağ panel: kalan alan */
+  #right {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Tab bar: daha büyük dokunma alanı */
+  #tabs { flex-shrink: 0; }
+  .tab {
+    padding: 10px 10px;
+    font-size: 10px;
+    flex: 1;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+
+  /* Input tab: dikey yerleşim */
+  #tab-input {
+    flex-direction: column !important;
+    overflow: hidden;
+  }
+
+  /* Kontur listesi: yatay kaydırmalı şerit */
+  #feature-list {
+    width: 100% !important;
+    height: 44px;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #feature-list-header {
+    width: 60px;
+    flex-shrink: 0;
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    flex-direction: column;
+    justify-content: center;
+    padding: 4px 6px;
+  }
+  #feature-list-body {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .feat-item {
+    flex-direction: column;
+    padding: 4px 8px;
+    border-bottom: none;
+    border-right: 1px solid #1a1d22;
+    min-width: 56px;
+    align-items: center;
+    justify-content: center;
+  }
+  .feat-icon { font-size: 12px; width: auto; }
+  .feat-coords { font-size: 8px; }
+  .feat-type { font-size: 8px; }
+
+  /* Feature editor: kompakt, scroll destekli */
+  #feature-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  #feat-editor-title { padding: 5px 8px; flex-shrink: 0; }
+
+  /* Tip butonları: daha büyük */
+  #feat-type-bar { padding: 6px; gap: 6px; }
+  .ftype-btn { padding: 10px 4px; }
+  .ftype-btn svg { width: 24px; height: 24px; }
+  .ftype-btn span { font-size: 9px; }
+
+  /* Input alanları: telefon için büyük */
+  #feat-fields {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 0;
+  }
+  .feat-field-row { margin-bottom: 8px; }
+  .feat-field-row label {
+    width: 80px;
+    font-size: 11px;
+  }
+  .feat-field-row input {
+    font-size: 16px; /* iOS zoom engeli */
+    padding: 8px 10px;
+  }
+
+  /* OK butonu: her zaman altta, büyük dokunma alanı */
+  #feat-ok-bar { padding: 6px; flex-shrink: 0; }
+  .feat-ok-btn { padding: 13px; font-size: 13px; }
+
+  /* Koordinat tablosu */
+  table { font-size: 10px; }
+  th, td { padding: 4px 5px; }
+  /* İnce sütunlar */
+  th:nth-child(6), td:nth-child(6) { display: none; } /* Komp sütunu gizle */
+
+  /* G-kod textarea */
+  #gcodeDisplay { font-size: 11px; padding: 6px; }
+
+  /* Params tab */
+  #tab-params { padding: 8px; }
+  .p-row input, .p-row select { width: 100px; font-size: 14px; padding: 6px 8px; }
+
+  /* FIT butonu canvas üzerinde */
+  #fit-cv-btn { bottom: 4px; right: 4px; padding: 5px 10px; font-size: 12px; }
+  #coords { font-size: 9px; }
+  /* Geri al: topbar'da var, ok-bar'da gizle */
+  #feat-ok-bar .feat-ok-btn:last-child { display: none; }
+}
+
+/* Çok küçük ekranlar (320px - iPhone SE) */
+@media (max-width: 380px) {
+  #viewport { flex: 0 0 38vh; }
+  .tab { padding: 8px 6px; font-size: 9px; }
+  .tbtn { padding: 5px 6px; font-size: 11px; }
+  .feat-field-row input { font-size: 15px; }
+}
+
+/* Yatay telefon (landscape) */
+@media (max-width: 900px) and (orientation: landscape) {
+
+  /* Topbar: çok küçük */
+  #topbar { padding: 2px 6px; gap: 3px; }
+  .tbtn   { padding: 3px 6px; font-size: 10px; }
+
+  /* Ana layout: yan yana */
+  #app { flex-direction: row; }
+  #viewport {
+    flex: 0 0 45vw;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+  }
+  #right { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Tabs: ince */
+  #tabs { flex-shrink: 0; }
+  .tab  { font-size: 9px; padding: 5px 6px; flex: 1; text-align: center; }
+
+  /* Input tab: dikey */
+  #tab-input { flex-direction: column !important; overflow: hidden; }
+
+  /* Kontur şeridi: 32px */
+  #feature-list {
+    width: 100% !important;
+    height: 32px !important;
+    flex-direction: row;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  #feature-list-header {
+    width: 44px; flex-shrink: 0;
+    border-bottom: none; border-right: 1px solid var(--border);
+    flex-direction: column; justify-content: center;
+    padding: 2px 4px; font-size: 8px;
+  }
+  #feature-list-body {
+    flex: 1; display: flex; flex-direction: row;
+    overflow-x: auto; overflow-y: hidden;
+  }
+  .feat-item {
+    flex-direction: column; min-width: 46px;
+    padding: 2px 4px; border-bottom: none;
+    border-right: 1px solid #1a1d22;
+    align-items: center; justify-content: center;
+  }
+  .feat-coords { font-size: 7px; }
+  .feat-type   { font-size: 7px; }
+
+  /* Feature editor */
+  #feature-editor {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; min-height: 0;
+  }
+  #feat-editor-title { padding: 2px 8px; flex-shrink: 0; font-size: 9px; }
+
+  /* Tip butonları: YATAYda çok küçük, tek satır */
+  #feat-type-bar {
+    display: flex; flex-direction: row;
+    padding: 3px 6px; gap: 4px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    height: 40px;   /* sabit yükseklik */
+  }
+  .ftype-btn {
+    flex: 1;
+    padding: 0 4px;
+    flex-direction: row !important;  /* ikon + yazı yan yana */
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+  }
+  .ftype-btn svg  { width: 14px; height: 14px; }
+  .ftype-btn span { font-size: 9px; }
+
+  /* Input alanları: flex:1 ile kalan alanı doldur */
+  #feat-fields {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 8px;
+    min-height: 0;
+  }
+  .feat-field-row {
+    margin-bottom: 4px;
+    align-items: center;
+  }
+  .feat-field-row label {
+    width: 76px; font-size: 10px; flex-shrink: 0;
+  }
+  .feat-field-row input {
+    font-size: 14px; padding: 5px 8px;
+  }
+  .feat-separator { margin: 3px 0; }
+
+  /* ONAYLA: ince ama görünür, altta sabit */
+  #feat-ok-bar {
+    padding: 4px 6px; flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 4px;
+  }
+  .feat-ok-btn { padding: 8px; font-size: 12px; }
+  /* Geri al butonu topbar'da var, ok-bar'da gizle */
+  #feat-ok-bar .feat-ok-btn:last-child { display: none; }
+
+  /* Params/Coords scrollable */
+  #tab-coords, #tab-params { overflow-y: auto; }
+  #tab-params { padding: 6px; }
+  .p-group { padding: 7px; margin-bottom: 4px; }
+  .p-row input, .p-row select { width: 85px; font-size: 12px; padding: 4px 5px; }
+
+  /* Coords table kompakt */
+  th, td { padding: 3px 5px; font-size: 10px; }
+}
+
+
+@media (max-width: 768px) {
+  .btn-full { display: none !important; }
+  .btn-short { display: inline !important; }
+}
+
 </style>
 </head>
 <body>
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <span>⚙ Kontur</span>
-  <button class="tbtn" onclick="resetAll()">🗑 SIFIRLA</button>
-  <button class="tbtn" onclick="saveNC()">💾 .NC KAYDET</button>
-  <button class="tbtn" onclick="loadNC()">📂 .NC YÜKLE</button>
+  <span>◈ KONTUR AUTO NC</span>
+  <button class="tbtn" onclick="resetAll()"><span class="btn-full">🗑 SIFIRLA</span><span class="btn-short" style="display:none">🗑</span></button>
+  <button class="tbtn" onclick="saveNC()"><span class="btn-full">💾 .NC KAYDET</span><span class="btn-short" style="display:none">💾</span></button>
+  <button class="tbtn" onclick="loadNC()"><span class="btn-full">📂 .NC YÜKLE</span><span class="btn-short" style="display:none">📂</span></button>
   <input type="file" id="fileInput" accept=".nc,.txt" style="display:none" onchange="loadNCFile(event)">
-  <button class="tbtn" onclick="fitView()">⊡ FIT</button>
-  <div id="statusbar">Fanuc Uyumlu | G-kod Editör</div>
+  <button class="tbtn" onclick="fitView()">⊡</button>
+  <button class="tbtn" onclick="undo()" title="Geri Al (Ctrl+Z)" style="font-size:13px;padding:4px 8px;">↩</button>
+  <button class="tbtn" onclick="redo()" title="İleri Al (Ctrl+Y)" style="font-size:13px;padding:4px 8px;">↪</button>
+  <div id="statusbar">Kontur Auto NC | Fanuc Uyumlu CNC Editör</div>
+  <div style="margin-left:auto;color:#2a3a2a;font-size:9px;font-family:'Courier New',monospace;">by Mert Koruker</div>
 </div>
 
 <!-- MAIN APP -->
@@ -173,6 +462,7 @@ td.type-PAH{color:#ffff00;}
     <canvas id="cv2d"></canvas>
     <div id="coords">X: 0.000 | Z: 0.000</div>
     <div id="zoominfo">x1.0</div>
+    <button id="fit-cv-btn" onclick="fitView()">⊡ FIT</button>
   </div>
 
   <!-- RIGHT PANEL -->
@@ -230,14 +520,7 @@ td.type-PAH{color:#ffff00;}
             </svg>
             <span>YAY ±R</span>
           </button>
-          <!-- PAH -->
-          <button class="ftype-btn chamfer" id="fb-PAH" onclick="selectFeatType('PAH')" title="Pah (Chamfer)">
-            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="2,20 2,8 10,2 20,2"/>
-              <line x1="2" y1="8" x2="10" y2="2" stroke-width="2.5"/>
-            </svg>
-            <span>PAH</span>
-          </button>
+
         </div>
 
         <!-- Giriş alanları -->
@@ -246,12 +529,12 @@ td.type-PAH{color:#ffff00;}
           <div id="ff-start" style="display:none">
             <div class="feat-field-row">
               <label>X Başlangıç (Ø)</label>
-              <input type="number" id="ff-startX" placeholder="0">
+              <input type="number" inputmode="decimal" id="ff-startX" placeholder="0">
               <span class="unit">mm</span>
             </div>
             <div class="feat-field-row">
               <label>Z Başlangıç</label>
-              <input type="number" id="ff-startZ" placeholder="0">
+              <input type="number" inputmode="decimal" id="ff-startZ" placeholder="0">
               <span class="unit">mm</span>
             </div>
           </div>
@@ -260,17 +543,17 @@ td.type-PAH{color:#ffff00;}
           <div id="ff-line" style="display:none">
             <div class="feat-field-row" id="ff-row-X">
               <label>X Hedef (Ø)</label>
-              <input type="number" id="ff-X" placeholder="—">
+              <input type="number" inputmode="decimal" id="ff-X" placeholder="—">
               <span class="unit">mm</span>
             </div>
             <div class="feat-field-row" id="ff-row-Z">
               <label>Z Hedef</label>
-              <input type="number" id="ff-Z" placeholder="—">
+              <input type="number" inputmode="decimal" id="ff-Z" placeholder="—">
               <span class="unit">mm</span>
             </div>
             <div class="feat-field-row" id="ff-row-A" style="display:none">
               <label>A° Açı</label>
-              <input type="number" id="ff-A" placeholder="—">
+              <input type="number" inputmode="decimal" id="ff-A" placeholder="—">
               <span class="unit">°</span>
             </div>
           </div>
@@ -279,7 +562,7 @@ td.type-PAH{color:#ffff00;}
           <div id="ff-arc" style="display:none">
             <div class="feat-field-row">
               <label>R Radüs</label>
-              <input type="number" id="ff-R" placeholder="+CW / -CCW">
+              <input type="number" inputmode="decimal" id="ff-R" placeholder="+CW / -CCW">
               <span class="unit">mm</span>
             </div>
             <div style="color:#444;font-size:9px;margin-top:-4px;padding-left:96px">+ → CW (konveks) &nbsp; − → CCW (konkav)</div>
@@ -401,6 +684,14 @@ td.type-PAH{color:#ffff00;}
           </select>
         </div>
       </div>
+      <div class="p-group">
+        <h4>Stok Ayarları</h4>
+        <div style="color:#666;font-size:9px;line-height:1.5;margin-bottom:6px;">Boş bırakılırsa konturdan otomatik hesaplanır.</div>
+        <div class="p-row"><label>Stok Çapı Ø (mm)</label><input type="number" id="pStockD" placeholder="oto" step="0.5" min="0"></div>
+        <div class="p-row"><label>Stok Uzunluğu (mm)</label><input type="number" id="pStockL" placeholder="oto" step="1" min="0"></div>
+        <div class="p-row"><label>Delik Çapı Ø (mm)</label><input type="number" id="pHoleD" value="0" step="0.5" min="0"></div>
+        <div class="p-row"><label>Stok Z Başlangıç</label><input type="number" id="pStockZ0" placeholder="oto" step="1"></div>
+      </div>
       <button class="btn btn-generate" onclick="generateGCode();alert('Parametreler güncellendi!')">UYGULA & G-KOD GÜNCELLE</button>
     </div>
 
@@ -412,6 +703,16 @@ td.type-PAH{color:#ffff00;}
    STATE
 ═══════════════════════════════════════════════════ */
 let elements = [], startPoint = null, lastPoint = null;
+let _history = [], _redoHistory = [];  // undo/redo stacks
+function _saveHistory() {
+  _history.push({
+    elements: JSON.parse(JSON.stringify(elements)),
+    startPoint: startPoint ? {...startPoint} : null,
+    lastPoint:  lastPoint  ? {...lastPoint}  : null
+  });
+  if (_history.length > 50) _history.shift();
+  _redoHistory = [];  // yeni işlem yapılınca redo temizlenir
+}
 let activeMode = 'G01', activeComp = 'G40';
 let scale = 15, offsetX = 0, offsetY = 0;
 let isPanning = false, panStart = {x:0,y:0}, panOffset = {x:0,y:0};
@@ -457,7 +758,7 @@ function showTab(name) {
 }
 
 /* ═══════════════════════════════════════════════════
-   Kontur FEATURE UI
+   SHOPTURN FEATURE UI
 ═══════════════════════════════════════════════════ */
 let activeFeatType = 'G01';
 let editingIdx = null;
@@ -663,6 +964,7 @@ function renderFeatureList() {
 }
 
 function featOK() {
+  _saveHistory();
   const type = activeFeatType;
 
   if (!startPoint) {
@@ -976,154 +1278,190 @@ function generateGCode() {
   const toolR   = getParamFloat('pToolR', 0.8);
   const tnrDir  = getParam('pToolDir', 'outer');
   const tnrOn   = getParam('pTNRmode', 'on') === 'on';
-  const normalFn = tnrDir === 'inner' ? innerNormal : outerNormal;
 
-  let g = `${prog}\n(FANUC UYUMLU KONTUR PROGRAMI)\n`;
+  let g = `${prog}\n(KONTUR AUTO NC - FANUC UYUMLU)\n`;
   if (tnrOn && toolR > 0) g += `(TNR TELAFISI AKTIF - R${toolR} ${tnrDir==='outer'?'DIS':'IC'} TORNA)\n`;
   g += `G21 G40 G90 G95\n${tool} ${spin} S${speed}\n`;
 
-  if (!startPoint) {
-    document.getElementById('gcodeDisplay').value = g + 'M30\n%';
-    return;
-  }
+  if (!startPoint) { document.getElementById('gcodeDisplay').value = g + 'M30\n%'; return; }
 
   const pts = [{x: startPoint.x, z: startPoint.z}];
   elements.forEach(el => pts.push({x: el.to.x, z: el.to.z, type: el.type, r: el.r||0, c: el.c||0, comp: el.comp}));
 
-  const approachLen = getParamFloat('pApproach', 2);
-  const retractLen  = getParamFloat('pRetractLen', 2);
-
-  let approachPt = null, retractPt = null;
-  if (elements.length > 0) {
-    const d0 = segDir(pts[0], pts[1]);
-    if (approachLen > 0) {
-      approachPt = {x: pts[0].x - d0.x*approachLen, z: pts[0].z - d0.z*approachLen};
-    }
-    const prevLast = pts[pts.length-2];
-    const dLast = segDir(prevLast, pts[pts.length-1]);
-    if (retractLen > 0) {
-      retractPt = {x: pts[pts.length-1].x + dLast.x*retractLen, z: pts[pts.length-1].z + dLast.z*retractLen};
-    }
+  // Arc takım sığar mı?
+  function arcFits(el) {
+    if (!el || (el.type !== 'G02' && el.type !== 'G03')) return true;
+    const R = Math.abs(el.r) || 0;
+    const rRaw = tnrDir === 'outer'
+      ? (el.type === 'G02' ? R - toolR : R + toolR)
+      : (el.type === 'G03' ? R - toolR : R + toolR);
+    return rRaw > 0;
   }
 
-  // G00 → start noktası, G01 F, sonra kontur
-  g += `G00 X${fmt(pts[0].x * 2)} Z${fmt(pts[0].z)}\n`;
-  g += `G01 F${feed}\n`;
-
-  // ── TNR temas noktası hesabı ──────────────────────────────────────────
-  // TNR kapalıysa ham kontur koordinatı yazılır.
-  // Açıksa: bisektör merkezinden (c) eksen bazında R geri çekme.
-  // Özel kural: gelen X-sabit (dikey) + giden 45° → exit.z = pt.z + dIn.z * R
-  // G02/G03: offset yay ∩ sonraki segment offset hattı → merkez; merkez - (R,R)
+  // TNR exit noktası — v2.16 baz, arc skip eklendi
   function tnrExitPoint(ptIdx) {
     if (!tnrOn || toolR === 0 || ptIdx <= 0 || ptIdx >= pts.length - 1) {
       return { x: pts[ptIdx].x, z: pts[ptIdx].z };
     }
     const pt   = pts[ptIdx];
     const prev = pts[ptIdx - 1];
-    const next = pts[ptIdx + 1];
-    const dIn  = segDir(prev, pt);
-    const dOut = segDir(pt, next);
-    const c    = bisectorCenter(pt, dIn, dOut, toolR, outerNormal);
 
-    const sx = (c.x >= pt.x) ? 1 : -1;
-    const sz = (c.z >= pt.z) ? 1 : -1;
-    let ex = c.x - sx * toolR;
-    let ez = c.z - sz * toolR;
+    // Sonraki sığan segmenti bul
+    let nextIdx = ptIdx + 1;
+    while (nextIdx < pts.length - 1 && !arcFits(elements[nextIdx - 1])) nextIdx++;
+    const next = pts[nextIdx];
 
-    // Özel kural: gelen tam dikey (|dIn.x|≈0) + giden 45° (|dOut.x|≈|dOut.z|)
-    const incomingVertical = Math.abs(dIn.x) < 0.01;
-    const outgoing45       = Math.abs(Math.abs(dOut.x) - Math.abs(dOut.z)) < 0.01 && Math.abs(dOut.x) > 0.01;
-    if (incomingVertical && outgoing45) {
-      ez = pt.z + dIn.z * toolR;   // gelen yönde R daha ilerle
+    // dIn: gelen segment yönü (sığmayan arc atlanır)
+    const prevEl = elements[ptIdx - 1];
+    const dIn = (prevEl && !arcFits(prevEl) && ptIdx >= 2)
+      ? segDir(pts[ptIdx - 2], pts[ptIdx - 1])
+      : segDir(prev, pt);
+
+    // dOut: giden segment yönü (arc tangent veya düz)
+    let dOut;
+    const nextEl = elements[ptIdx];
+    if (nextEl && (nextEl.type==='G02'||nextEl.type==='G03') && arcFits(nextEl)) {
+      const pa=pts[ptIdx], pb=pts[ptIdx+1];
+      const dxa=pb.x-pa.x, dza=pb.z-pa.z, La=Math.sqrt(dxa*dxa+dza*dza);
+      if (La>1e-10 && Math.abs(nextEl.r)>1e-10) {
+        const Ra=Math.abs(nextEl.r);
+        const ha=Math.sqrt(Math.max(0,Ra*Ra-(La/2)**2));
+        const signA = nextEl.type==='G02' ? 1 : -1;
+        const arc_cxa=(pa.x+pb.x)/2+signA*ha*(-dza/La);
+        const arc_cza=(pa.z+pb.z)/2+signA*ha*(dxa/La);
+        const startA=Math.atan2(pa.x-arc_cxa,pa.z-arc_cza);
+        dOut = nextEl.type==='G02'
+          ? {x:-Math.cos(startA),z: Math.sin(startA)}
+          : {x: Math.cos(startA),z:-Math.sin(startA)};
+      } else { dOut = segDir(pt, next); }
+    } else if (nextIdx > ptIdx+1) {
+      dOut = segDir(pts[nextIdx-1], pts[nextIdx]);
+    } else {
+      dOut = segDir(pt, next);
     }
 
-    // G02/G03 için: yay çıkış temas noktası (offset yay ∩ sonraki segment offset)
-    const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : 'G01';
-    if ((curType === 'G02' || curType === 'G03') && ptIdx < pts.length - 1) {
-      const arcEl = elements[ptIdx - 1];
-      const arcR  = Math.abs(arcEl.r) || 0;
-      const R_off = (tnrDir === 'outer') ? arcR - toolR : arcR + toolR;
-      // Yay merkezini hesapla (CW için G02)
-      const p1 = pts[ptIdx - 1], p2 = pts[ptIdx];
-      const mx = (p1.x + p2.x) / 2, mz = (p1.z + p2.z) / 2;
-      const dx_ = p2.x - p1.x, dz_ = p2.z - p1.z;
-      const L_  = Math.sqrt(dx_*dx_ + dz_*dz_);
-      const d_half = L_ / 2;
-      const h_ = Math.sqrt(Math.max(0, arcR*arcR - d_half*d_half));
-      // G02: saat yönü → merkez segmentin sağında
-      const nx_ = dz_/L_, nz_ = -dx_/L_;
-      const arc_cx = mx + h_*nx_, arc_cz = mz + h_*nz_;
-      // Sonraki segment offset hattı
-      const dNext = segDir(pt, next);
-      const nNext = outerNormal(dNext);
-      const x_line = pt.x + nNext.x * toolR;
-      const z_sq   = R_off*R_off - (x_line - arc_cx)*(x_line - arc_cx);
-      if (z_sq >= 0) {
-        const z_m = arc_cz - Math.sqrt(z_sq);  // alt kesişim (dış torna)
-        ex = x_line - toolR;
-        ez = z_m    - toolR;
+    // Sanal köşe: arc atlandıysa segment uzantılarının kesişimi
+    let bisRef = pt;
+    const inSkipped  = prevEl && !arcFits(prevEl);
+    const outSkipped = nextIdx > ptIdx + 1;
+    if (inSkipped || outSkipped) {
+      // Gelen segment: sığan segmentin bitiş noktasından dIn yönünde
+      const pIn = inSkipped ? pts[ptIdx - 1] : prev;
+      // Giden segment: sığmayan arc'ın bitiş noktasından dOut yönünde
+      const pOut = outSkipped ? pts[nextIdx - 1] : pt;
+      const det = dIn.x*(-dOut.z)-dIn.z*(-dOut.x);
+      if (Math.abs(det)>1e-10) {
+        const ddx=pOut.x-pIn.x, ddz=pOut.z-pIn.z;
+        const t=((ddx)*(-dOut.z)-(ddz)*(-dOut.x))/det;
+        bisRef = {x: pIn.x+t*dIn.x, z: pIn.z+t*dIn.z};
       }
     }
 
+    const c  = bisectorCenter(bisRef, dIn, dOut, toolR, outerNormal);
+    const sx = (c.x >= bisRef.x) ? 1 : -1;
+    const sz = (c.z >= bisRef.z) ? 1 : -1;
+    let ex = c.x - sx * toolR;
+    let ez = c.z - sz * toolR;
+
+    // G02/G03 yay çıkış temas noktası
+    const curType = elements[ptIdx-1] ? elements[ptIdx-1].type : 'G01';
+    if ((curType==='G02'||curType==='G03') && arcFits(elements[ptIdx-1]) && ptIdx<pts.length-1) {
+      const arcEl = elements[ptIdx-1];
+      const arcR  = Math.abs(arcEl.r)||0;
+      const R_off = (tnrDir==='outer')
+        ? (curType==='G02' ? arcR-toolR : arcR+toolR)
+        : (curType==='G03' ? arcR-toolR : arcR+toolR);
+      if (R_off > 0) {
+        let arc_cx, arc_cz;
+        if (arcEl._cx!==undefined) {
+          arc_cx=arcEl._cx; arc_cz=arcEl._cz;
+        } else {
+          const p1=pts[ptIdx-1], p2=pts[ptIdx];
+          const dx_=p2.x-p1.x, dz_=p2.z-p1.z;
+          const L_=Math.sqrt(dx_*dx_+dz_*dz_);
+          const h_=Math.sqrt(Math.max(0,arcR*arcR-(L_/2)**2));
+          const signArc = curType==='G02' ? 1 : -1;
+          arc_cx=(p1.x+p2.x)/2+signArc*h_*(-dz_/L_);
+          arc_cz=(p1.z+p2.z)/2+signArc*h_*(dx_/L_);
+        }
+        const dNext=segDir(pt,next);
+        const nNext=outerNormal(dNext);
+        const x_line=pt.x+nNext.x*toolR;
+        const z_sq=R_off*R_off-(x_line-arc_cx)**2;
+        if (z_sq > 1e-6) {
+          ex=x_line-toolR;
+          ez=(arc_cz-Math.sqrt(z_sq))-toolR;
+        } else if (z_sq >= -1e-6) {
+          // Grazing: arc EXIT noktası X ve Z - toolR
+          ex = pts[ptIdx].x;
+          ez = pts[ptIdx].z - toolR;
+        }
+      }
+    }
     return { x: ex, z: ez };
   }
 
+  g += `G00 X${fmt(pts[0].x * 2)} Z${fmt(pts[0].z)}\n`;
+
   let lastComp = 'G40';
+  let lastG = '';
+  let feedWritten = false;
   let prevX = parseFloat((pts[0].x * 2).toFixed(3));
   let prevZ = parseFloat(pts[0].z.toFixed(3));
 
   elements.forEach((el, i) => {
     if (el.comp !== lastComp) { g += el.comp + '\n'; lastComp = el.comp; }
 
-    const ptIdx = i + 1; // pts dizisindeki indeks
-
-    // Hedef koordinat: TNR açıksa exit noktası, değilse ham
+    const ptIdx = i + 1;
     const ep = tnrExitPoint(ptIdx);
     const tx = parseFloat((ep.x * 2).toFixed(3));
     const tz = parseFloat(ep.z.toFixed(3));
 
     if (Math.abs(tx - prevX) < 0.0005 && Math.abs(tz - prevZ) < 0.0005) return;
 
-    if (el.type === 'PAH') {
-      // PAH: temas noktası değil, ham koordinat (pah köşesi özel)
-      let line = 'G01';
-      if (Math.abs(parseFloat((el.to.x*2).toFixed(3)) - prevX) >= 0.0005) line += ` X${fmt(el.to.x * 2)}`;
-      if (Math.abs(parseFloat(el.to.z.toFixed(3)) - prevZ) >= 0.0005) line += ` Z${fmt(el.to.z)}`;
-      line += ` ,C${fmt(el.c)} F${feed}`;
-      g += line + '\n';
-      prevX = parseFloat((el.to.x*2).toFixed(3));
-      prevZ = parseFloat(el.to.z.toFixed(3));
-    } else if (el.type === 'G01') {
-      let line = 'G01';
-      if (Math.abs(tx - prevX) >= 0.0005) line += ` X${fmt(ep.x * 2)}`;
-      if (Math.abs(tz - prevZ) >= 0.0005) line += ` Z${fmt(ep.z)}`;
-      line += ` F${feed}`;
-      g += line + '\n';
+    if (el.type === 'G01') {
+      let coords = '';
+      if (Math.abs(tx - prevX) >= 0.0005) coords += ` X${fmt(ep.x * 2)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) coords += ` Z${fmt(ep.z)}`;
+      if (!coords.trim()) return;
+      let line = lastG !== 'G01' ? 'G01' : '';
+      lastG = 'G01';
+      line += coords;
+      if (!feedWritten) { line += ` F${feed}`; feedWritten = true; }
+      g += line.trim() + '\n';
       prevX = tx; prevZ = tz;
+
     } else {
-      // G02 / G03: exit koordinatı + Roff
+      // G02 / G03
       let rVal = Math.abs(el.r) || 0;
-      if (tnrOn && toolR > 0) {
-        const isOuter = (tnrDir === 'outer');
-        if (isOuter) {
-          rVal = (el.type === 'G02') ? Math.max(rVal - toolR, 0.01) : rVal + toolR;
-        } else {
-          rVal = (el.type === 'G03') ? Math.max(rVal - toolR, 0.01) : rVal + toolR;
-        }
+      const isOuter = (tnrDir === 'outer');
+      const rRaw = isOuter
+        ? (el.type==='G02' ? rVal - toolR : rVal + toolR)
+        : (el.type==='G03' ? rVal - toolR : rVal + toolR);
+
+      if (tnrOn && toolR > 0 && rRaw <= 0) {
+        // Takım sığmıyor: arc atla, prevX/prevZ arc sonuna taşı
+        const arcEnd = pts[i + 1];
+        prevX = parseFloat((arcEnd.x * 2).toFixed(3));
+        prevZ = parseFloat(arcEnd.z.toFixed(3));
+        return;
       }
-      let line = el.type;
+      if (tnrOn && toolR > 0 && rRaw > 0) rVal = rRaw;
+
+      let line = lastG !== el.type ? el.type : '';
+      lastG = el.type;
       if (Math.abs(tx - prevX) >= 0.0005) line += ` X${fmt(ep.x * 2)}`;
       if (Math.abs(tz - prevZ) >= 0.0005) line += ` Z${fmt(ep.z)}`;
-      line += ` R${fmt(rVal)} F${feed}`;
-      g += line + '\n';
+      line += ` R${fmt(rVal)}`;
+      if (!feedWritten) { line += ` F${feed}`; feedWritten = true; }
+      g += line.trim() + '\n';
       prevX = tx; prevZ = tz;
     }
   });
 
   if (lastComp !== 'G40') g += 'G40\n';
-
-  g += `G00 ${retract}\nM30\n%`;
+  const retractLine = lastG !== 'G00' ? `G00 ${retract}` : retract;
+  g += retractLine + '\nM30\n%';
   document.getElementById('gcodeDisplay').value = g;
 }
 
@@ -1227,17 +1565,71 @@ function redraw() {
       const prevPt = el.from || startPoint;
       const x1=prevPt.x,z1=prevPt.z,x2=el.to.x,z2=el.to.z,R=Math.abs(el.r);
       const dx=x2-x1,dz=z2-z1,dist=Math.sqrt(dx*dx+dz*dz);
-      if(dist<1e-10||dist>2*R+1e-10) return segDir(prevPt,el.to);
-      const mx=(x1+x2)/2,mz=(z1+z2)/2,h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
-      const nx=-dz/dist,nz=dx/dist;
-      const sign=el.type==='G02'?1:-1;
-      const cx=mx+sign*h*nx,cz=mz+sign*h*nz;
+      let cx, cz;
+      if (el._cx !== undefined && el._cz !== undefined) {
+        cx=el._cx; cz=el._cz;
+      } else {
+        if(dist<1e-10||dist>2*R+1e-10) return segDir(prevPt,el.to);
+        const mx=(x1+x2)/2,mz=(z1+z2)/2,h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
+        const nx=-dz/dist,nz=dx/dist;
+        const sign=el.type==='G02'?1:-1;
+        cx=mx+sign*h*nx; cz=mz+sign*h*nz;
+      }
       const a = atEnd ? Math.atan2(x2-cx,z2-cz) : Math.atan2(x1-cx,z1-cz);
       return el.type==='G02'
         ? {x: -Math.cos(a), z:  Math.sin(a)}
         : {x:  Math.cos(a), z: -Math.sin(a)};
     }
 
+    // arc takım sığmazsa kontrol
+    function arcCanFit(el) {
+      if (el.type !== 'G02' && el.type !== 'G03') return true;
+      const R = Math.abs(el.r) || 0;
+      return tnrDir2==='outer'
+        ? (el.type==='G02' ? R > toolR2 : true)
+        : (el.type==='G03' ? R > toolR2 : true);
+    }
+
+    // İki offset hattının kesişimi
+    function offsetIntersect(p1x,p1z,d1x,d1z, p2x,p2z,d2x,d2z) {
+      const det=d1x*(-d2z)-d1z*(-d2x);
+      if(Math.abs(det)<1e-10) return null;
+      const t=((p2x-p1x)*(-d2z)-(p2z-p1z)*(-d2x))/det;
+      return {x:p1x+t*d1x, z:p1z+t*d1z};
+    }
+
+    // Sığmayan arc → önceki ve sonraki segment offset hatlarının kesişimi
+    function arcSkipIntersect(arcIdx) {
+      // arcIdx: elements dizisindeki arc indeksi
+      // Gelen segment: arcIdx-1 veya önceki sığan
+      let dIn=null, pIn=null;
+      for(let j=arcIdx-1; j>=0; j--) {
+        const elj=elements[j];
+        if(arcCanFit(elj)) {
+          dIn = elj.type==='G02'||elj.type==='G03'
+            ? arcTangentDir(elj,true) : segDir(allPts[j],allPts[j+1]);
+          const nj = nFn2(dIn);
+          pIn = {x:allPts[j+1].x+nj.x*toolR2, z:allPts[j+1].z+nj.z*toolR2};
+          break;
+        }
+      }
+      // Giden segment: arcIdx+1 veya sonraki sığan
+      let dOut=null, pOut=null;
+      for(let j=arcIdx+1; j<elements.length; j++) {
+        const elj=elements[j];
+        if(arcCanFit(elj)) {
+          dOut = elj.type==='G02'||elj.type==='G03'
+            ? arcTangentDir(elj,false) : segDir(allPts[j],allPts[j+1]);
+          const nj = nFn2(dOut);
+          pOut = {x:allPts[j].x+nj.x*toolR2, z:allPts[j].z+nj.z*toolR2};
+          break;
+        }
+      }
+      if(!dIn||!dOut||!pIn||!pOut) return null;
+      return offsetIntersect(pIn.x,pIn.z,dIn.x,dIn.z, pOut.x,pOut.z,dOut.x,dOut.z);
+    }
+
+    // offsetPts önce normal hesapla, sonra sığmayan arc'lar için düzelt
     const offsetPts = allPts.map((pt, i) => {
       if (i === 0) {
         const el0 = elements[0];
@@ -1254,6 +1646,17 @@ function redraw() {
       const elNext = elements[i];
       const dOut = elNext.type==='G02'||elNext.type==='G03' ? arcTangentDir(elNext,false) : segDir(allPts[i],allPts[i+1]);
       return bisectorCenter(pt, dIn, dOut, toolR2, nFn2);
+    });
+
+    // Sığmayan arc'ların başlangıç ve bitiş noktalarını kesişim noktasıyla düzelt
+    elements.forEach((el, i) => {
+      if (!arcCanFit(el)) {
+        const isect = arcSkipIntersect(i);
+        if (isect) {
+          offsetPts[i]   = {...isect};  // arc başlangıcı
+          offsetPts[i+1] = {...isect};  // arc bitişi
+        }
+      }
     });
 
     ctx.strokeStyle = 'rgba(255,149,0,0.5)';
@@ -1273,29 +1676,65 @@ function redraw() {
         const x1=prevPt.x, z1=prevPt.z, x2=el.to.x, z2=el.to.z;
         const R = Math.abs(el.r);
         const dx=x2-x1, dz=z2-z1, dist=Math.sqrt(dx*dx+dz*dz);
-        if (dist < 1e-10 || dist > 2*R+1e-10) {
-          ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x)); return;
-        }
-        const mx=(x1+x2)/2, mz=(z1+z2)/2;
-        const h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
-        const nx=-dz/dist, nz=dx/dist;
-        const sign = el.type==='G02' ? 1 : -1;
-        const cx=mx+sign*h*nx, cz=mz+sign*h*nz;
+        if (dist < 1e-10) { ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x)); return; }
 
-        const Roff = tnrDir2==='outer'
-          ? (el.type==='G02' ? Math.max(R-toolR2,0.01) : R+toolR2)
-          : (el.type==='G03' ? Math.max(R-toolR2,0.01) : R+toolR2);
+        // Merkez: _cx/_cz varsa (teğet radüs) kesin merkezi kullan
+        let cx, cz;
+        if (el._cx !== undefined && el._cz !== undefined) {
+          cx = el._cx; cz = el._cz;
+        } else {
+          if (dist > 2*R+1e-10) { ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x)); return; }
+          const mx=(x1+x2)/2, mz=(z1+z2)/2;
+          const h=Math.sqrt(Math.max(0,R*R-(dist/2)**2));
+          const nx=-dz/dist, nz=dx/dist;
+          const sign = el.type==='G02' ? 1 : -1;
+          cx=mx+sign*h*nx; cz=mz+sign*h*nz;
+        }
+
+        // Roff: takım offset yay yarıçapı
+        // outer: G02 konveks → R-toolR, G03 konkav → R+toolR
+        // inner: G03 konveks → R-toolR, G02 konkav → R+toolR
+        const RoffRaw = tnrDir2==='outer'
+          ? (el.type==='G02' ? R-toolR2 : R+toolR2)
+          : (el.type==='G03' ? R-toolR2 : R+toolR2);
+
+        // Takım sığmıyor: offsetPts kesişim noktasına zaten set edildi
+        // lineTo ile kesişim noktasına git (gStart=gEnd=kesişim)
+        if (RoffRaw <= 0) { ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x)); return; }
+        const Roff = RoffRaw;
 
         const startA = Math.atan2(x1-cx, z1-cz);
         const endA   = Math.atan2(x2-cx, z2-cz);
-        let totalAngle = el.type==='G02' ? startA-endA : endA-startA;
-        if (totalAngle <= 0) totalAngle += 2*Math.PI;
+
+        // Teğet radüs için küçük yay yönü
+        let totalAngle, isG02 = el.type==='G02';
+        if (el._cx !== undefined) {
+          let diff = endA - startA;
+          if (diff >  Math.PI) diff -= 2*Math.PI;
+          if (diff < -Math.PI) diff += 2*Math.PI;
+          if (isG02 && diff > 0) diff = -diff;
+          if (!isG02 && diff < 0) diff = -diff;
+          totalAngle = Math.abs(diff);
+        } else {
+          totalAngle = isG02 ? startA-endA : endA-startA;
+          if (totalAngle <= 0) totalAngle += 2*Math.PI;
+        }
 
         const steps = Math.max(Math.ceil(totalAngle*Roff*scale/2), Math.ceil(totalAngle*180/Math.PI));
         ctx.lineTo(toSX(gStart.z), toSY(gStart.x));
         for (let s=1; s<steps; s++) {
           const t=s/steps;
-          const angle = el.type==='G02' ? startA-totalAngle*t : startA+totalAngle*t;
+          let angle;
+          if (el._cx !== undefined) {
+            let diff=endA-startA;
+            if(diff> Math.PI) diff-=2*Math.PI;
+            if(diff<-Math.PI) diff+=2*Math.PI;
+            if(isG02 && diff>0) diff=-diff;
+            if(!isG02 && diff<0) diff=-diff;
+            angle=startA+diff*t;
+          } else {
+            angle = isG02 ? startA-totalAngle*t : startA+totalAngle*t;
+          }
           ctx.lineTo(toSX(cz+Roff*Math.cos(angle)), toSY(cx+Roff*Math.sin(angle)));
         }
         ctx.lineTo(toSX(gEnd.z), toSY(gEnd.x));
@@ -1313,14 +1752,31 @@ function redraw() {
     ctx.stroke();
   }
 
+  // Koordinat etiketi
+  function drawLabel(sx, sy, xR, zV, col, num) {
+    const s = '#'+num+' X'+fmt(xR*2)+' Z'+fmt(zV);
+    ctx.font = '10px Courier New';
+    const tw = ctx.measureText(s).width;
+    let lx=sx+7, ly=sy-8;
+    if(lx+tw+4>W) lx=sx-tw-9;
+    if(ly<14) ly=sy+16;
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.fillRect(lx-2,ly-10,tw+5,13);
+    ctx.fillStyle=col;
+    ctx.fillText(s,lx,ly);
+  }
+
   elements.forEach((el, i) => {
     const sx = toSX(el.to.z), sy = toSY(el.to.x);
-    ctx.fillStyle = el.type==='PAH' ? '#ffff00' : el.type==='G01' ? color : '#ff9500';
+    const col = el.type==='G01' ? color : '#ff9500';
+    ctx.fillStyle = col;
     ctx.beginPath(); ctx.arc(sx, sy, 3.5, 0, Math.PI*2); ctx.fill();
+    drawLabel(sx, sy, el.to.x, el.to.z, col, i+1);
   });
 
   ctx.fillStyle = '#00ff88';
   ctx.beginPath(); ctx.arc(toSX(startPoint.z), toSY(startPoint.x), 5, 0, Math.PI*2); ctx.fill();
+  drawLabel(toSX(startPoint.z), toSY(startPoint.x), startPoint.x, startPoint.z, '#00ff88', 0);
 
   ctx.fillStyle = '#e74c3c';
   ctx.beginPath(); ctx.arc(toSX(lastPoint.z), toSY(lastPoint.x), 4.5, 0, Math.PI*2); ctx.fill();
@@ -1338,28 +1794,39 @@ function drawArc(el) {
   const z1 = el.from ? el.from.z : lastPoint.z;
   const x2 = el.to.x, z2 = el.to.z;
   const R  = Math.abs(el.r);
-
   if (R === 0) { ctx.lineTo(toSX(z2), toSY(x2)); return; }
 
-  const dx = x2 - x1, dz = z2 - z1;
-  const dist = Math.sqrt(dx*dx + dz*dz);
-  if (dist < 1e-10 || dist > 2 * R + 1e-10) {
-    ctx.lineTo(toSX(z2), toSY(x2));
-    return;
-  }
+  const dx = x2-x1, dz = z2-z1;
+  const dist = Math.sqrt(dx*dx+dz*dz);
+  if (dist < 1e-10) { ctx.lineTo(toSX(z2), toSY(x2)); return; }
 
-  const mx = (x1+x2)/2, mz = (z1+z2)/2;
-  const h   = Math.sqrt(Math.max(0, R*R - (dist/2)**2));
-  const nx = -dz/dist, nz = dx/dist;
-  const sign = el.type === 'G02' ? 1 : -1;
-  const cx = mx + sign*h*nx;
-  const cz = mz + sign*h*nz;
+  let cx, cz;
+  if (el._cx !== undefined && el._cz !== undefined) {
+    // Teğet radüs: kesin merkez mevcut
+    cx = el._cx; cz = el._cz;
+  } else {
+    if (dist > 2*R + 1e-10) { ctx.lineTo(toSX(z2), toSY(x2)); return; }
+    const mx=(x1+x2)/2, mz=(z1+z2)/2;
+    const h=Math.sqrt(Math.max(0, R*R-(dist/2)**2));
+    const nx=-dz/dist, nz=dx/dist;
+    const sign=el.type==='G02'?1:-1;
+    cx=mx+sign*h*nx; cz=mz+sign*h*nz;
+  }
 
   const startA = Math.atan2(x1-cx, z1-cz);
   const endA   = Math.atan2(x2-cx, z2-cz);
 
   let totalAngle;
-  if (el.type === 'G02') {
+  if (el._cx !== undefined) {
+    // Teğet radüs: diff normalize [-π,π] → küçük yay
+    let diff=endA-startA;
+    if(diff> Math.PI) diff-=2*Math.PI;
+    if(diff<-Math.PI) diff+=2*Math.PI;
+    // arcType ile tutarlı yön: G02→negatif, G03→pozitif
+    if(el.type==='G02' && diff>0) diff=-diff;
+    if(el.type==='G03' && diff<0) diff=-diff;
+    totalAngle=Math.abs(diff);
+  } else if (el.type === 'G02') {
     totalAngle = startA - endA;
     if (totalAngle <= 0) totalAngle += 2*Math.PI;
   } else {
@@ -1367,15 +1834,23 @@ function drawArc(el) {
     if (totalAngle <= 0) totalAngle += 2*Math.PI;
   }
 
-  const steps = Math.max(Math.ceil(totalAngle * R * scale / 2), Math.ceil(totalAngle * 180/Math.PI));
+  const steps = Math.max(Math.ceil(totalAngle*R*scale/2), Math.ceil(totalAngle*180/Math.PI));
   ctx.lineTo(toSX(z1), toSY(x1));
-  for (let i = 1; i <= steps; i++) {
-    const t = i / steps;
-    const angle = el.type === 'G02'
-      ? startA - totalAngle * t
-      : startA + totalAngle * t;
-    const px = cx + R * Math.sin(angle);
-    const pz = cz + R * Math.cos(angle);
+  for (let i=1; i<=steps; i++) {
+    const t = i/steps;
+    let angle;
+    if (el._cx !== undefined) {
+      let diff=endA-startA;
+      if(diff> Math.PI) diff-=2*Math.PI;
+      if(diff<-Math.PI) diff+=2*Math.PI;
+      if(el.type==='G02' && diff>0) diff=-diff;
+      if(el.type==='G03' && diff<0) diff=-diff;
+      angle=startA+diff*t;
+    } else {
+      angle = el.type==='G02' ? startA-totalAngle*t : startA+totalAngle*t;
+    }
+    const px = cx + R*Math.sin(angle);
+    const pz = cz + R*Math.cos(angle);
     ctx.lineTo(toSX(pz), toSY(px));
   }
 }
@@ -1416,6 +1891,118 @@ canvas.addEventListener('wheel', e => {
   redraw();
 }, {passive: false});
 
+
+/* ═══ TEĞET RADÜS — Noktaya tıkla, R gir ═══ */
+function findNearestCorner(wz, wx) {
+  if (!startPoint || elements.length < 2) return null;
+  const pts = [{x:startPoint.x,z:startPoint.z},...elements.map(e=>({x:e.to.x,z:e.to.z}))];
+  let best=null, bestD=Infinity;
+  for (let i=1; i<pts.length-1; i++) {
+    const pt=pts[i], prev=elements[i-1], cur=elements[i];
+    if (!(prev.type==='G01'||prev.type==='PAH')) continue;
+    if (!(cur.type==='G01'||cur.type==='G02'||cur.type==='G03')) continue;
+    const d=Math.sqrt((pt.z-wz)**2+(pt.x-wx)**2);
+    if (d<bestD) { bestD=d; best=i; }
+  }
+  return bestD < 12/scale ? best : null;
+}
+
+function applyTanRadius(idx, R) {
+  _saveHistory();
+  const absR=Math.abs(R);
+  if(absR<=0) return false;
+  const pts=[{x:startPoint.x,z:startPoint.z},...elements.map(e=>({x:e.to.x,z:e.to.z}))];
+  const pt=pts[idx], prev=pts[idx-1], next=pts[idx+1];
+  const vlen=(a,b)=>Math.sqrt((b.x-a.x)**2+(b.z-a.z)**2);
+  const vdir=(a,b)=>{const l=vlen(a,b)||1;return{x:(b.x-a.x)/l,z:(b.z-a.z)/l};};
+  const dIn=vdir(prev,pt), dOut=vdir(pt,next);
+  const cross=dIn.x*dOut.z-dIn.z*dOut.x;
+  const dotSeg=dIn.x*dOut.x+dIn.z*dOut.z;
+  if(Math.abs(cross)<1e-6){alert('Paralel segmentler — radüs eklenemez');return false;}
+
+  // Normal seçimi: cross<0→innerN, cross>0→outerN
+  let n1x,n1z,n2x,n2z;
+  if(cross<0){n1x=dIn.z;n1z=-dIn.x;n2x=dOut.z;n2z=-dOut.x;}
+  else       {n1x=-dIn.z;n1z=dIn.x;n2x=-dOut.z;n2z=dOut.x;}
+
+  // Offset hat kesişimi = merkez
+  const p1x=pt.x+n1x*absR, p1z=pt.z+n1z*absR;
+  const p2x=pt.x+n2x*absR, p2z=pt.z+n2z*absR;
+  const det=dIn.x*(-dOut.z)-dIn.z*(-dOut.x);
+  if(Math.abs(det)<1e-10){alert('Geometri hatası');return false;}
+  const t=((p2x-p1x)*(-dOut.z)-(p2z-p1z)*(-dOut.x))/det;
+  const cx=p1x+t*dIn.x, cz=p1z+t*dIn.z;
+
+  // Teğet noktalar (merkezi segmente projekte et)
+  const tp=(cx-pt.x)*dIn.x+(cz-pt.z)*dIn.z;
+  const sp=(cx-pt.x)*dOut.x+(cz-pt.z)*dOut.z;
+  const pE={x:pt.x+tp*dIn.x, z:pt.z+tp*dIn.z};
+  const pX={x:pt.x+sp*dOut.x,z:pt.z+sp*dOut.z};
+
+  // Sınır kontrolü
+  const lI=vlen(prev,pt), lO=vlen(pt,next);
+  if(Math.abs(tp)>lI*0.99||Math.abs(sp)>lO*0.99){
+    const d=Math.max(1+dotSeg,0.001);
+    alert('R çok büyük!\nMaksimum ≈ '+(Math.min(lI,lO)*Math.abs(cross)/d*0.95).toFixed(3)+' mm');
+    return false;
+  }
+
+  // arcType: geometrik diff'ten belirle (küçük yay yönü)
+  const startA=Math.atan2(pE.x-cx, pE.z-cz);
+  const endA  =Math.atan2(pX.x-cx, pX.z-cz);
+  let diff=endA-startA;
+  if(diff> Math.PI) diff-=2*Math.PI;
+  if(diff<-Math.PI) diff+=2*Math.PI;
+  if(R<0) diff=-diff;  // R- → yönü ters çevir
+  const arcType=diff>0?'G03':'G02';
+
+  const toolR=getParamFloat('pToolR',0.8);
+  elements[idx-1].to={x:pE.x,z:pE.z};
+  elements.splice(idx,0,{type:arcType,from:{x:pE.x,z:pE.z},to:{x:pX.x,z:pX.z},
+    r:absR,c:0,comp:'G40',tR:toolR,_cx:cx,_cz:cz});
+  elements[idx+1].from={x:pX.x,z:pX.z};
+  elements.forEach((el,i)=>{el.from=i===0?startPoint:elements[i-1].to;});
+  lastPoint=elements[elements.length-1].to;
+  return true;
+}
+
+function _handleCanvasTap(clientX, clientY) {
+  const rect=canvas.getBoundingClientRect();
+  const wz=fromSX(clientX-rect.left), wx=fromSY(clientY-rect.top);
+  const idx=findNearestCorner(wz,wx);
+  if (idx===null) return;
+  const inp=prompt('Teğet Radüs (mm) — Yön otomatik.\n− girersen ters yön. Örnek: 2');
+  if (!inp||inp.trim()==='') return;
+  const Rv=parseFloat(inp.replace(',','.'));
+  if (isNaN(Rv)||Rv===0){alert('Geçersiz değer!');return;}
+  if (applyTanRadius(idx,Rv)) {
+    generateGCode();redraw();renderFeatureList();updateCoordsTable();
+  }
+}
+
+canvas.addEventListener('click', e => {
+  if (e.button!==0) return;
+  _handleCanvasTap(e.clientX, e.clientY);
+});
+
+
+// Mobil tek parmak tap → teğet radüs
+let _tapStart = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length===1) {
+    _tapStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, t:Date.now()};
+  } else { _tapStart=null; }
+}, {passive:true});
+canvas.addEventListener('touchend', e => {
+  if (!_tapStart||e.changedTouches.length!==1){_tapStart=null;return;}
+  const dx=e.changedTouches[0].clientX-_tapStart.x;
+  const dy=e.changedTouches[0].clientY-_tapStart.y;
+  const dt=Date.now()-_tapStart.t;
+  if(dt<300 && Math.sqrt(dx*dx+dy*dy)<10){
+    _handleCanvasTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+  }
+  _tapStart=null;
+},{passive:true});
 canvas.addEventListener('mousedown', e => {
   if (e.button === 1 || e.button === 2) {
     isPanning = true;
@@ -1677,9 +2264,42 @@ function loadNCFile(e) {
    UNDO / RESET
 ═══════════════════════════════════════════════════ */
 function undo() {
-  if (elements.length === 0) { startPoint = null; lastPoint = null; generateGCode(); redraw(); renderFeatureList(); openNewFeature(); return; }
-  elements.pop();
-  lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  if (_history.length > 0) {
+    // Mevcut state'i redo'ya kaydet
+    _redoHistory.push({
+      elements: JSON.parse(JSON.stringify(elements)),
+      startPoint: startPoint ? {...startPoint} : null,
+      lastPoint:  lastPoint  ? {...lastPoint}  : null
+    });
+    const state = _history.pop();
+    elements    = JSON.parse(JSON.stringify(state.elements));
+    startPoint  = state.startPoint ? {...state.startPoint} : null;
+    lastPoint   = state.lastPoint  ? {...state.lastPoint}  : null;
+  } else if (elements.length > 0) {
+    _redoHistory.push({
+      elements: JSON.parse(JSON.stringify(elements)),
+      startPoint: startPoint ? {...startPoint} : null,
+      lastPoint:  lastPoint  ? {...lastPoint}  : null
+    });
+    elements.pop();
+    lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
+  } else {
+    startPoint = null; lastPoint = null;
+  }
+  generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
+}
+
+function redo() {
+  if (_redoHistory.length === 0) return;
+  _history.push({
+    elements: JSON.parse(JSON.stringify(elements)),
+    startPoint: startPoint ? {...startPoint} : null,
+    lastPoint:  lastPoint  ? {...lastPoint}  : null
+  });
+  const state = _redoHistory.pop();
+  elements    = JSON.parse(JSON.stringify(state.elements));
+  startPoint  = state.startPoint ? {...state.startPoint} : null;
+  lastPoint   = state.lastPoint  ? {...state.lastPoint}  : null;
   generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
 }
 
@@ -1722,3 +2342,4 @@ document.addEventListener('keydown', e => {
 
 </body>
 </html>
+
