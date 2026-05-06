@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -15,68 +14,68 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:12px;}
 
-/* – TOP BAR – */
-#topbar{background:#0d0f12;border-bottom:1px solid var(–border);padding:0.4vh 0.8vw;display:flex;align-items:center;gap:0;flex-shrink:0;height:4.5vh;min-height:32px;overflow-x:auto;overflow-y:hidden;}
+/* -- TOP BAR -- */
+#topbar{background:#0d0f12;border-bottom:1px solid var(--border);padding:0.4vh 0.8vw;display:flex;align-items:center;gap:0;flex-shrink:0;height:4.5vh;min-height:32px;overflow-x:auto;overflow-y:hidden;}
 
-.tbtn{background:#1e2228;border:1px solid var(–border);color:var(–text);padding:0.4vh 0.8vw;border-radius:4px;cursor:pointer;font-size:clamp(9px,1vw,13px);font-family:‘Courier New’,monospace;white-space:nowrap;}
-.tbtn:hover{background:#2a2f38;border-color:var(–accent);}
+.tbtn{background:#1e2228;border:1px solid var(--border);color:var(--text);padding:0.4vh 0.8vw;border-radius:4px;cursor:pointer;font-size:clamp(9px,1vw,13px);font-family:'Courier New',monospace;white-space:nowrap;}
+.tbtn:hover{background:#2a2f38;border-color:var(--accent);}
 #statusbar{display:none;}
 
-/* – MAIN LAYOUT – */
+/* -- MAIN LAYOUT -- */
 #app{flex:1;display:flex;overflow:hidden;}
 
-/* – VIEWPORT – */
-#viewport{flex:0 0 65%;position:relative;background:#000;border-right:1px solid var(–border);cursor:crosshair;}
+/* -- VIEWPORT -- */
+#viewport{flex:0 0 65%;position:relative;background:#000;border-right:1px solid var(--border);cursor:crosshair;}
 canvas{display:block;width:100%;height:100%;}
 #coords{position:absolute;bottom:6px;left:8px;font-size:10px;color:#444;pointer-events:none;}
-#fit-cv-btn{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);border:1px solid #2a2d33;color:#00aaff;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-family:‘Courier New’,monospace;}
+#fit-cv-btn{position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);border:1px solid #2a2d33;color:#00aaff;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;}
 #fit-cv-btn:hover{border-color:#00aaff;}
 #zoominfo{position:absolute;top:6px;right:8px;font-size:10px;color:#333;pointer-events:none;}
 
-/* – RIGHT SIDE – */
+/* -- RIGHT SIDE -- */
 #right{flex:0 0 35%;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 
-/* – TABS – */
+/* -- TABS -- */
 #tabs{display:flex;background:transparent;border:none;flex-shrink:0;}
-.tab{padding:0.4vh 0.8vw;cursor:pointer;font-size:clamp(9px,1vw,12px);color:#555;border:1px solid var(–border);border-radius:4px;transition:all .15s;background:#1e2228;}
-.tab.active{color:var(–accent);border-color:var(–accent);background:#0d2040;}
+.tab{padding:0.4vh 0.8vw;cursor:pointer;font-size:clamp(9px,1vw,12px);color:#555;border:1px solid var(--border);border-radius:4px;transition:all .15s;background:#1e2228;}
+.tab.active{color:var(--accent);border-color:var(--accent);background:#0d2040;}
 .tab:hover:not(.active){color:#999;}
 
-/* – TAB CONTENT – */
+/* -- TAB CONTENT -- */
 .tabcontent{display:none;flex:1;overflow:hidden;}
 .tabcontent.active{display:flex;flex-direction:column;}
 
-/* ––––– SHOPTURN INPUT UI ––––– */
+/* ---------- SHOPTURN INPUT UI ---------- */
 #tab-input{padding:0;flex-direction:row;overflow:hidden;align-items:stretch;}
 
 /* Feature List (sol) */
-#feature-list{width:9vw;min-width:75px;max-width:110px;background:#0d0f12;border-right:1px solid var(–border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;order:2;}
-#feature-list-header{padding:0.4vh 0.4vw;font-size:clamp(7px,0.8vw,10px);color:#444;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:center;}
+#feature-list{width:9vw;min-width:75px;max-width:110px;background:#0d0f12;border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;order:2;}
+#feature-list-header{padding:0.4vh 0.4vw;font-size:clamp(7px,0.8vw,10px);color:#444;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;}
 #feature-list-body{flex:1;overflow-y:auto;}
 .feat-item{padding:0.5vh 0.3vw;border-bottom:1px solid #1a1d22;cursor:pointer;display:flex;flex-direction:column;gap:1px;transition:background .1s;}
 .feat-item:hover{background:#1a1d22;}
-.feat-item.active{background:#1a2a3a;border-left:2px solid var(–accent);}
-.feat-item.start-feat{border-left:2px solid var(–green);}
+.feat-item.active{background:#1a2a3a;border-left:2px solid var(--accent);}
+.feat-item.start-feat{border-left:2px solid var(--green);}
 .feat-icon{display:none;}
 .feat-info{flex:1;min-width:0;}
 .feat-type{font-size:clamp(7px,0.7vw,9px);color:#555;text-transform:uppercase;}
 .feat-coords{font-size:clamp(7px,0.8vw,10px);color:#ccc;white-space:nowrap;overflow:visible;text-overflow:ellipsis;}
-.feat-item.active .feat-type{color:var(–accent);}
+.feat-item.active .feat-type{color:var(--accent);}
 .feat-item.active .feat-coords{color:#fff;}
 
 /* Feature Editor (sax) */
 #feature-editor{flex:1;display:flex;flex-direction:column;overflow:hidden;order:3;min-width:0;}
 #feat-editor-title{padding:0;height:0;overflow:hidden;}
-#feat-editor-title span{color:var(–accent);font-size:11px;}
+#feat-editor-title span{color:var(--accent);font-size:11px;}
 
 /* Feature type selector butonları */
-#feat-type-bar{display:flex;flex-direction:column;gap:0.5vh;padding:0.5vh 0.3vw;border-right:1px solid var(–border);border-bottom:none;flex-shrink:0;order:1;width:4.5vw;min-width:36px;max-width:52px;background:#13161a;}
-.ftype-btn{flex:1;background:#1a1d22;border:1px solid var(–border);border-radius:6px;color:#666;cursor:pointer;padding:0.5vh 0.2vw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.3vh;transition:all .15s;font-family:‘Courier New’,monospace;}
+#feat-type-bar{display:flex;flex-direction:column;gap:0.5vh;padding:0.5vh 0.3vw;border-right:1px solid var(--border);border-bottom:none;flex-shrink:0;order:1;width:4.5vw;min-width:36px;max-width:52px;background:#13161a;}
+.ftype-btn{flex:1;background:#1a1d22;border:1px solid var(--border);border-radius:6px;color:#666;cursor:pointer;padding:0.5vh 0.2vw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.3vh;transition:all .15s;font-family:'Courier New',monospace;}
 .ftype-btn svg{width:clamp(12px,1.6vw,20px);height:clamp(12px,1.6vw,20px);}
 .ftype-btn span{font-size:clamp(6px,0.7vw,9px);text-transform:uppercase;letter-spacing:.3px;}
 .ftype-btn:hover{background:#1e2228;border-color:#444;color:#aaa;}
-.ftype-btn.active{background:#0d2040;border-color:var(–accent);color:var(–accent);}
-.ftype-btn.arc-cw.active{background:#2a1500;border-color:var(–orange);color:var(–orange);}
+.ftype-btn.active{background:#0d2040;border-color:var(--accent);color:var(--accent);}
+.ftype-btn.arc-cw.active{background:#2a1500;border-color:var(--orange);color:var(--orange);}
 .ftype-btn.arc-ccw.active{background:#001a40;border-color:#7788ff;color:#7788ff);}
 .ftype-btn.chamfer.active{background:#1a1a00;border-color:#ffff44;color:#ffff44;}
 
@@ -84,18 +83,21 @@ canvas{display:block;width:100%;height:100%;}
 #feat-fields{flex:1;overflow-y:auto;padding:0.5vh 0.6vw;}
 .feat-field-row{display:flex;align-items:center;gap:0.4vw;margin-bottom:0.6vh;}
 .feat-field-row label{color:#555;font-size:clamp(8px,0.9vw,11px);width:6vw;min-width:55px;flex-shrink:0;}
-.feat-field-row input{flex:1;background:#1e2228;border:1px solid var(–border);color:#00ff88;text-align:right;padding:0.4vh 0.5vw;font-size:clamp(12px,1.4vw,16px);border-radius:4px;outline:none;font-family:‘Courier New’,monospace;min-width:0;}
-.feat-field-row input:focus{border-color:var(–accent);color:#fff;}
+.feat-field-row input{flex:1;background:#1e2228;border:1px solid var(--border);color:#00ff88;text-align:right;padding:0.4vh 0.5vw;font-size:clamp(12px,1.4vw,16px);border-radius:4px;outline:none;font-family:'Courier New',monospace;min-width:0;}
+.feat-field-row input:focus{border-color:var(--accent);color:#fff;}
 .feat-field-row .unit{color:#333;font-size:clamp(7px,0.8vw,10px);width:1.5vw;min-width:14px;text-align:left;flex-shrink:0;}
+.ang-auto-btn{background:#1a2a0a;border:1px solid #27ae60;color:#27ae60;font-family:'Courier New',monospace;font-size:clamp(8px,0.85vw,10px);font-weight:bold;padding:0.3vh 0.5vw;border-radius:3px;cursor:pointer;letter-spacing:0.5px;flex-shrink:0;}
+.ang-auto-btn:hover{background:#27ae60;color:#000;}
+.ang-auto-btn:disabled{background:#0d0f12;border-color:#1a1d22;color:#333;cursor:default;}
 .feat-separator{border:none;border-top:1px solid #1a1d22;margin:8px 0;}
 
 /* OK butonu */
-#feat-ok-bar{padding:0.4vh 0.5vw;border-bottom:1px solid var(–border);flex-shrink:0;display:flex;gap:0.4vw;}
-.feat-ok-btn{flex:1;background:linear-gradient(135deg,#1a4a7a,#006699);border:none;border-radius:6px;color:#fff;font-size:clamp(10px,1.1vw,14px);font-weight:bold;padding:0.6vh 0.5vw;cursor:pointer;font-family:‘Courier New’,monospace;letter-spacing:1px;transition:all .15s;}
+#feat-ok-bar{padding:0.4vh 0.5vw;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;gap:0.4vw;}
+.feat-ok-btn{flex:1;background:linear-gradient(135deg,#1a4a7a,#006699);border:none;border-radius:6px;color:#fff;font-size:clamp(10px,1.1vw,14px);font-weight:bold;padding:0.6vh 0.5vw;cursor:pointer;font-family:'Courier New',monospace;letter-spacing:1px;transition:all .15s;}
 .feat-ok-btn:hover{filter:brightness(1.2);}
 .feat-ok-btn:active{transform:translateY(1px);}
 
-.btn{border:none;border-radius:5px;padding:8px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:11px;font-family:‘Courier New’,monospace;transition:all .15s;line-height:1.2;}
+.btn{border:none;border-radius:5px;padding:8px 6px;color:#fff;font-weight:bold;cursor:pointer;font-size:11px;font-family:'Courier New',monospace;transition:all .15s;line-height:1.2;}
 .btn:hover{filter:brightness(1.2);}
 .btn.active-mode{outline:2px solid #fff;box-shadow:0 0 8px currentColor;}
 
@@ -112,21 +114,21 @@ canvas{display:block;width:100%;height:100%;}
 .btn-generate:active{transform:translateY(2px);box-shadow:none;}
 
 .params-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
-.param-mini{background:#1e2228;border:1px solid var(–border);border-radius:4px;padding:4px 6px;display:flex;gap:4px;align-items:center;}
+.param-mini{background:#1e2228;border:1px solid var(--border);border-radius:4px;padding:4px 6px;display:flex;gap:4px;align-items:center;}
 .param-mini label{color:#555;font-size:9px;}
-.param-mini input{background:transparent;border:none;color:#ffaa00;width:45px;font-size:12px;outline:none;font-family:‘Courier New’,monospace;text-align:right;}
+.param-mini input{background:transparent;border:none;color:#ffaa00;width:45px;font-size:12px;outline:none;font-family:'Courier New',monospace;text-align:right;}
 
-/* ––––– GCODE TAB ––––– */
+/* ---------- GCODE TAB ---------- */
 #tab-gcode{flex-direction:column;}
-#gcodeToolbar{background:#0d0f12;padding:5px 8px;display:flex;gap:5px;border-bottom:1px solid var(–border);flex-shrink:0;align-items:center;}
-#gcodeDisplay{flex:1;background:#030505;border:none;color:#00ff44;font-size:12px;resize:none;outline:none;line-height:1.6;padding:8px 10px;font-family:‘Courier New’,monospace;}
+#gcodeToolbar{background:#0d0f12;padding:5px 8px;display:flex;gap:5px;border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;}
+#gcodeDisplay{flex:1;background:#030505;border:none;color:#00ff44;font-size:12px;resize:none;outline:none;line-height:1.6;padding:8px 10px;font-family:'Courier New',monospace;}
 #gcodeDisplay.editable{color:#ffff99;background:#050505;}
 
-/* ––––– COORDS TAB ––––– */
+/* ---------- COORDS TAB ---------- */
 #tab-coords{flex-direction:column;}
 #coordsTable{flex:1;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;}
-th{background:#0d0f12;color:#555;font-size:10px;padding:5px 8px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(–border);}
+th{background:#0d0f12;color:#555;font-size:10px;padding:5px 8px;text-align:left;position:sticky;top:0;border-bottom:1px solid var(--border);}
 td{padding:4px 8px;font-size:11px;border-bottom:1px solid #1a1d22;color:#ccc;}
 tr:hover td{background:#1a1d22;}
 tr.active-row td{color:#00ff88;}
@@ -139,53 +141,60 @@ td.type-PAH{color:#ffff00;}
 .cell-edit:focus{border-color:#00aaff;outline:none;}
 .cell-edit-sel{background:#0d0f12;border:1px solid #2a2d33;color:#ccc;padding:1px 2px;font-size:10px;border-radius:2px;max-width:52px;}
 
-/* ––––– PARAMS TAB ––––– */
+/* ---------- PARAMS TAB ---------- */
 #tab-params{padding:0.8vh 0.8vw;gap:0.6vh;flex-direction:column;overflow-y:auto;}
-.p-group{background:#1e2228;border:1px solid var(–border);border-radius:6px;padding:10px;}
-.p-group h4{color:var(–accent);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.p-group{background:#1e2228;border:1px solid var(--border);border-radius:6px;padding:10px;}
+.p-group h4{color:var(--accent);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
 .p-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .p-row label{color:#888;font-size:clamp(9px,1vw,12px);}
-.p-row input{background:#0d0f12;border:1px solid var(–border);color:#ffaa00;width:8vw;min-width:70px;text-align:right;font-size:clamp(11px,1.2vw,14px);padding:0.3vh 0.4vw;border-radius:4px;outline:none;font-family:‘Courier New’,monospace;}
-.p-row input:focus{border-color:var(–accent);}
-.p-row select{background:#0d0f12;border:1px solid var(–border);color:#ffaa00;font-size:12px;padding:4px 6px;border-radius:4px;outline:none;font-family:‘Courier New’,monospace;}
+.p-row input{background:#0d0f12;border:1px solid var(--border);color:#ffaa00;width:8vw;min-width:70px;text-align:right;font-size:clamp(11px,1.2vw,14px);padding:0.3vh 0.4vw;border-radius:4px;outline:none;font-family:'Courier New',monospace;}
+.p-row input:focus{border-color:var(--accent);}
+.p-row select{background:#0d0f12;border:1px solid var(--border);color:#ffaa00;font-size:12px;padding:4px 6px;border-radius:4px;outline:none;font-family:'Courier New',monospace;}
 
-/* – SCROLLBAR – */
+/* -- SCROLLBAR -- */
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:#0d0f12;}
 ::-webkit-scrollbar-thumb{background:#2a2d33;border-radius:2px;}
 
 .tnr-dir-btn {
-flex:1; padding:0.6vh 0.4vw; border-radius:5px; border:1px solid #2a3a4a;
-background:#0d1520; color:#668; font-size:clamp(10px,1.1vw,13px); cursor:pointer;
-font-family:‘Courier New’,monospace; transition:all .15s; text-align:center;
+  flex:1; padding:0.6vh 0.4vw; border-radius:5px; border:1px solid #2a3a4a;
+  background:#0d1520; color:#668; font-size:clamp(10px,1.1vw,13px); cursor:pointer;
+  font-family:'Courier New',monospace; transition:all .15s; text-align:center;
 }
 .tnr-dir-btn:hover { border-color:#00aaff; color:#adf; }
 .tnr-dir-btn.tnr-active { background:#0d2a40; border-color:#00aaff; color:#00aaff; font-weight:bold; }
 
-/* “-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”   MOBİL RESPONSIVE  Telefon UI
-“-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-” */
+/* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   MOBİL RESPONSIVE  Telefon UI
+"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
+
 
 /* çok küçük ekranlar (320px - iPhone SE) */
 
+
 /* Yatay telefon (landscape) */
 
-/* “-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”   ÖĞRETİCİ OVERLAY
-“-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-”-” */
+
+
+
+
+
+/* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   ÖĞRETİCİ OVERLAY
+"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
 #tutorial-overlay {
-position:fixed; inset:0; background:rgba(0,0,0,0.88);
-z-index:9999; display:flex; align-items:center; justify-content:center;
-font-family:‘Courier New’,monospace;
+  position:fixed; inset:0; background:rgba(0,0,0,0.88);
+  z-index:9999; display:flex; align-items:center; justify-content:center;
+  font-family:'Courier New',monospace;
 }
 #tutorial-box {
-background:#0f1318; border:1px solid #00aaff;
-border-radius:10px; width:min(820px,95vw); max-height:90vh;
-overflow:hidden; display:flex; flex-direction:column;
-box-shadow:0 0 40px rgba(0,170,255,0.15);
+  background:#0f1318; border:1px solid #00aaff;
+  border-radius:10px; width:min(820px,95vw); max-height:90vh;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 0 40px rgba(0,170,255,0.15);
 }
 #tutorial-header {
-background:linear-gradient(135deg,#0d2040,#0a1520);
-padding:18px 24px; border-bottom:1px solid #1a3050;
-display:flex; align-items:center; gap:12px;
+  background:linear-gradient(135deg,#0d2040,#0a1520);
+  padding:18px 24px; border-bottom:1px solid #1a3050;
+  display:flex; align-items:center; gap:12px;
 }
 #tutorial-header .logo { color:#00aaff; font-size:20px; font-weight:bold; letter-spacing:2px; }
 #tutorial-header .sub  { color:#446; font-size:11px; margin-top:2px; }
@@ -211,12 +220,12 @@ display:flex; align-items:center; gap:12px;
 .t-step-dot.active{ background:#0d2040; border-color:#00aaff; color:#00aaff; }
 
 #tutorial-footer {
-padding:14px 24px; border-top:1px solid #1a2a3a;
-display:flex; align-items:center; justify-content:space-between;
-background:#080c10;
+  padding:14px 24px; border-top:1px solid #1a2a3a;
+  display:flex; align-items:center; justify-content:space-between;
+  background:#080c10;
 }
 #t-progress { color:#333; font-size:11px; }
-.t-btn { background:#1a2a3a; border:1px solid #2a4a6a; color:#fff; padding:8px 20px; border-radius:6px; cursor:pointer; font-family:‘Courier New’,monospace; font-size:12px; transition:all .15s; }
+.t-btn { background:#1a2a3a; border:1px solid #2a4a6a; color:#fff; padding:8px 20px; border-radius:6px; cursor:pointer; font-family:'Courier New',monospace; font-size:12px; transition:all .15s; }
 .t-btn:hover { border-color:#00aaff; color:#00aaff; }
 .t-btn.primary { background:linear-gradient(135deg,#1a4a7a,#006699); border-color:#00aaff; }
 .t-btn.finish  { background:linear-gradient(135deg,#1a5a2a,#27ae60); border-color:#27ae60; }
@@ -224,68 +233,73 @@ background:#080c10;
 #t-skip { color:#333; font-size:10px; cursor:pointer; text-decoration:underline; }
 #t-skip:hover { color:#666; }
 
-/* – CUSTOM NUMPAD – */
+
+
+
+
+
+/* -- CUSTOM NUMPAD -- */
 #numpad-overlay {
-position: fixed;
-inset: 0;
-z-index: 9998;
-background: rgba(0,0,0,0.3);
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,0.3);
 }
 #numpad {
-position: fixed;
-bottom: 0; left: 0; right: 0;
-z-index: 9999;
-background: #1a1d22;
-border-top: 2px solid #00aaff;
-padding: 0;
-display: none;
-flex-direction: column;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #1a1d22;
+  border-top: 2px solid #00aaff;
+  padding: 0;
+  display: none;
+  flex-direction: column;
 }
 #numpad-display {
-background: #0d0f12;
-color: #00ff88;
-font-size: clamp(18px,4vw,28px);
-font-family: ‘Courier New’, monospace;
-text-align: right;
-padding: 0.6vh 1vw;
-border-bottom: 1px solid #2a2d33;
-min-height: 5vh;
-display: flex;
-align-items: center;
-justify-content: flex-end;
-gap: 0.5vw;
+  background: #0d0f12;
+  color: #00ff88;
+  font-size: clamp(18px,4vw,28px);
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  padding: 0.6vh 1vw;
+  border-bottom: 1px solid #2a2d33;
+  min-height: 5vh;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5vw;
 }
 #numpad-kbd-hint {
-font-size: clamp(9px,1vw,12px);
-color: #2a3a4a;
-text-align: center;
-padding: 2px 0;
-border-bottom: 1px solid #1a1d22;
-letter-spacing: 1px;
+  font-size: clamp(9px,1vw,12px);
+  color: #2a3a4a;
+  text-align: center;
+  padding: 2px 0;
+  border-bottom: 1px solid #1a1d22;
+  letter-spacing: 1px;
 }
 #numpad-label {
-color: #446;
-font-size: clamp(10px,1.5vw,14px);
-margin-right: auto;
+  color: #446;
+  font-size: clamp(10px,1.5vw,14px);
+  margin-right: auto;
 }
 #numpad-grid {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 1px;
-background: #2a2d33;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: #2a2d33;
 }
 .nk {
-background: #1e2228;
-color: #e8e8e8;
-font-size: clamp(16px,3.5vw,26px);
-font-family: ‘Courier New’, monospace;
-font-weight: bold;
-border: none;
-padding: 1.8vh 0;
-cursor: pointer;
-text-align: center;
-transition: background .1s;
--webkit-tap-highlight-color: transparent;
+  background: #1e2228;
+  color: #e8e8e8;
+  font-size: clamp(16px,3.5vw,26px);
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  border: none;
+  padding: 1.8vh 0;
+  cursor: pointer;
+  text-align: center;
+  transition: background .1s;
+  -webkit-tap-highlight-color: transparent;
 }
 .nk:active { background: #2a3a4a; }
 .nk.nk-minus { color: #e74c3c; font-size: clamp(20px,4vw,30px); }
@@ -294,242 +308,247 @@ transition: background .1s;
 .nk.nk-del { color: #ff9500; }
 .nk.nk-zero { grid-column: span 2; }
 
-/* – YASAL UYARI – */
+
+/* -- YASAL UYARI -- */
 #warning-overlay {
-position: fixed; inset: 0; z-index: 99999;
-background: rgba(0,0,0,0.92);
-display: flex; align-items: center; justify-content: center;
-font-family: ‘Courier New’, monospace;
+  position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Courier New', monospace;
 }
 #warning-box {
-background: #0f1318;
-border: 1px solid #e74c3c;
-border-radius: 10px;
-width: min(600px, 92vw);
-padding: 2vh 2vw;
-display: flex; flex-direction: column; gap: 1.5vh;
+  background: #0f1318;
+  border: 1px solid #e74c3c;
+  border-radius: 10px;
+  width: min(600px, 92vw);
+  padding: 2vh 2vw;
+  display: flex; flex-direction: column; gap: 1.5vh;
 }
 #warning-box h2 {
-color: #e74c3c; font-size: clamp(13px,1.6vw,18px);
-letter-spacing: 1px; margin: 0;
-border-bottom: 1px solid #2a1a1a; padding-bottom: 1vh;
+  color: #e74c3c; font-size: clamp(13px,1.6vw,18px);
+  letter-spacing: 1px; margin: 0;
+  border-bottom: 1px solid #2a1a1a; padding-bottom: 1vh;
 }
 #warning-box p {
-color: #aaa; font-size: clamp(11px,1.2vw,14px);
-line-height: 1.8; margin: 0;
+  color: #aaa; font-size: clamp(11px,1.2vw,14px);
+  line-height: 1.8; margin: 0;
 }
 #warning-box p strong { color: #ffaa00; }
 .warn-btns { display: flex; gap: 1vw; margin-top: 0.5vh; }
 .warn-btn-ok {
-flex: 2;
-background: linear-gradient(135deg,#1a4a7a,#006699);
-border: none; border-radius: 6px; color: #fff;
-font-size: clamp(12px,1.3vw,16px); font-family: ‘Courier New’,monospace;
-padding: 1.2vh; cursor: pointer; font-weight: bold; letter-spacing: 1px;
+  flex: 2;
+  background: linear-gradient(135deg,#1a4a7a,#006699);
+  border: none; border-radius: 6px; color: #fff;
+  font-size: clamp(12px,1.3vw,16px); font-family: 'Courier New',monospace;
+  padding: 1.2vh; cursor: pointer; font-weight: bold; letter-spacing: 1px;
 }
 .warn-btn-ok:active { filter: brightness(1.2); }
 .warn-btn-cancel {
-flex: 1;
-background: #1e1e1e; border: 1px solid #444; border-radius: 6px;
-color: #888; font-size: clamp(11px,1.2vw,14px);
-font-family: ‘Courier New’,monospace;
-padding: 1.2vh; cursor: pointer;
+  flex: 1;
+  background: #1e1e1e; border: 1px solid #444; border-radius: 6px;
+  color: #888; font-size: clamp(11px,1.2vw,14px);
+  font-family: 'Courier New',monospace;
+  padding: 1.2vh; cursor: pointer;
 }
 .warn-btn-cancel:active { background: #2a2a2a; }
 
-/* – CANVAÇİZİM MODU – */
+
+/* -- CANVAÇİZİM MODU -- */
 #draw-mode-bar {
-position: absolute;
-top: 6px; left: 8px;
-display: none;
-gap: 4px;
-z-index: 100;
-align-items: center;
+  position: absolute;
+  top: 6px; left: 8px;
+  display: none;
+  gap: 4px;
+  z-index: 100;
+  align-items: center;
 }
 #draw-mode-bar.active { display: flex; }
 .dm-btn {
-background: #1e2228;
-border: 1px solid #2a2d33;
-color: #668;
-font-size: clamp(9px,1vw,12px);
-padding: 0.4vh 0.7vw;
-border-radius: 4px;
-cursor: pointer;
-font-family: ‘Courier New’, monospace;
-white-space: nowrap;
-transition: all .15s;
+  background: #1e2228;
+  border: 1px solid #2a2d33;
+  color: #668;
+  font-size: clamp(9px,1vw,12px);
+  padding: 0.4vh 0.7vw;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  transition: all .15s;
 }
 .dm-btn:hover { border-color: #00aaff; color: #adf; }
 .dm-btn.dm-active { background: #0d2040; border-color: #00aaff; color: #00aaff; }
 .dm-btn.dm-exit { background: #2a0d0d; border-color: #e74c3c; color: #e74c3c; }
 #draw-preview-hint {
-position: absolute;
-bottom: 28px; left: 50%;
-transform: translateX(-50%);
-background: rgba(0,10,20,0.85);
-color: #00aaff;
-font-size: clamp(10px,1.2vw,14px);
-padding: 4px 14px;
-border-radius: 4px;
-border: 1px solid #1a3a5a;
-pointer-events: none;
-display: none;
-font-family: ‘Courier New’, monospace;
-white-space: nowrap;
+  position: absolute;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,10,20,0.85);
+  color: #00aaff;
+  font-size: clamp(10px,1.2vw,14px);
+  padding: 4px 14px;
+  border-radius: 4px;
+  border: 1px solid #1a3a5a;
+  pointer-events: none;
+  display: none;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
 }
 #draw-mode-toggle {
-background: #1a2a1a;
-border: 1px solid #27ae60;
-color: #27ae60;
-font-size: clamp(9px,1vw,12px);
-padding: 0.4vh 0.8vw;
-border-radius: 4px;
-cursor: pointer;
-font-family: ‘Courier New’, monospace;
-white-space: nowrap;
-transition: all .15s;
+  background: #1a2a1a;
+  border: 1px solid #27ae60;
+  color: #27ae60;
+  font-size: clamp(9px,1vw,12px);
+  padding: 0.4vh 0.8vw;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  transition: all .15s;
 }
 #draw-mode-toggle.active {
-background: #27ae60;
-color: #000;
-font-weight: bold;
+  background: #27ae60;
+  color: #000;
+  font-weight: bold;
 }
 #draw-mode-toggle:hover { filter: brightness(1.2); }
 
-/* – L!SLENDIRME POPUP – */
+
+/* -- L!SLENDIRME POPUP -- */
 #dim-popup {
-position: fixed;
-z-index: 9000;
-background: #0f1318;
-border: 1px solid #00aaff;
-border-radius: 8px;
-padding: 0;
-min-width: 220px;
-max-width: 280px;
-box-shadow: 0 4px 24px rgba(0,0,0,0.7);
-display: none;
-flex-direction: column;
-overflow: hidden;
-font-family: ‘Courier New’, monospace;
+  position: fixed;
+  z-index: 9000;
+  background: #0f1318;
+  border: 1px solid #00aaff;
+  border-radius: 8px;
+  padding: 0;
+  min-width: 220px;
+  max-width: 280px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Courier New', monospace;
 }
 #dim-popup-header {
-background: #0d2040;
-padding: 0.5vh 0.8vw;
-display: flex;
-align-items: center;
-justify-content: space-between;
-border-bottom: 1px solid #1a3050;
+  background: #0d2040;
+  padding: 0.5vh 0.8vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1a3050;
 }
 #dim-popup-title {
-color: #00aaff;
-font-size: clamp(10px,1.1vw,13px);
-letter-spacing: 1px;
+  color: #00aaff;
+  font-size: clamp(10px,1.1vw,13px);
+  letter-spacing: 1px;
 }
 #dim-popup-close {
-background: none;
-border: none;
-color: #e74c3c;
-cursor: pointer;
-font-size: 14px;
-padding: 0 4px;
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
 }
 #dim-popup-body {
-padding: 0.6vh 0.8vw;
-display: flex;
-flex-direction: column;
-gap: 0.5vh;
+  padding: 0.6vh 0.8vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5vh;
 }
 .dim-row {
-display: flex;
-align-items: center;
-gap: 0.5vw;
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
 }
 .dim-lbl {
-color: #668;
-font-size: clamp(9px,1vw,12px);
-width: 60px;
-flex-shrink: 0;
+  color: #668;
+  font-size: clamp(9px,1vw,12px);
+  width: 60px;
+  flex-shrink: 0;
 }
 .dim-inp {
-flex: 1;
-background: #1e2228;
-border: 1px solid #2a2d33;
-color: #00ff88;
-text-align: right;
-padding: 0.35vh 0.5vw;
-font-size: clamp(12px,1.4vw,16px);
-border-radius: 4px;
-outline: none;
-font-family: ‘Courier New’, monospace;
-cursor: pointer;
+  flex: 1;
+  background: #1e2228;
+  border: 1px solid #2a2d33;
+  color: #00ff88;
+  text-align: right;
+  padding: 0.35vh 0.5vw;
+  font-size: clamp(12px,1.4vw,16px);
+  border-radius: 4px;
+  outline: none;
+  font-family: 'Courier New', monospace;
+  cursor: pointer;
 }
 .dim-inp:focus { border-color: #00aaff; }
 .dim-unit { color: #334; font-size: clamp(8px,0.8vw,10px); width: 16px; flex-shrink: 0; }
 #dim-popup-footer {
-padding: 0.5vh 0.8vw;
-border-top: 1px solid #1a2a3a;
-display: flex;
-gap: 0.4vw;
+  padding: 0.5vh 0.8vw;
+  border-top: 1px solid #1a2a3a;
+  display: flex;
+  gap: 0.4vw;
 }
 .dim-ok-btn {
-flex: 1;
-background: linear-gradient(135deg,#1a4a7a,#006699);
-border: none;
-border-radius: 5px;
-color: #fff;
-font-size: clamp(10px,1.1vw,13px);
-padding: 0.6vh;
-cursor: pointer;
-font-family: ‘Courier New’, monospace;
-letter-spacing: 1px;
+  flex: 1;
+  background: linear-gradient(135deg,#1a4a7a,#006699);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: clamp(10px,1.1vw,13px);
+  padding: 0.6vh;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
 }
 .dim-del-btn {
-background: #2a0d0d;
-border: 1px solid #e74c3c;
-border-radius: 5px;
-color: #e74c3c;
-font-size: clamp(10px,1.1vw,13px);
-padding: 0.6vh 0.8vw;
-cursor: pointer;
-font-family: ‘Courier New’, monospace;
+  background: #2a0d0d;
+  border: 1px solid #e74c3c;
+  border-radius: 5px;
+  color: #e74c3c;
+  font-size: clamp(10px,1.1vw,13px);
+  padding: 0.6vh 0.8vw;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
 }
 /* Elemanlara hover highlight */
 .elem-highlight {
-stroke: #ffaa00 !important;
-stroke-width: 3 !important;
+  stroke: #ffaa00 !important;
+  stroke-width: 3 !important;
 }
 #dim-mode-toggle {
-background: #1a1a2a;
-border: 1px solid #9b59b6;
-color: #9b59b6;
-font-size: clamp(9px,1vw,12px);
-padding: 0.4vh 0.8vw;
-border-radius: 4px;
-cursor: pointer;
-font-family: ‘Courier New’, monospace;
-white-space: nowrap;
-transition: all .15s;
+  background: #1a1a2a;
+  border: 1px solid #9b59b6;
+  color: #9b59b6;
+  font-size: clamp(9px,1vw,12px);
+  padding: 0.4vh 0.8vw;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  transition: all .15s;
 }
 #dim-mode-toggle.active {
-background: #9b59b6;
-color: #fff;
-font-weight: bold;
+  background: #9b59b6;
+  color: #fff;
+  font-weight: bold;
 }
 
+
 .dim-type-btn {
-background: #1a1d22; border: 1px solid #2a2d33; color: #668;
-font-size: clamp(8px,0.9vw,11px); padding: 0.3vh 0.5vw;
-border-radius: 3px; cursor: pointer; font-family: ‘Courier New’,monospace;
-transition: all .15s;
+  background: #1a1d22; border: 1px solid #2a2d33; color: #668;
+  font-size: clamp(8px,0.9vw,11px); padding: 0.3vh 0.5vw;
+  border-radius: 3px; cursor: pointer; font-family: 'Courier New',monospace;
+  transition: all .15s;
 }
 .dim-type-btn:hover { border-color: #00aaff; color: #adf; }
 .dim-type-btn.active { background: #0d2040; border-color: #00aaff; color: #00aaff; }
 
+
 .menu-item-btn {
-display:block;width:100%;padding:10px 12px;background:#13161a;
-border:1px solid #1a1d22;border-radius:5px;color:#e8e8e8;
-font-family:‘Courier New’,monospace;font-size:11px;cursor:pointer;
-text-align:left;margin-bottom:5px;transition:all 0.15s;
+  display:block;width:100%;padding:10px 12px;background:#13161a;
+  border:1px solid #1a1d22;border-radius:5px;color:#e8e8e8;
+  font-family:'Courier New',monospace;font-size:11px;cursor:pointer;
+  text-align:left;margin-bottom:5px;transition:all 0.15s;
 }
 .menu-item-btn:hover { background:#1a1d22;border-color:#2a2d33; }
 
@@ -537,8 +556,9 @@ text-align:left;margin-bottom:5px;transition:all 0.15s;
 </head>
 <body>
 
-<!-- ÖĞRETİCİ OVERLAY -->
 
+
+<!-- ÖĞRETİCİ OVERLAY -->
 <div id="tutorial-overlay" style="display:none">
   <div id="tutorial-box">
     <div id="tutorial-header">
@@ -548,125 +568,122 @@ text-align:left;margin-bottom:5px;transition:all 0.15s;
       </div>
     </div>
 
-```
-<div id="tutorial-steps">
+    <div id="tutorial-steps">
 
-  <!-- ADIM 0: Hoş Geldiniz -->
-  <div class="t-step active" data-step="0">
-    <div class="t-steps-nav" id="t-nav"></div>
-    <h2>👋 Hoş Geldiniz!</h2>
-    <p><span class="highlight">Kontur Auto NC</span>, torna tezgahları için Fanuc uyumlu G-kod üretir. Konturunuzu grafik olarak çizersiniz, program otomatik G-kod hesaplar.</p>
-    <p>Bu kısa rehber size temel kullanımı <span class="highlight">adım adım</span> gösterecek. Sonunda gerçek bir örnek kontur çizmiş olacaksınız.</p>
-    <div id="t-canvas-wrap">
-      <canvas id="t-canvas"></canvas>
-      <span class="t-canvas-label">rnek Kontur nizlemesi</span>
+      <!-- ADIM 0: Hoş Geldiniz -->
+      <div class="t-step active" data-step="0">
+        <div class="t-steps-nav" id="t-nav"></div>
+        <h2>👋 Hoş Geldiniz!</h2>
+        <p><span class="highlight">Kontur Auto NC</span>, torna tezgahları için Fanuc uyumlu G-kod üretir. Konturunuzu grafik olarak çizersiniz, program otomatik G-kod hesaplar.</p>
+        <p>Bu kısa rehber size temel kullanımı <span class="highlight">adım adım</span> gösterecek. Sonunda gerçek bir örnek kontur çizmiş olacaksınız.</p>
+        <div id="t-canvas-wrap">
+          <canvas id="t-canvas"></canvas>
+          <span class="t-canvas-label">rnek Kontur nizlemesi</span>
+        </div>
+        <div class="tip"> Bu rehber bir daha <strong>karşınıza çıkmaz</strong>. İstediğiniz zaman <strong>PARAMETRELER</strong> sekmesinden yeniden açabilirsiniz.</div>
+      </div>
+
+      <!-- ADIM 1: Arayüz -->
+      <div class="t-step" data-step="1">
+        <div class="t-steps-nav" id="t-nav-1"></div>
+        <h2>🖥️ Arayüz Tanıtımı</h2>
+        <p><span class="key">Sol Panel</span>  Canvas: Konturunuzu burada görürsünüz. Kaydırmak için sağ tık + sürükle, zoom için scroll.</p>
+        <p><span class="key">Sağ Panel</span>  4 sekme:</p>
+        <p>
+          &nbsp;⬢ <span class="highlight">ÇİZİM</span>  Nokta ekle/düzenle<br>
+          &nbsp;⬢ <span class="highlight">G-KOD</span>  Üretilen G-kod<br>
+          &nbsp;⬢ <span class="highlight">NOKTA LİSTESİ</span>  Tüm koordinatlar tablo halinde<br>
+          &nbsp;⬢ <span class="highlight">PARAMETRELER</span>  Takım, devir, ilerleme ayarları
+        </p>
+        <p><span class="key">Üst Çubuk</span>  Sıfırla, Kaydet/Yükle, FIT, Geri Al, İleri Al</p>
+        <div class="tip"> Canvas üzerinde bir noktaya <strong>tıklayarak</strong> o köşeye uzatma radüs ekleyebilirsiniz.</div>
+      </div>
+
+      <!-- ADIM 2: Başlangıç Noktası -->
+      <div class="t-step" data-step="2">
+        <div class="t-steps-nav" id="t-nav-2"></div>
+        <h2> Adım 1  Başlangıç Noktası</h2>
+        <p>ÇİZİM sekmesinde <span class="highlight">KONTUR listesi boşken</span> ilk tıklayacağınız nokta <span class="highlight">başlangıç noktasıdır</span>.</p>
+        <p>rnek kontur için:</p>
+        <p><span class="key">X Başlangıç (-)</span> = <span class="highlight">0</span> &nbsp; <span class="key">Z Başlangıç</span> = <span class="highlight">0</span></p>
+        <p>Değerleri girin ve <span class="key">✓ ONAYLA</span> butonuna basın.</p>
+        <div class="tip"> X değeri her zaman <strong>çap (-)</strong> olarak girilir. Yarıçap değil!</div>
+      </div>
+
+      <!-- ADIM 3: Düz çizgiler -->
+      <div class="t-step" data-step="3">
+        <div class="t-steps-nav" id="t-nav-3"></div>
+        <h2>📐 Adım 2  Düz çizgiler (G01)</h2>
+        <p>Tip <span class="highlight">ÇİZ</span> seçili iken aşağıdaki noktaları sırayla ekleyin:</p>
+        <p style="font-size:11px; line-height:2; color:#888;">
+          <span style="color:#00ff88">#1</span> &nbsp;X=<span class="highlight">8.000</span> &nbsp;Z=<span class="highlight">0.000</span><br>
+          <span style="color:#00ff88">#2</span> &nbsp;X=<span class="highlight">10.000</span> &nbsp;Z=<span class="highlight">-1.000</span><br>
+          <span style="color:#00ff88">#3</span> &nbsp;X=<span class="highlight">10.000</span> &nbsp;Z=<span class="highlight">-5.000</span><br>
+          <span style="color:#00ff88">#4</span> &nbsp;X=<span class="highlight">16.848</span> &nbsp;Z=<span class="highlight">-14.408</span>
+        </p>
+        <p>Her noktayı girdikten sonra <span class="key">✓ ONAYLA</span> butonuna basın.</p>
+        <div class="tip"> <strong>Geri Al</strong> için   butonu veya Ctrl+Z kullanın.</div>
+      </div>
+
+      <!-- ADIM 4: Yay (G02/G03) -->
+      <div class="t-step" data-step="4">
+        <div class="t-steps-nav" id="t-nav-4"></div>
+        <h2> Adım 3  Yay Segmentleri</h2>
+        <p>Tip <span class="highlight">YAY ±R</span> seçin. R değeri:</p>
+        <p>&nbsp;⬢ <span class="highlight">R pozitif</span>   G02 (saat yönü, konveks)<br>
+           &nbsp;⬢ <span class="highlight">R negatif</span>   G03 (saat tersi, konkav)</p>
+        <p style="font-size:11px; line-height:2; color:#888;">
+          <span style="color:#ff9500">#5</span> &nbsp;G02 &nbsp;X=<span class="highlight">18.540</span> &nbsp;Z=<span class="highlight">-15.000</span> &nbsp;R=<span class="highlight">0.900</span><br>
+          <span style="color:#00ff88">#6</span> &nbsp;G01 &nbsp;X=<span class="highlight">18.800</span> &nbsp;Z=<span class="highlight">-15.000</span><br>
+          <span style="color:#ff9500">#7</span> &nbsp;G03 &nbsp;X=<span class="highlight">20.000</span> &nbsp;Z=<span class="highlight">-15.600</span> &nbsp;R=<span class="highlight">-0.600</span>
+        </p>
+        <div class="tip"> G03 için R değerini <strong>negatif</strong> girin (-0.600).</div>
+      </div>
+
+      <!-- ADIM 5: Devam noktaları -->
+      <div class="t-step" data-step="5">
+        <div class="t-steps-nav" id="t-nav-5"></div>
+        <h2>✅ Adım 4  Konturu Tamamlayın</h2>
+        <p>Kalan noktaları ekleyin:</p>
+        <p style="font-size:11px; line-height:2; color:#888;">
+          <span style="color:#00ff88">#8</span> &nbsp;G01 &nbsp;X=<span class="highlight">20.000</span> &nbsp;Z=<span class="highlight">-22.000</span><br>
+          <span style="color:#ff9500">#9</span> &nbsp;G02 &nbsp;X=<span class="highlight">40.000</span> &nbsp;Z=<span class="highlight">-32.000</span> &nbsp;R=<span class="highlight">10.000</span><br>
+          <span style="color:#00ff88">#10</span> G01 &nbsp;X=<span class="highlight">41.000</span> &nbsp;Z=<span class="highlight">-32.000</span><br>
+          <span style="color:#ff9500">#11</span> G03 &nbsp;X=<span class="highlight">42.000</span> &nbsp;Z=<span class="highlight">-32.500</span> &nbsp;R=<span class="highlight">-0.500</span><br>
+          <span style="color:#00ff88">#12</span> G01 &nbsp;X=<span class="highlight">42.000</span> &nbsp;Z=<span class="highlight">-40.000</span>
+        </p>
+        <p>Tüm noktaları ekledikten sonra <span class="key">G-KOD</span> sekmesine geçin. Hazır G-kodunuzu göreceksiniz!</p>
+      </div>
+
+      <!-- ADIM 6: İpuçları -->
+      <div class="t-step" data-step="6">
+        <div class="t-steps-nav" id="t-nav-6"></div>
+        <h2> İpuçları &amp; Kısayollar</h2>
+        <p><span class="key">Ctrl+Z</span> Geri Al &nbsp; <span class="key">Ctrl+Y</span> İleri Al</p>
+        <p><span class="key">FIT</span> Konturu ekrana sığdır</p>
+        <p><span class="warn">Uzatma Radüs:</span> Canvas'ta bir <strong>köşe noktasına tıklayın</strong>   R değeri girin   otomatik G02/G03 eklenir.</p>
+        <p><span class="warn">Nokta Listesi:</span> KOPYALA/YAPIŞTIR ile kontur listesini farklı cihazlara aktarabilirsiniz.</p>
+        <p><span class="warn">TNR Telafisi:</span> PARAMETRELER sekmesinden takım uç radüsünü ayarlayın  — G-kod otomatik telafi eder.</p>
+        <p><span class="warn">.NC Kaydet/Yükle:</span> G-kodu .nc uzantılı dosya olarak kaydedip yükleyebilirsiniz.</p>
+        <div class="tip">🎉 Hazırsınız! Bu rehber bir daha görünmeyecek. İyi çalışmalar!</div>
+      </div>
+
+    </div><!-- /tutorial-steps -->
+
+    <div id="tutorial-footer">
+      <span id="t-progress">Adım 1 / 7</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="t-skip" onclick="tutorialFinish()">Geç</span>
+        <button class="t-btn" id="t-prev" onclick="tutorialPrev()" style="display:none">- Geri</button>
+        <button class="t-btn primary" id="t-next" onclick="tutorialNext()">İleri -</button>
+        <button class="t-btn finish" id="t-finish" onclick="tutorialFinish()" style="display:none">▶ Başla!</button>
+      </div>
     </div>
-    <div class="tip"> Bu rehber bir daha <strong>karşınıza çıkmaz</strong>. İstediğiniz zaman <strong>PARAMETRELER</strong> sekmesinden yeniden açabilirsiniz.</div>
-  </div>
-
-  <!-- ADIM 1: Arayüz -->
-  <div class="t-step" data-step="1">
-    <div class="t-steps-nav" id="t-nav-1"></div>
-    <h2>🖥️ Arayüz Tanıtımı</h2>
-    <p><span class="key">Sol Panel</span>  Canvas: Konturunuzu burada görürsünüz. Kaydırmak için sağ tık + sürükle, zoom için scroll.</p>
-    <p><span class="key">Sağ Panel</span>  4 sekme:</p>
-    <p>
-      &nbsp;⬢ <span class="highlight">ÇİZİM</span>  Nokta ekle/düzenle<br>
-      &nbsp;⬢ <span class="highlight">G-KOD</span>  Üretilen G-kod<br>
-      &nbsp;⬢ <span class="highlight">NOKTA LİSTESİ</span>  Tüm koordinatlar tablo halinde<br>
-      &nbsp;⬢ <span class="highlight">PARAMETRELER</span>  Takım, devir, ilerleme ayarları
-    </p>
-    <p><span class="key">Üst Çubuk</span>  Sıfırla, Kaydet/Yükle, FIT, Geri Al, İleri Al</p>
-    <div class="tip"> Canvas üzerinde bir noktaya <strong>tıklayarak</strong> o köşeye uzatma radüs ekleyebilirsiniz.</div>
-  </div>
-
-  <!-- ADIM 2: Başlangıç Noktası -->
-  <div class="t-step" data-step="2">
-    <div class="t-steps-nav" id="t-nav-2"></div>
-    <h2> Adım 1  Başlangıç Noktası</h2>
-    <p>ÇİZİM sekmesinde <span class="highlight">KONTUR listesi boşken</span> ilk tıklayacağınız nokta <span class="highlight">başlangıç noktasıdır</span>.</p>
-    <p>rnek kontur için:</p>
-    <p><span class="key">X Başlangıç (-)</span> = <span class="highlight">0</span> &nbsp; <span class="key">Z Başlangıç</span> = <span class="highlight">0</span></p>
-    <p>Değerleri girin ve <span class="key">✓ ONAYLA</span> butonuna basın.</p>
-    <div class="tip"> X değeri her zaman <strong>çap (-)</strong> olarak girilir. Yarıçap değil!</div>
-  </div>
-
-  <!-- ADIM 3: Düz çizgiler -->
-  <div class="t-step" data-step="3">
-    <div class="t-steps-nav" id="t-nav-3"></div>
-    <h2>📐 Adım 2  Düz çizgiler (G01)</h2>
-    <p>Tip <span class="highlight">ÇİZ</span> seçili iken aşağıdaki noktaları sırayla ekleyin:</p>
-    <p style="font-size:11px; line-height:2; color:#888;">
-      <span style="color:#00ff88">#1</span> &nbsp;X=<span class="highlight">8.000</span> &nbsp;Z=<span class="highlight">0.000</span><br>
-      <span style="color:#00ff88">#2</span> &nbsp;X=<span class="highlight">10.000</span> &nbsp;Z=<span class="highlight">-1.000</span><br>
-      <span style="color:#00ff88">#3</span> &nbsp;X=<span class="highlight">10.000</span> &nbsp;Z=<span class="highlight">-5.000</span><br>
-      <span style="color:#00ff88">#4</span> &nbsp;X=<span class="highlight">16.848</span> &nbsp;Z=<span class="highlight">-14.408</span>
-    </p>
-    <p>Her noktayı girdikten sonra <span class="key">✓ ONAYLA</span> butonuna basın.</p>
-    <div class="tip"> <strong>Geri Al</strong> için   butonu veya Ctrl+Z kullanın.</div>
-  </div>
-
-  <!-- ADIM 4: Yay (G02/G03) -->
-  <div class="t-step" data-step="4">
-    <div class="t-steps-nav" id="t-nav-4"></div>
-    <h2> Adım 3  Yay Segmentleri</h2>
-    <p>Tip <span class="highlight">YAY ±R</span> seçin. R değeri:</p>
-    <p>&nbsp;⬢ <span class="highlight">R pozitif</span>   G02 (saat yönü, konveks)<br>
-       &nbsp;⬢ <span class="highlight">R negatif</span>   G03 (saat tersi, konkav)</p>
-    <p style="font-size:11px; line-height:2; color:#888;">
-      <span style="color:#ff9500">#5</span> &nbsp;G02 &nbsp;X=<span class="highlight">18.540</span> &nbsp;Z=<span class="highlight">-15.000</span> &nbsp;R=<span class="highlight">0.900</span><br>
-      <span style="color:#00ff88">#6</span> &nbsp;G01 &nbsp;X=<span class="highlight">18.800</span> &nbsp;Z=<span class="highlight">-15.000</span><br>
-      <span style="color:#ff9500">#7</span> &nbsp;G03 &nbsp;X=<span class="highlight">20.000</span> &nbsp;Z=<span class="highlight">-15.600</span> &nbsp;R=<span class="highlight">-0.600</span>
-    </p>
-    <div class="tip"> G03 için R değerini <strong>negatif</strong> girin (-0.600).</div>
-  </div>
-
-  <!-- ADIM 5: Devam noktaları -->
-  <div class="t-step" data-step="5">
-    <div class="t-steps-nav" id="t-nav-5"></div>
-    <h2>✅ Adım 4  Konturu Tamamlayın</h2>
-    <p>Kalan noktaları ekleyin:</p>
-    <p style="font-size:11px; line-height:2; color:#888;">
-      <span style="color:#00ff88">#8</span> &nbsp;G01 &nbsp;X=<span class="highlight">20.000</span> &nbsp;Z=<span class="highlight">-22.000</span><br>
-      <span style="color:#ff9500">#9</span> &nbsp;G02 &nbsp;X=<span class="highlight">40.000</span> &nbsp;Z=<span class="highlight">-32.000</span> &nbsp;R=<span class="highlight">10.000</span><br>
-      <span style="color:#00ff88">#10</span> G01 &nbsp;X=<span class="highlight">41.000</span> &nbsp;Z=<span class="highlight">-32.000</span><br>
-      <span style="color:#ff9500">#11</span> G03 &nbsp;X=<span class="highlight">42.000</span> &nbsp;Z=<span class="highlight">-32.500</span> &nbsp;R=<span class="highlight">-0.500</span><br>
-      <span style="color:#00ff88">#12</span> G01 &nbsp;X=<span class="highlight">42.000</span> &nbsp;Z=<span class="highlight">-40.000</span>
-    </p>
-    <p>Tüm noktaları ekledikten sonra <span class="key">G-KOD</span> sekmesine geçin. Hazır G-kodunuzu göreceksiniz!</p>
-  </div>
-
-  <!-- ADIM 6: İpuçları -->
-  <div class="t-step" data-step="6">
-    <div class="t-steps-nav" id="t-nav-6"></div>
-    <h2> İpuçları &amp; Kısayollar</h2>
-    <p><span class="key">Ctrl+Z</span> Geri Al &nbsp; <span class="key">Ctrl+Y</span> İleri Al</p>
-    <p><span class="key">FIT</span> Konturu ekrana sığdır</p>
-    <p><span class="warn">Uzatma Radüs:</span> Canvas'ta bir <strong>köşe noktasına tıklayın</strong>   R değeri girin   otomatik G02/G03 eklenir.</p>
-    <p><span class="warn">Nokta Listesi:</span> KOPYALA/YAPIŞTIR ile kontur listesini farklı cihazlara aktarabilirsiniz.</p>
-    <p><span class="warn">TNR Telafisi:</span> PARAMETRELER sekmesinden takım uç radüsünü ayarlayın  — G-kod otomatik telafi eder.</p>
-    <p><span class="warn">.NC Kaydet/Yükle:</span> G-kodu .nc uzantılı dosya olarak kaydedip yükleyebilirsiniz.</p>
-    <div class="tip">🎉 Hazırsınız! Bu rehber bir daha görünmeyecek. İyi çalışmalar!</div>
-  </div>
-
-</div><!-- /tutorial-steps -->
-
-<div id="tutorial-footer">
-  <span id="t-progress">Adım 1 / 7</span>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <span id="t-skip" onclick="tutorialFinish()">Geç</span>
-    <button class="t-btn" id="t-prev" onclick="tutorialPrev()" style="display:none">- Geri</button>
-    <button class="t-btn primary" id="t-next" onclick="tutorialNext()">İleri -</button>
-    <button class="t-btn finish" id="t-finish" onclick="tutorialFinish()" style="display:none">▶ Başla!</button>
   </div>
 </div>
-```
 
-  </div>
-</div>
 
 <!-- TOP BAR -->
-
 <div id="topbar">
   <div style="display:flex;align-items:center;gap:0.4vw;flex-shrink:0;">
     <button class="tbtn" onclick="sideMenuOpen()" style="font-size:clamp(10px,1.2vw,15px);padding:0.4vh 1vw;letter-spacing:1px;">☰ MENÜ</button>
@@ -690,11 +707,9 @@ text-align:left;margin-bottom:5px;transition:all 0.15s;
 </div>
 
 <!-- MAIN APP -->
-
 <div id="app">
 
   <!-- CANVAS VIEWPORT -->
-
   <div id="viewport">
     <canvas id="cv2d"></canvas>
     <!-- çizim modu araçları -->
@@ -714,242 +729,243 @@ text-align:left;margin-bottom:5px;transition:all 0.15s;
   </div>
 
   <!-- RIGHT PANEL -->
-
   <div id="right">
 
-```
-<!-- -- INPUT TAB -- -->
-<div id="tab-input" class="tabcontent active">
 
-  <!-- Sol: Feature Listesi -->
-  <div id="feature-list">
-    <div id="feature-list-header" style="flex-direction:column;gap:2px;padding:0.3vh 0.3vw;">
-      <span style="font-size:clamp(7px,0.7vw,9px);">KONTUR</span>
-      <button style="background:#0d1a0d;border:1px solid #1a3a1a;color:#27ae60;cursor:pointer;font-size:clamp(9px,0.9vw,11px);padding:0.3vh 0.2vw;border-radius:3px;width:100%;font-family:'Courier New',monospace;"
-        onclick="openNewFeature()">+ YENİ</button>
-    </div>
-    <div id="feature-list-body"></div>
-  </div>
+    <!-- -- INPUT TAB -- -->
+    <div id="tab-input" class="tabcontent active">
 
-  <!-- Tip butonları  tab-input direkt çocuxu, order:1 ile en solda -->
-  <div id="feat-type-bar">
-    <button class="ftype-btn active" id="fb-G01" onclick="selectFeatType('G01')" title="Düz çizgi">
-      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="2" y1="20" x2="20" y2="4"/>
-        <polyline points="14,4 20,4 20,10" stroke-width="1.5"/>
-      </svg>
-      <span>Düz</span>
-    </button>
-    <button class="ftype-btn" id="fb-ANG" onclick="selectFeatType('ANG')" title="Açılı çizgi">
-      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="2" y1="20" x2="11" y2="20"/>
-        <line x1="11" y1="20" x2="20" y2="4"/>
-        <text x="6" y="12" font-size="7" fill="currentColor" stroke="none">A°</text>
-      </svg>
-      <span>AÇILI</span>
-    </button>
-    <button class="ftype-btn arc-cw" id="fb-G02" onclick="selectFeatType('G02')" title="Yay (+R=CW, -R=CCW)">
-      <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M3 19 Q11 3 19 11"/>
-        <polyline points="14,8 19,11 16,16" stroke-width="1.5"/>
-      </svg>
-      <span>YAY ±R</span>
-    </button>
-  </div>
+      <!-- Sol: Feature Listesi -->
+      <div id="feature-list">
+        <div id="feature-list-header" style="flex-direction:column;gap:2px;padding:0.3vh 0.3vw;">
+          <span style="font-size:clamp(7px,0.7vw,9px);">KONTUR</span>
+          <button style="background:#0d1a0d;border:1px solid #1a3a1a;color:#27ae60;cursor:pointer;font-size:clamp(9px,0.9vw,11px);padding:0.3vh 0.2vw;border-radius:3px;width:100%;font-family:'Courier New',monospace;"
+            onclick="openNewFeature()">+ YENİ</button>
+        </div>
+        <div id="feature-list-body"></div>
+      </div>
 
-  <!-- Sax: Feature Editörü -->
-  <div id="feature-editor">
+      <!-- Tip butonları  tab-input direkt çocuxu, order:1 ile en solda -->
+      <div id="feat-type-bar">
+        <button class="ftype-btn active" id="fb-G01" onclick="selectFeatType('G01')" title="Düz çizgi">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="2" y1="20" x2="20" y2="4"/>
+            <polyline points="14,4 20,4 20,10" stroke-width="1.5"/>
+          </svg>
+          <span>Düz</span>
+        </button>
+        <button class="ftype-btn" id="fb-ANG" onclick="selectFeatType('ANG')" title="Açılı çizgi">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="2" y1="20" x2="11" y2="20"/>
+            <line x1="11" y1="20" x2="20" y2="4"/>
+            <text x="6" y="12" font-size="7" fill="currentColor" stroke="none">A°</text>
+          </svg>
+          <span>AÇILI</span>
+        </button>
+        <button class="ftype-btn arc-cw" id="fb-G02" onclick="selectFeatType('G02')" title="Yay (+R=CW, -R=CCW)">
+          <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 19 Q11 3 19 11"/>
+            <polyline points="14,8 19,11 16,16" stroke-width="1.5"/>
+          </svg>
+          <span>YAY ±R</span>
+        </button>
+      </div>
 
-    <!-- OK butonu + label - üstte sabit -->
-    <div id="feat-ok-bar">
-      <button class="feat-ok-btn" onclick="featOK()">✓ ONAYLA</button>
-      <button class="feat-ok-btn" style="flex:0 0 5vw;min-width:36px;max-width:48px;background:#1e1e1e;font-size:clamp(12px,1.5vw,18px);" onclick="undo()" title="Geri Al (Ctrl+Z)"> </button>
-    </div>
-    <!-- Label elementleri - gizli, JS için -->
-    <div id="feat-editor-title" style="display:none;">
-      <span id="feat-editor-label"></span>
-      <span id="feat-editor-idx"></span>
-    </div>
+      <!-- Sax: Feature Editörü -->
+      <div id="feature-editor">
 
-    <!-- Giriş alanları -->
-    <div id="feat-fields">
-      <!-- START alanları (sadece ilk nokta) -->
-      <div id="ff-start" style="display:none">
-        <!-- TNR Yön Seçimi -->
-        <div id="ff-tnr-select" style="margin-bottom:10px;padding:8px 0 6px 0;border-bottom:1px solid #1a2a3a;">
-          <div style="color:#888;font-size:clamp(9px,1vw,12px);margin-bottom:0.5vh;letter-spacing:1px;">TAKIM UCU RADÜSÜ TELAFİSİ</div>
-          <div style="display:flex;gap:0.5vw;margin-bottom:0.5vh;">
-            <button id="tnr-btn-outer" class="tnr-dir-btn tnr-active" onclick="setTnrDir('outer')"
-              style="padding:0.8vh 0.5vw;font-size:clamp(10px,1.1vw,13px);">
-              - Dış Torna
-            </button>
-            <button id="tnr-btn-inner" class="tnr-dir-btn" onclick="setTnrDir('inner')"
-              style="padding:0.8vh 0.5vw;font-size:clamp(10px,1.1vw,13px);">
-              - İç Torna
-            </button>
+        <!-- OK butonu + label - üstte sabit -->
+        <div id="feat-ok-bar">
+          <button class="feat-ok-btn" onclick="featOK()">✓ ONAYLA</button>
+          <button class="feat-ok-btn" style="flex:0 0 5vw;min-width:36px;max-width:48px;background:#1e1e1e;font-size:clamp(12px,1.5vw,18px);" onclick="undo()" title="Geri Al (Ctrl+Z)"> </button>
+        </div>
+        <!-- Label elementleri - gizli, JS için -->
+        <div id="feat-editor-title" style="display:none;">
+          <span id="feat-editor-label"></span>
+          <span id="feat-editor-idx"></span>
+        </div>
+
+        <!-- Giriş alanları -->
+        <div id="feat-fields">
+          <!-- START alanları (sadece ilk nokta) -->
+          <div id="ff-start" style="display:none">
+            <!-- TNR Yön Seçimi -->
+            <div id="ff-tnr-select" style="margin-bottom:10px;padding:8px 0 6px 0;border-bottom:1px solid #1a2a3a;">
+              <div style="color:#888;font-size:clamp(9px,1vw,12px);margin-bottom:0.5vh;letter-spacing:1px;">TAKIM UCU RADÜSÜ TELAFİSİ</div>
+              <div style="display:flex;gap:0.5vw;margin-bottom:0.5vh;">
+                <button id="tnr-btn-outer" class="tnr-dir-btn tnr-active" onclick="setTnrDir('outer')"
+                  style="padding:0.8vh 0.5vw;font-size:clamp(10px,1.1vw,13px);">
+                  - Dış Torna
+                </button>
+                <button id="tnr-btn-inner" class="tnr-dir-btn" onclick="setTnrDir('inner')"
+                  style="padding:0.8vh 0.5vw;font-size:clamp(10px,1.1vw,13px);">
+                  - İç Torna
+                </button>
+              </div>
+              <!-- Uç Radüsü R girişi -->
+              <div style="display:flex;align-items:center;gap:0.5vw;margin-top:0.3vh;">
+                <span style="color:#667;font-size:clamp(9px,0.9vw,11px);flex-shrink:0;">R =</span>
+                <input readonly inputmode="none" id="ff-tnr-r" style="text-align:right;cursor:pointer;width:70px;max-width:70px;flex:0 0 70px;" onclick="openNumKb(this)">
+                <span style="color:#446;font-size:clamp(8px,0.8vw,10px);flex-shrink:0;">mm</span>
+              </div>
+            </div>
+            <div class="feat-field-row">
+              <label>X Başlangıç (-)</label>
+              <input readonly inputmode="none" id="ff-startX" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row">
+              <label>Z Başlangıç</label>
+              <input readonly inputmode="none" id="ff-startZ" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <span class="unit">mm</span>
+            </div>
           </div>
-          <!-- Uç Radüsü R girişi -->
-          <div style="display:flex;align-items:center;gap:0.5vw;margin-top:0.3vh;">
-            <span style="color:#667;font-size:clamp(9px,0.9vw,11px);flex-shrink:0;">R =</span>
-            <input readonly inputmode="none" id="ff-tnr-r" style="text-align:right;cursor:pointer;width:70px;max-width:70px;flex:0 0 70px;" onclick="openNumKb(this)">
-            <span style="color:#446;font-size:clamp(8px,0.8vw,10px);flex-shrink:0;">mm</span>
+
+          <!-- G01 / ANG alanları -->
+          <div id="ff-line" style="display:none">
+            <div class="feat-field-row" id="ff-row-X">
+              <label>X Hedef (-)</label>
+              <input readonly inputmode="none" id="ff-X" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <button class="ang-auto-btn" id="ff-X-auto" onclick="angAuto('X')" style="display:none">OTO</button>
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row" id="ff-row-Z">
+              <label>Z Hedef</label>
+              <input readonly inputmode="none" id="ff-Z" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <button class="ang-auto-btn" id="ff-Z-auto" onclick="angAuto('Z')" style="display:none">OTO</button>
+              <span class="unit">mm</span>
+            </div>
+            <div class="feat-field-row" id="ff-row-A" style="display:none">
+              <label>A° Açı</label>
+              <input readonly inputmode="none" id="ff-A" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <button class="ang-auto-btn" id="ff-A-auto" onclick="angAuto('A')" style="display:none">OTO</button>
+              <span class="unit">°</span>
+            </div>
+          </div>
+
+          <!-- G02/G03 ek alanı -->
+          <div id="ff-arc" style="display:none">
+            <div class="feat-field-row">
+              <label>R Radüs</label>
+              <input readonly inputmode="none" id="ff-R" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <span class="unit">mm</span>
+            </div>
+            <div style="color:#444;font-size:9px;margin-top:-4px;padding-left:6vw">+   CW (konveks) &nbsp; -   CCW (konkav)</div>
+          </div>
+
+          <!-- PAH ek alanı -->
+          <div id="ff-pah" style="display:none">
+            <div class="feat-field-row">
+              <label>C Pah</label>
+              <input readonly inputmode="none" id="ff-C" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
+              <span class="unit">mm</span>
+            </div>
+          </div>
+
+          <hr class="feat-separator">
+          <div style="color:#333;font-size:9px;line-height:1.6;padding:2px 0">
+            TNR: <span id="ff-tnr-show" style="color:#ffaa00">0.8</span> mm &nbsp;|&nbsp;
+            <span id="ff-dir-show" style="color:#888">Dıx</span>
           </div>
         </div>
-        <div class="feat-field-row">
-          <label>X Başlangıç (-)</label>
-          <input readonly inputmode="none" id="ff-startX" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-        <div class="feat-field-row">
-          <label>Z Başlangıç</label>
-          <input readonly inputmode="none" id="ff-startZ" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-      </div>
 
-      <!-- G01 / ANG alanları -->
-      <div id="ff-line" style="display:none">
-        <div class="feat-field-row" id="ff-row-X">
-          <label>X Hedef (-)</label>
-          <input readonly inputmode="none" id="ff-X" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-        <div class="feat-field-row" id="ff-row-Z">
-          <label>Z Hedef</label>
-          <input readonly inputmode="none" id="ff-Z" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-        <div class="feat-field-row" id="ff-row-A" style="display:none">
-          <label>A° Açı</label>
-          <input readonly inputmode="none" id="ff-A" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">°</span>
-        </div>
-      </div>
 
-      <!-- G02/G03 ek alanı -->
-      <div id="ff-arc" style="display:none">
-        <div class="feat-field-row">
-          <label>R Radüs</label>
-          <input readonly inputmode="none" id="ff-R" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-        <div style="color:#444;font-size:9px;margin-top:-4px;padding-left:6vw">+   CW (konveks) &nbsp; -   CCW (konkav)</div>
-      </div>
-
-      <!-- PAH ek alanı -->
-      <div id="ff-pah" style="display:none">
-        <div class="feat-field-row">
-          <label>C Pah</label>
-          <input readonly inputmode="none" id="ff-C" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)">
-          <span class="unit">mm</span>
-        </div>
-      </div>
-
-      <hr class="feat-separator">
-      <div style="color:#333;font-size:9px;line-height:1.6;padding:2px 0">
-        TNR: <span id="ff-tnr-show" style="color:#ffaa00">0.8</span> mm &nbsp;|&nbsp;
-        <span id="ff-dir-show" style="color:#888">Dıx</span>
       </div>
     </div>
 
+    <!-- -- GCODE TAB -- -->
+    <div id="tab-gcode" class="tabcontent">
+      <div id="gcodeToolbar">
+        <button class="tbtn" id="editBtn" onclick="toggleEdit()">✏ DÜZENLE</button>
+        <button class="tbtn" onclick="copyGcode()">⎘ KOPYALA</button>
+        
+        <span id="editStatus" style="color:#555;font-size:10px;margin-left:auto;">Salt Okunur</span>
+      </div>
+      <textarea id="gcodeDisplay" readonly>G21 G40 G90 G95...</textarea>
+    </div>
 
-  </div>
-</div>
+    <!-- -- COORDS TAB -- -->
+    <div id="tab-coords" class="tabcontent">
+      <div style="display:flex;gap:4px;padding:6px 0;border-bottom:1px solid #1a1d22;margin-bottom:4px">
+        <button class="tbtn" onclick="copyPointList()" title="Nokta listesini panoya kopyala">↩ KOPYALA</button>
+        <button class="tbtn" onclick="pastePointList()" title="Panodaki nokta listesini yükle"> YAPIŞTIR</button>
+        <button class="tbtn" style="margin-left:auto;color:#ff6666" onclick="if(confirm('Tüm noktaları sil?')){elements=[];startPoint=null;lastPoint=null;generateGCode();redraw();updateCoordsTable();}"> TEMİZLE</button>
+      </div>
+      <div id="coordsTable">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Tip</th>
+            <th>X (-)</th><th>Z</th>
+            <th>R/C</th><th>Komp</th><th></th>
+          </tr></thead>
+          <tbody id="coordsBody"></tbody>
+        </table>
+      </div>
+    </div>
 
-<!-- -- GCODE TAB -- -->
-<div id="tab-gcode" class="tabcontent">
-  <div id="gcodeToolbar">
-    <button class="tbtn" id="editBtn" onclick="toggleEdit()">✏ DÜZENLE</button>
-    <button class="tbtn" onclick="copyGcode()">⎘ KOPYALA</button>
-    
-    <span id="editStatus" style="color:#555;font-size:10px;margin-left:auto;">Salt Okunur</span>
-  </div>
-  <textarea id="gcodeDisplay" readonly>G21 G40 G90 G95...</textarea>
-</div>
+    <!-- -- PARAMS TAB -- -->
+    <div id="tab-params" class="tabcontent">
+      <div class="p-group">
+        <h4>Program Başlığı</h4>
+        <div class="p-row"><label>Program No</label><input type="text" id="pProg" value="O1000"></div>
+        <div class="p-row"><label>Takım No</label><input type="text" id="pTool" value="T0101"></div>
+        <div class="p-row"><label>Dönüş Yönü</label>
+          <select id="pSpin"><option value="M03">M03 (İleri)</option><option value="M04">M04 (Geri)</option></select>
+        </div>
+      </div>
+      <div class="p-group">
+        <h4>Kesme Parametreleri</h4>
+        <div class="p-row"><label>Devir (S)</label><input type="number" id="pS" value="1200"></div>
+        <div class="p-row"><label>İlerleme F (mm/dev)</label><input type="number" id="pF" value="0.15" step="0.01"></div>
+        <div class="p-row"><label>Hızlı Çekim G00</label><input type="text" id="pRetract" value="X200 Z100"></div>
+      </div>
+      <div class="p-group">
+        <h4>Takım Uç Radüsü Telafisi</h4>
+        <div class="p-row"><label>Uç Radüsü (TNR)</label><input readonly inputmode="none" id="pToolR" value="0.8" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)"></div>
+        <select id="pToolDir" style="display:none">
+            <option value="outer">Dış Torna (X+)</option>
+            <option value="inner">İç Torna (X-)</option>
+          </select>
+        <div class="p-row"><label>TNR Telafisi</label>
+          <select id="pTNRmode">
+            <option value="on">Aktif (G-koda uygula)</option>
+            <option value="off">Kapalı (ham koordinat)</option>
+          </select>
+        </div>
+        <div style="color:#666;font-size:9px;line-height:1.5;margin-top:6px;padding:6px;background:#0d0f12;border-radius:4px;">
+          Köşe koordinatları değişmez.<br>
+          Pah/radüs giriş noktaları takım<br>
+          uç radüsüne göre otomatik hesaplanır.
+        </div>
+      </div>
+      <div class="p-group">
+        <h4>Uzatma Uzatma</h4>
+        <div style="color:#666;font-size:9px;line-height:1.5;margin-bottom:6px;">
+          Kontur başına/sonuna aynı yönde uzatma uzatma.<br>Düz düz, açılı aynı açıda.
+        </div>
+        <div class="p-row"><label>Giriş Uzatma (mm)</label><input type="number" id="pApproach" value="2" step="0.5" min="0"></div>
+        <div class="p-row"><label>Çıkış Uzatma (mm)</label><input type="number" id="pRetractLen" value="2" step="0.5" min="0"></div>
+      </div>
+      <div class="p-group">
+        <h4>Görüntü Ayarları</h4>
+        <div class="p-row"><label>Kontur Rengi</label>
+          <select id="pColor" onchange="redraw()">
+            <option value="#00aaff">Mavi</option>
+            <option value="#00ff88">Yeşil</option>
+            <option value="#ff9500">Turuncu</option>
+            <option value="#ff4444">Kırmızı</option>
+          </select>
+        </div>
+        <div class="p-row"><label>Telafi Çizgisi</label>
+          <select id="pShowComp" onchange="redraw()">
+            <option value="1">Göster</option>
+            <option value="0">Gizle</option>
+          </select>
+        </div>
+      </div>
 
-<!-- -- COORDS TAB -- -->
-<div id="tab-coords" class="tabcontent">
-  <div style="display:flex;gap:4px;padding:6px 0;border-bottom:1px solid #1a1d22;margin-bottom:4px">
-    <button class="tbtn" onclick="copyPointList()" title="Nokta listesini panoya kopyala">↩ KOPYALA</button>
-    <button class="tbtn" onclick="pastePointList()" title="Panodaki nokta listesini yükle"> YAPIŞTIR</button>
-    <button class="tbtn" style="margin-left:auto;color:#ff6666" onclick="if(confirm('Tüm noktaları sil?')){elements=[];startPoint=null;lastPoint=null;generateGCode();redraw();updateCoordsTable();}"> TEMİZLE</button>
-  </div>
-  <div id="coordsTable">
-    <table>
-      <thead><tr>
-        <th>#</th><th>Tip</th>
-        <th>X (-)</th><th>Z</th>
-        <th>R/C</th><th>Komp</th><th></th>
-      </tr></thead>
-      <tbody id="coordsBody"></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- -- PARAMS TAB -- -->
-<div id="tab-params" class="tabcontent">
-  <div class="p-group">
-    <h4>Program Başlığı</h4>
-    <div class="p-row"><label>Program No</label><input type="text" id="pProg" value="O1000"></div>
-    <div class="p-row"><label>Takım No</label><input type="text" id="pTool" value="T0101"></div>
-    <div class="p-row"><label>Dönüş Yönü</label>
-      <select id="pSpin"><option value="M03">M03 (İleri)</option><option value="M04">M04 (Geri)</option></select>
+      <button class="btn btn-generate" onclick="generateGCode();alert('Parametreler güncellendi!')">UYGULA & G-KOD GÜNCELLE</button>
     </div>
-  </div>
-  <div class="p-group">
-    <h4>Kesme Parametreleri</h4>
-    <div class="p-row"><label>Devir (S)</label><input type="number" id="pS" value="1200"></div>
-    <div class="p-row"><label>İlerleme F (mm/dev)</label><input type="number" id="pF" value="0.15" step="0.01"></div>
-    <div class="p-row"><label>Hızlı Çekim G00</label><input type="text" id="pRetract" value="X200 Z100"></div>
-  </div>
-  <div class="p-group">
-    <h4>Takım Uç Radüsü Telafisi</h4>
-    <div class="p-row"><label>Uç Radüsü (TNR)</label><input readonly inputmode="none" id="pToolR" value="0.8" style="text-align:right;cursor:pointer;" onclick="openNumKb(this)"></div>
-    <select id="pToolDir" style="display:none">
-        <option value="outer">Dış Torna (X+)</option>
-        <option value="inner">İç Torna (X-)</option>
-      </select>
-    <div class="p-row"><label>TNR Telafisi</label>
-      <select id="pTNRmode">
-        <option value="on">Aktif (G-koda uygula)</option>
-        <option value="off">Kapalı (ham koordinat)</option>
-      </select>
-    </div>
-    <div style="color:#666;font-size:9px;line-height:1.5;margin-top:6px;padding:6px;background:#0d0f12;border-radius:4px;">
-      Köşe koordinatları değişmez.<br>
-      Pah/radüs giriş noktaları takım<br>
-      uç radüsüne göre otomatik hesaplanır.
-    </div>
-  </div>
-  <div class="p-group">
-    <h4>Uzatma Uzatma</h4>
-    <div style="color:#666;font-size:9px;line-height:1.5;margin-bottom:6px;">
-      Kontur başına/sonuna aynı yönde uzatma uzatma.<br>Düz düz, açılı aynı açıda.
-    </div>
-    <div class="p-row"><label>Giriş Uzatma (mm)</label><input type="number" id="pApproach" value="2" step="0.5" min="0"></div>
-    <div class="p-row"><label>Çıkış Uzatma (mm)</label><input type="number" id="pRetractLen" value="2" step="0.5" min="0"></div>
-  </div>
-  <div class="p-group">
-    <h4>Görüntü Ayarları</h4>
-    <div class="p-row"><label>Kontur Rengi</label>
-      <select id="pColor" onchange="redraw()">
-        <option value="#00aaff">Mavi</option>
-        <option value="#00ff88">Yeşil</option>
-        <option value="#ff9500">Turuncu</option>
-        <option value="#ff4444">Kırmızı</option>
-      </select>
-    </div>
-    <div class="p-row"><label>Telafi Çizgisi</label>
-      <select id="pShowComp" onchange="redraw()">
-        <option value="1">Göster</option>
-        <option value="0">Gizle</option>
-      </select>
-    </div>
-  </div>
-
-  <button class="btn btn-generate" onclick="generateGCode();alert('Parametreler güncellendi!')">UYGULA & G-KOD GÜNCELLE</button>
-</div>
-```
 
   </div><!-- /right -->
 </div><!-- /app -->
@@ -2148,25 +2164,138 @@ function liveUpdate() {
   }
   if (!isNaN(cv) && el.type==='PAH') el.c = cv;
 
-  // ANG: eksik değeri anlık hesapla
+  // ANG: eksik deger artik OTO butonu ile hesaplaniyor (anlik degil).
+  // Kullanici X, Z, A'dan ikisini girip OTO butonuna basarak ucuncuyu doldurur.
+  // Burada sadece OTO butonu gorunurlugunu guncelle:
   if (activeFeatType === 'ANG') {
-    const prev = editingIdx > 0 ? elements[editingIdx-1].to : (editingIdx === 0 ? startPoint : lastPoint);
-    if (prev && !isNaN(av) && av !== 0) {
-      const px = prev.x; const pz = prev.z;
-      const xEntered = !isNaN(xv);
-      const zEntered = !isNaN(zv);
-      const tanA = Math.tan(Math.abs(av) * Math.PI / 180);
-      if (xEntered && !zEntered && tanA > 1e-10) {
-        el.to.z = pz - Math.abs(el.to.x - px) / tanA;
-      } else if (!xEntered && zEntered && tanA > 1e-10) {
-        el.to.x = px + tanA * Math.abs(pz - el.to.z);
-      }
-    }
+    _refreshAngAutoButtons();
   }
 
   elements.forEach((e,i) => { e.from = i===0?startPoint:elements[i-1].to; });
   lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
   generateGCode(); redraw(); updateCoordsTable();
+}
+
+// ============================================================
+// ANG OTO HESAP (X, Z, A'dan ikisi girilince ucuncuyu hesaplar)
+// ============================================================
+// Kural: A acisinin isareti X yonunu belirler.
+//   A > 0  -> X artiyor (yukari, parmaga dogru)
+//   A < 0  -> X azaliyor (asagi, eksene dogru)
+// Suris yonu (Z+ veya Z-) kullanicidan gelir; biz sadece dx ve dz buyukluk
+// iliskisinden ucuncu degeri cikariyoruz.
+
+function _angGetPrevPoint() {
+  if (typeof editingIdx === 'undefined' || editingIdx === null) return null;
+  if (editingIdx > 0 && elements[editingIdx-1]) return elements[editingIdx-1].to;
+  if (editingIdx === 0) return startPoint;
+  return lastPoint;
+}
+
+function _angReadInputs() {
+  const xRaw = document.getElementById('ff-X')?.value;
+  const zRaw = document.getElementById('ff-Z')?.value;
+  const aRaw = document.getElementById('ff-A')?.value;
+  const x = (xRaw === '' || xRaw == null) ? NaN : parseFloat(xRaw);
+  const z = (zRaw === '' || zRaw == null) ? NaN : parseFloat(zRaw);
+  const a = (aRaw === '' || aRaw == null) ? NaN : parseFloat(aRaw);
+  // ff-X UI'da CAP olarak gosteriliyor; ic hesap YARICAP uzerinden
+  return { x: isNaN(x) ? NaN : x/2, z, a, xCap: x };
+}
+
+function _refreshAngAutoButtons() {
+  const xBtn = document.getElementById('ff-X-auto');
+  const zBtn = document.getElementById('ff-Z-auto');
+  const aBtn = document.getElementById('ff-A-auto');
+  if (!xBtn || !zBtn || !aBtn) return;
+
+  // Sadece ANG aktifken gorunsun
+  if (activeFeatType !== 'ANG') {
+    xBtn.style.display = 'none';
+    zBtn.style.display = 'none';
+    aBtn.style.display = 'none';
+    return;
+  }
+
+  const inp = _angReadInputs();
+  const filledX = !isNaN(inp.x);
+  const filledZ = !isNaN(inp.z);
+  const filledA = !isNaN(inp.a) && inp.a !== 0;
+  const filledCount = (filledX?1:0) + (filledZ?1:0) + (filledA?1:0);
+
+  // Tam 2 dolu, 1 bos: bos olanin OTO'su gorunur
+  const showX = (filledCount === 2 && !filledX);
+  const showZ = (filledCount === 2 && !filledZ);
+  const showA = (filledCount === 2 && !filledA);
+
+  xBtn.style.display = showX ? '' : 'none';
+  zBtn.style.display = showZ ? '' : 'none';
+  aBtn.style.display = showA ? '' : 'none';
+}
+
+function angAuto(field) {
+  const prev = _angGetPrevPoint();
+  if (!prev) { alert('Onceki nokta bulunamadi.'); return; }
+  const inp = _angReadInputs();
+  const px = prev.x, pz = prev.z;
+
+  if (field === 'X') {
+    // Z ve A girildi, X hesaplanacak
+    if (isNaN(inp.z) || isNaN(inp.a) || inp.a === 0) return;
+    const tanA = Math.tan(Math.abs(inp.a) * Math.PI / 180);
+    if (tanA < 1e-10) { alert('Aci 0 olamaz.'); return; }
+    const dz = inp.z - pz;
+    if (Math.abs(dz) < 1e-10) { alert('Z degeri onceki nokta ile ayni; aci hesaplanamaz.'); return; }
+    const aSign = inp.a >= 0 ? 1 : -1;
+    // A > 0 -> X artiyor (dx > 0), A < 0 -> X azaliyor (dx < 0)
+    const dx = aSign * tanA * Math.abs(dz);
+    const newX = px + dx;
+    // Inputa CAP olarak yaz
+    const xInput = document.getElementById('ff-X');
+    if (xInput) {
+      xInput.value = (newX * 2).toFixed(3);
+      xInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  } else if (field === 'Z') {
+    // X ve A girildi, Z hesaplanacak
+    if (isNaN(inp.x) || isNaN(inp.a) || inp.a === 0) return;
+    const tanA = Math.tan(Math.abs(inp.a) * Math.PI / 180);
+    if (tanA < 1e-10) { alert('Aci 0 olamaz.'); return; }
+    const dx = inp.x - px;
+    if (Math.abs(dx) < 1e-10) { alert('X degeri onceki nokta ile ayni; aci hesaplanamaz.'); return; }
+    // dx isareti A isaretine uymali (A>0 ise dx>0, A<0 ise dx<0)
+    // Eger uymuyorsa kullanici uyarilir
+    const aSign = inp.a >= 0 ? 1 : -1;
+    const dxSign = dx >= 0 ? 1 : -1;
+    if (aSign !== dxSign) {
+      if (!confirm('Dikkat: A acisi ile X yonu uyusmuyor.\nA > 0 -> X artmali, A < 0 -> X azalmali.\nHesabi yine de yapayim mi?')) return;
+    }
+    // |dz| = |dx| / tanA. dz isareti? -> kullanicinin sectigi suris yonu yok,
+    // bu yuzden iki olasilik var. Default: ileri torna (Z-).
+    const absDz = Math.abs(dx) / tanA;
+    const newZ = pz - absDz; // Z- yonune git (klasik ileri torna)
+    const zInput = document.getElementById('ff-Z');
+    if (zInput) {
+      zInput.value = newZ.toFixed(3);
+      zInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  } else if (field === 'A') {
+    // X ve Z girildi, A hesaplanacak
+    if (isNaN(inp.x) || isNaN(inp.z)) return;
+    const dx = inp.x - px;
+    const dz = inp.z - pz;
+    if (Math.abs(dz) < 1e-10) { alert('Z farki yok; aci hesaplanamaz.'); return; }
+    if (Math.abs(dx) < 1e-10) { alert('X farki yok; bu A 0 demektir.'); return; }
+    // |A| = atan(|dx|/|dz|), isaret dx isaretine uyar
+    const absA = Math.atan(Math.abs(dx) / Math.abs(dz)) * 180 / Math.PI;
+    const aSign = dx >= 0 ? 1 : -1;
+    const newA = aSign * absA;
+    const aInput = document.getElementById('ff-A');
+    if (aInput) {
+      aInput.value = newA.toFixed(3);
+      aInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
 }
 
 function setTnrDir(dir) {
@@ -2240,6 +2369,7 @@ function selectFeatType(type) {
   (function(){const _l=document.getElementById('feat-editor-label');if(_l)_l.textContent=labels[type] || type;})();
   const first = document.querySelector('#ff-line input, #ff-arc input, #ff-pah input');
   if (first) setTimeout(() => first.focus(), 30);
+  if (typeof _refreshAngAutoButtons === 'function') _refreshAngAutoButtons();
 }
 
 function openNewFeature() {
@@ -2317,6 +2447,7 @@ function openEditFeature(idx) {
   (function(){const _l=document.getElementById('feat-editor-label');if(_l)_l.textContent=labels[selType]||selType;})();
   document.getElementById('feat-editor-idx').textContent = '#'+(idx+1);
   highlightFeatureList(idx);
+  if (typeof _refreshAngAutoButtons === 'function') _refreshAngAutoButtons();
 }
 
 function highlightFeatureList(idx) {
@@ -2400,7 +2531,8 @@ function featOK() {
       const av = parseFloat(document.getElementById('ff-A').value);
       const rv = parseFloat(document.getElementById('ff-R').value);
       const cv = parseFloat(document.getElementById('ff-C').value);
-      // ANG: eksik değeri hesapla
+      // ANG: eksik degeri hesapla. A isareti X yonunu belirler.
+      // A > 0 -> X artiyor, A < 0 -> X azaliyor
       if (activeFeatType === 'ANG' && !isNaN(av) && av !== 0) {
         const prev = editingIdx > 0 ? elements[editingIdx-1].to : startPoint;
         const px = prev ? prev.x : 0;
@@ -2408,12 +2540,20 @@ function featOK() {
         const xOK = !isNaN(xv);
         const zOK = !isNaN(zv);
         const tanA = Math.tan(Math.abs(av) * Math.PI / 180);
+        const aSign = av >= 0 ? 1 : -1;
         if (xOK && !zOK) {
+          // X verildi, Z hesaplanacak
           el.to.x = xv/2;
-          el.to.z = pz - Math.abs(xv/2 - px) / tanA;
+          const dx = el.to.x - px;
+          // dz isareti: dx isareti A isaretine zaten uymali (kullanici dogru girdi)
+          // |dz| = |dx| / tanA, dz isareti default Z- (klasik ileri torna)
+          el.to.z = pz - Math.abs(dx) / tanA;
         } else if (!xOK && zOK) {
+          // Z verildi, X hesaplanacak
           el.to.z = zv;
-          el.to.x = px + tanA * Math.abs(pz - zv);
+          const dz = el.to.z - pz;
+          // dx isareti A isaretine uyar: A>0 ise dx>0, A<0 ise dx<0
+          el.to.x = px + aSign * tanA * Math.abs(dz);
         } else {
           if (!isNaN(xv)) el.to.x = xv/2;
           if (!isNaN(zv)) el.to.z = zv;
@@ -2536,8 +2676,21 @@ function segDir(p1, p2) {
   return {x: dx/len, z: dz/len};
 }
 
-function outerNormal(dir) { return {x: -dir.z, z:  dir.x}; }
-function innerNormal(dir) { return {x:  dir.z, z: -dir.x}; }
+// Dis torna icin normal: yonden bagimsiz, X+ tarafa offset.
+// Dik segmentlerde (a.x = b.x = 0) Z+ olan secilir, bu sayede tool malzeme
+// disinda kalir (alin temizleme veya ilk dalis fark etmez).
+function outerNormal(dir) {
+  const a = {x: -dir.z, z:  dir.x};
+  const b = {x:  dir.z, z: -dir.x};
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  return (a.x > b.x) ? a : b;
+}
+function innerNormal(dir) {
+  const a = {x: -dir.z, z:  dir.x};
+  const b = {x:  dir.z, z: -dir.x};
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z < b.z) ? a : b;
+  return (a.x < b.x) ? a : b;
+}
 
 /*
   bisectorCenter: köşede takım dairesinin merkezini hesaplar.
@@ -2710,8 +2863,18 @@ function _gc_segDir(p1, p2) {
   if (len < 1e-10) return { x: 1, z: 0 };
   return { x: dx / len, z: dz / len };
 }
-function _gc_outerNormal(dir) { return { x: -dir.z, z: dir.x }; }
-function _gc_innerNormal(dir) { return { x: dir.z, z: -dir.x }; }
+function _gc_outerNormal(dir) {
+  const a = { x: -dir.z, z: dir.x };
+  const b = { x:  dir.z, z: -dir.x };
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  return (a.x > b.x) ? a : b;
+}
+function _gc_innerNormal(dir) {
+  const a = { x: -dir.z, z: dir.x };
+  const b = { x:  dir.z, z: -dir.x };
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z < b.z) ? a : b;
+  return (a.x < b.x) ? a : b;
+}
 function _gc_bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
   const nIn = normalFn(dIn), nOut = normalFn(dOut);
   const bx = nIn.x + nOut.x, bz = nIn.z + nOut.z;
@@ -2820,7 +2983,13 @@ function _buildGCode(payload) {
         const nNext = _gc_outerNormal(dNext);
         const x_line = pt.x + nNext.x * toolR;
         const z_sq = R_off * R_off - (x_line - arc_cx) ** 2;
-        if (z_sq > 1e-6) { ex = x_line - toolR; ez = (arc_cz - Math.sqrt(z_sq)) - toolR; }
+        if (z_sq > 1e-6) {
+          // sqrt isareti arc tipine bagli: G02 (saat yonu) -> arc altinda bitis,
+          // G03 (saat tersi) -> arc ustunde bitis
+          const zSign = (curType === "G02") ? -1 : 1;
+          ex = x_line - toolR;
+          ez = (arc_cz + zSign * Math.sqrt(z_sq)) - toolR;
+        }
         else if (z_sq >= -1e-6) { ex = pts[ptIdx].x; ez = pts[ptIdx].z - toolR; }
       }
     }
@@ -4441,7 +4610,6 @@ function _refreshInputModeButtons() {
 </script>
 
 <!-- PASTE MODAL -->
-
 <div id="pasteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#1a1d22;border:1px solid #2a2d33;border-radius:8px;padding:16px;width:420px;max-width:95vw;display:flex;flex-direction:column;gap:8px;">
     <div style="color:#00aaff;font-size:12px;font-weight:bold;">↩ Nokta Listesi  Kopyala / Yapıştır</div>
@@ -4454,8 +4622,8 @@ function _refreshInputModeButtons() {
   </div>
 </div>
 
-<!-- CUSTOM NUMPAD -->
 
+<!-- CUSTOM NUMPAD -->
 <div id="numpad-overlay" onclick="closeNumKb()" style="display:none;"></div>
 <div id="numpad">
   <div id="numpad-display">
@@ -4481,8 +4649,8 @@ function _refreshInputModeButtons() {
   </div>
 </div>
 
-<!-- YASAL UYARI -->
 
+<!-- YASAL UYARI -->
 <div id="warning-overlay">
   <div id="warning-box">
     <h2>⚠ KULLANIM UYARISI</h2>
@@ -4500,8 +4668,8 @@ function _refreshInputModeButtons() {
   </div>
 </div>
 
-<!-- L!SLENDIRME POPUP -->
 
+<!-- L!SLENDIRME POPUP -->
 <div id="dim-popup">
   <div id="dim-popup-header">
     <span id="dim-popup-title">L!✏ DÜZENLE</span>
@@ -4529,8 +4697,8 @@ function _refreshInputModeButtons() {
   </div>
 </div>
 
-<!-- KÜTÜPHANE MODAL -->
 
+<!-- KÜTÜPHANE MODAL -->
 <div id="library-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:8888;font-family:'Courier New',monospace;">
   <div style="background:#13161a;border:1px solid #2a2d33;border-radius:8px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
     <div style="padding:14px 18px;border-bottom:1px solid #2a2d33;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
@@ -4547,7 +4715,6 @@ function _refreshInputModeButtons() {
 </div>
 
 <!-- KONTUR İSİM MODAL -->
-
 <div id="lib-name-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9000;font-family:'Courier New',monospace;align-items:center;justify-content:center;">
   <div style="background:#13161a;border:1px solid #2a2d33;border-radius:8px;padding:24px;width:90%;max-width:360px;">
     <div style="color:#27ae60;font-size:14px;font-weight:bold;margin-bottom:16px;">💾 Kontur Kaydet</div>
@@ -4565,56 +4732,53 @@ function _refreshInputModeButtons() {
 <input type="file" id="fileInput" accept=".nc,.txt" style="display:none" onchange="loadNCFile(event)">
 
 <!-- YAN MENÜ -->
-
 <div id="side-menu-overlay" onclick="sideMenuClose()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:7000;"></div>
 <div id="side-menu" style="display:none;position:fixed;top:0;left:0;width:220px;height:100%;background:#0d0f12;border-right:1px solid #2a2d33;z-index:7001;flex-direction:column;font-family:'Courier New',monospace;overflow-y:auto;">
   <div style="padding:14px 16px;border-bottom:1px solid #1a1d22;display:flex;justify-content:space-between;align-items:center;">
     <span style="color:#00aaff;font-size:13px;font-weight:bold;">☰ MENÜ</span>
     <button onclick="sideMenuClose()" style="background:transparent;border:none;color:#666;font-size:18px;cursor:pointer;">✕</button>
   </div>
-
+  
   <div style="padding:10px 8px;">
-
-```
-<div style="color:#444;font-size:9px;letter-spacing:1px;padding:8px 8px 4px;text-transform:uppercase;">Dosya</div>
-
-<button onclick="saveNC();sideMenuClose()" class="menu-item-btn">
-  💾 G-Kod Kaydet (.nc)
-</button>
-<button onclick="loadNC();sideMenuClose()" class="menu-item-btn">
-  📂 G-Kod Yükle (.nc)
-</button>
-<button onclick="copyGcode();sideMenuClose()" class="menu-item-btn">
-  ⎘ G-Kodu Kopyala
-</button>
-
-<div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Kütüphane</div>
-
-<button onclick="libraryOpen();sideMenuClose()" class="menu-item-btn" style="color:#27ae60;border-color:#1a3a1a;">
-  📚 Kontur Kütüphanesi
-</button>
-
-<div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Çizim Stili</div>
-
-<div style="display:flex;gap:4px;padding:0 4px;">
-  <button id="im-btn-touch" onclick="setInputMode('touch')" class="menu-item-btn" style="flex:1;text-align:center;padding:10px 4px;font-size:10px;">
-    👆 DOKUNMATİK
-  </button>
-  <button id="im-btn-mouse" onclick="setInputMode('mouse')" class="menu-item-btn" style="flex:1;text-align:center;padding:10px 4px;font-size:10px;">
-    🖱 MOUSE
-  </button>
-</div>
-<div style="color:#555;font-size:9px;padding:6px 10px 0;line-height:1.4;" id="im-hint">
-  Dokunmatik: Sürükle + çift dokun
-</div>
-
-<div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Yardım</div>
-
-<button onclick="tutorialOpen();sideMenuClose()" class="menu-item-btn">
-  ? Öğretici
-</button>
-```
-
+    
+    <div style="color:#444;font-size:9px;letter-spacing:1px;padding:8px 8px 4px;text-transform:uppercase;">Dosya</div>
+    
+    <button onclick="saveNC();sideMenuClose()" class="menu-item-btn">
+      💾 G-Kod Kaydet (.nc)
+    </button>
+    <button onclick="loadNC();sideMenuClose()" class="menu-item-btn">
+      📂 G-Kod Yükle (.nc)
+    </button>
+    <button onclick="copyGcode();sideMenuClose()" class="menu-item-btn">
+      ⎘ G-Kodu Kopyala
+    </button>
+    
+    <div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Kütüphane</div>
+    
+    <button onclick="libraryOpen();sideMenuClose()" class="menu-item-btn" style="color:#27ae60;border-color:#1a3a1a;">
+      📚 Kontur Kütüphanesi
+    </button>
+    
+    <div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Çizim Stili</div>
+    
+    <div style="display:flex;gap:4px;padding:0 4px;">
+      <button id="im-btn-touch" onclick="setInputMode('touch')" class="menu-item-btn" style="flex:1;text-align:center;padding:10px 4px;font-size:10px;">
+        👆 DOKUNMATİK
+      </button>
+      <button id="im-btn-mouse" onclick="setInputMode('mouse')" class="menu-item-btn" style="flex:1;text-align:center;padding:10px 4px;font-size:10px;">
+        🖱 MOUSE
+      </button>
+    </div>
+    <div style="color:#555;font-size:9px;padding:6px 10px 0;line-height:1.4;" id="im-hint">
+      Dokunmatik: Sürükle + çift dokun
+    </div>
+    
+    <div style="color:#444;font-size:9px;letter-spacing:1px;padding:12px 8px 4px;text-transform:uppercase;">Yardım</div>
+    
+    <button onclick="tutorialOpen();sideMenuClose()" class="menu-item-btn">
+      ? Öğretici
+    </button>
+    
   </div>
 </div>
 
