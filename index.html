@@ -2148,6 +2148,13 @@ function liveUpdate() {
     generateGCode(); redraw();
     return;
   }
+
+  // ANG OTO buton gorunurlugu - editingIdx kontrolunden ONCE yapilmali ki
+  // yeni nokta eklerken (editingIdx===null) de butonlar gorunsun
+  if (activeFeatType === 'ANG') {
+    _refreshAngAutoButtons();
+  }
+
   if (editingIdx === null || editingIdx < 0) return;
   const el = elements[editingIdx];
   if (!el) return;
@@ -2164,12 +2171,7 @@ function liveUpdate() {
   }
   if (!isNaN(cv) && el.type==='PAH') el.c = cv;
 
-  // ANG: eksik deger artik OTO butonu ile hesaplaniyor (anlik degil).
-  // Kullanici X, Z, A'dan ikisini girip OTO butonuna basarak ucuncuyu doldurur.
-  // Burada sadece OTO butonu gorunurlugunu guncelle:
-  if (activeFeatType === 'ANG') {
-    _refreshAngAutoButtons();
-  }
+  // (eski ANG anlik hesap kaldirildi, artik OTO butonu ile yapiliyor)
 
   elements.forEach((e,i) => { e.from = i===0?startPoint:elements[i-1].to; });
   lastPoint = elements.length ? elements[elements.length-1].to : startPoint;
@@ -2186,7 +2188,8 @@ function liveUpdate() {
 // iliskisinden ucuncu degeri cikariyoruz.
 
 function _angGetPrevPoint() {
-  if (typeof editingIdx === 'undefined' || editingIdx === null) return null;
+  // Yeni nokta ekleniyorsa (editingIdx null) -> lastPoint
+  if (typeof editingIdx === 'undefined' || editingIdx === null) return lastPoint || startPoint;
   if (editingIdx > 0 && elements[editingIdx-1]) return elements[editingIdx-1].to;
   if (editingIdx === 0) return startPoint;
   return lastPoint;
@@ -2596,14 +2599,16 @@ function featOK() {
   if (type === 'ANG' && !isNaN(av) && av !== 0) {
     const rad = Math.abs(av) * (Math.PI/180);
     const tanA = Math.tan(rad);
+    const aSign = av >= 0 ? 1 : -1;
     if (zv === null && xv !== null) {
-      // X + A   Z (Z negatif yönde)
-      const dx = Math.abs(xv - lastPoint.x);
-      zv = lastPoint.z - dx / tanA;
+      // X + A -> Z hesaplanir. dz default Z- yonunde (klasik ileri torna)
+      const dx = xv - lastPoint.x;
+      zv = lastPoint.z - Math.abs(dx) / tanA;
     } else if (xv === null && zv !== null) {
-      // Z + A   X (X büyüme yönünde)
-      const dz = Math.abs(lastPoint.z - zv);
-      xv = lastPoint.x + tanA * dz;
+      // Z + A -> X hesaplanir. A isareti X yonunu belirler.
+      // A > 0 -> X artiyor, A < 0 -> X azaliyor
+      const dz = zv - lastPoint.z;
+      xv = lastPoint.x + aSign * tanA * Math.abs(dz);
     }
   }
 
