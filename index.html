@@ -3479,6 +3479,69 @@ function _gc_bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
 }
 function _gc_fmt(n) { return parseFloat(n.toFixed(3)).toString(); }
 
+// ---- DUZ-DUZ KOSE DUZELTMESI (2026 gecikmis fix) ----
+// Bisector formulu, iki cizginin acisi TAM 90 derece oldugunda matematiksel
+// bir tesadufle ham koseye geri donuyordu (kayma sifirlaniyordu). Bu, offset
+// tablosunda R=0 girilip TNR tamamen bu programa birakildiginda (yani G41/G42
+// gercek bir telafi yapmadiginda) her omuz/basamak koesinde gercek bir olcu
+// hatasina yol aciyordu. Duzeltme: SADECE iki dogru parcasi (G01/PAH/ANG,
+// hepsi cizim asamasinda G01'e cozulmus) ardisik oldugunda calisir, yay
+// iceren hicbir gecise dokunmaz.
+//
+// Mantik: iki offsetli cizginin gercekten kesisip kesismedigini kontrol et.
+//   - Kesisiyorsa (concave/ic kose): kesisim noktasi doğru sonuçtur.
+//   - Kesismiyorsa (convex/dis kose): fiziksel yuvarlak uc, kose merkezli
+//     toolR yaricapli bir yay ile pivot etmek ZORUNDADIR (gercek Fanuc
+//     G41/G42 R>0 davranisinin aynisi) - bu durumda iki nokta + bir yay
+//     G-koda eklenir.
+function _isLineLikeType(t) { return t === "G01" || t === "PAH" || t === "ANG"; }
+
+function _gc_lineLineCornerExit(prev, pt, next, toolR, isOuter) {
+  const normalFn = isOuter ? _gc_outerNormal : _gc_innerNormal;
+  const dIn = _gc_segDir(prev, pt);
+  const dOut = _gc_segDir(pt, next);
+  const nIn = normalFn(dIn);
+  const nOut = normalFn(dOut);
+  const offInP0  = { x: prev.x + nIn.x * toolR,  z: prev.z + nIn.z * toolR };
+  const offOutP0 = { x: pt.x   + nOut.x * toolR, z: pt.z   + nOut.z * toolR };
+  const lenIn = Math.hypot(pt.x - prev.x, pt.z - prev.z);
+
+  const det = dIn.x * (-dOut.z) - dIn.z * (-dOut.x);
+  if (Math.abs(det) < 1e-9) {
+    // paralel (duz devam, kose yok) - offset dogal olarak cakisik
+    return { point: { x: pt.x + nIn.x * toolR, z: pt.z + nIn.z * toolR }, fillet: null };
+  }
+  const rhs = { x: offOutP0.x - offInP0.x, z: offOutP0.z - offInP0.z };
+  const t = (rhs.x * (-dOut.z) - rhs.z * (-dOut.x)) / det;
+
+  if (t <= lenIn + 1e-6) {
+    // GECERLI kesisim (concave/normal kose)
+    return { point: { x: offInP0.x + t * dIn.x, z: offInP0.z + t * dIn.z }, fillet: null };
+  }
+  // CONVEX kose - offset cizgiler bulusmuyor, toolR yaricapli pivot yay gerekli
+  const pStart = { x: pt.x + nIn.x * toolR,  z: pt.z + nIn.z * toolR };
+  const pEnd   = { x: pt.x + nOut.x * toolR, z: pt.z + nOut.z * toolR };
+  const crossZ = (pStart.x - pt.x) * (pEnd.z - pt.z) - (pStart.z - pt.z) * (pEnd.x - pt.x);
+  const fType = crossZ > 0 ? "G03" : "G02";
+  return { point: null, fillet: { center: pt, radius: toolR, from: pStart, to: pEnd, type: fType } };
+}
+
+// Elements dizisindeki tum G01-G01 (veya PAH/ANG dahil) ardisik ciftler icin
+// koseleri onceden hesapla. Yay iceren hicbir gecis bu dizide yer almaz.
+function _gc_buildLineCornerFixes(startPoint, elements, toolR, isOuter) {
+  const fixes = new Array(elements.length + 1).fill(null);
+  if (!toolR || toolR <= 0) return fixes;
+  for (let i = 1; i < elements.length; i++) {
+    const curEl = elements[i - 1], nextEl = elements[i];
+    if (!_isLineLikeType(curEl.type) || !_isLineLikeType(nextEl.type)) continue;
+    const prev = i === 1 ? startPoint : elements[i - 2].to;
+    const pt = curEl.to;
+    const next = nextEl.to;
+    fixes[i] = _gc_lineLineCornerExit(prev, pt, next, toolR, isOuter);
+  }
+  return fixes;
+}
+
 /* ---- G-CODE URETICI (lokal, Fanuc) ---- */
 function _buildGCode(payload) {
   const { prog, tool, spin, speed, feed, retract, toolR, tnrDir, tnrOn, startPoint, elements } = payload;
@@ -3491,6 +3554,11 @@ function _buildGCode(payload) {
 
   const pts = [{ x: startPoint.x, z: startPoint.z }];
   elements.forEach(el => pts.push({ x: el.to.x, z: el.to.z, type: el.type, r: el.r || 0, c: el.c || 0, comp: el.comp }));
+
+  // Duz-duz kose duzeltmesi: sadece yay iceremeyen ardisik ciftlerde calisir
+  const lineCornerFixes = (tnrOn && toolR > 0)
+    ? _gc_buildLineCornerFixes(startPoint, elements, toolR, tnrDir === "outer")
+    : new Array(elements.length + 1).fill(null);
 
   function arcFits(el) {
     if (!el || (el.type !== "G02" && el.type !== "G03")) return true;
@@ -3671,7 +3739,8 @@ function _buildGCode(payload) {
   let g00x = pts[0].x * 2;
   let g00z = pts[0].z;
   if (tnrOn && toolR > 0 && elements.length > 0) {
-    const ep1 = tnrExitPoint(1);
+    const fix1 = lineCornerFixes[1];
+    const ep1 = fix1 ? (fix1.fillet ? fix1.fillet.from : fix1.point) : tnrExitPoint(1);
     const dFirst = _gc_segDir(pts[0], pts[1]);
     if (Math.abs(dFirst.z) >= 0.01 && Math.abs(dFirst.z) > 1e-10) {
       const t = (pts[0].z - ep1.z) / dFirst.z;
@@ -3690,7 +3759,35 @@ function _buildGCode(payload) {
   elements.forEach((el, i) => {
     if (el.comp !== lastComp) { g += el.comp + "\n"; lastComp = el.comp; }
     const ptIdx = i + 1;
-    const ep = tnrExitPoint(ptIdx);
+    const fix = lineCornerFixes[ptIdx];
+
+    if (fix && fix.fillet) {
+      // CONVEX duz-duz kose: pivot noktasina git, sonra toolR yaricapli yayla don
+      const fx1 = parseFloat((fix.fillet.from.x * 2).toFixed(3)), fz1 = parseFloat(fix.fillet.from.z.toFixed(3));
+      let coords1 = "";
+      if (Math.abs(fx1 - prevX) >= 0.0005) coords1 += ` X${_gc_fmt(fix.fillet.from.x * 2)}`;
+      if (Math.abs(fz1 - prevZ) >= 0.0005) coords1 += ` Z${_gc_fmt(fix.fillet.from.z)}`;
+      if (coords1.trim()) {
+        let line1 = lastG !== "G01" ? "G01" : "";
+        lastG = "G01";
+        line1 += coords1;
+        if (!feedWritten) { line1 += ` F${feed}`; feedWritten = true; }
+        g += line1.trim() + "\n";
+        prevX = fx1; prevZ = fz1;
+      }
+      const fx2 = parseFloat((fix.fillet.to.x * 2).toFixed(3)), fz2 = parseFloat(fix.fillet.to.z.toFixed(3));
+      let line2 = lastG !== fix.fillet.type ? fix.fillet.type : "";
+      lastG = fix.fillet.type;
+      if (Math.abs(fx2 - prevX) >= 0.0005) line2 += ` X${_gc_fmt(fix.fillet.to.x * 2)}`;
+      if (Math.abs(fz2 - prevZ) >= 0.0005) line2 += ` Z${_gc_fmt(fix.fillet.to.z)}`;
+      line2 += ` R${_gc_fmt(fix.fillet.radius)}`;
+      if (!feedWritten) { line2 += ` F${feed}`; feedWritten = true; }
+      g += line2.trim() + "\n";
+      prevX = fx2; prevZ = fz2;
+      return;
+    }
+
+    const ep = (fix && fix.point) ? fix.point : tnrExitPoint(ptIdx);
     const tx = parseFloat((ep.x * 2).toFixed(3));
     const tz = parseFloat(ep.z.toFixed(3));
     if (Math.abs(tx - prevX) < 0.0005 && Math.abs(tz - prevZ) < 0.0005) return;
