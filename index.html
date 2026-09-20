@@ -741,6 +741,8 @@ td.type-PAH{color:#ffff00;}
           <span style="font-size:clamp(7px,0.7vw,9px);">KONTUR</span>
           <button style="background:#0d1a0d;border:1px solid #1a3a1a;color:#27ae60;cursor:pointer;font-size:clamp(9px,0.9vw,11px);padding:0.3vh 0.2vw;border-radius:3px;width:100%;font-family:'Courier New',monospace;"
             onclick="openNewFeature()">+ YENİ</button>
+          <button style="background:#1a0d1a;border:1px solid #6a1a6a;color:#cc88ff;cursor:pointer;font-size:clamp(8px,0.85vw,10px);padding:0.3vh 0.2vw;border-radius:3px;width:100%;font-family:'Courier New',monospace;"
+            onclick="gcodeImportOpen()" title="G-Kod yapıştırarak parça profilini çıkar ve düzenle">↳ G KOD YÜKLE</button>
         </div>
         <div id="feature-list-body"></div>
       </div>
@@ -907,8 +909,18 @@ td.type-PAH{color:#ffff00;}
       <div id="gcodeToolbar">
         <button class="tbtn" id="editBtn" onclick="toggleEdit()">✏ DÜZENLE</button>
         <button class="tbtn" onclick="copyGcode()">⎘ KOPYALA</button>
+        <button class="tbtn" id="gcodeApplyBtn" onclick="gcodeApplyFromEditor()" style="display:none;border-color:#27ae60;color:#27ae60;" title="Düzenlenen metni nokta listesine işle">↻ UYGULA</button>
         
-        <span id="editStatus" style="color:#555;font-size:10px;margin-left:auto;">Salt Okunur</span>
+        <span style="color:#333;font-size:10px;margin-left:auto;margin-right:4px;white-space:nowrap;">KOD SEÇENEĞİ:</span>
+        <div style="display:flex;border:1px solid #1a1d22;border-radius:4px;overflow:hidden;flex-shrink:0;">
+          <button id="gopt-std" onclick="setGcodeOption('std')"
+            style="padding:3px 7px;font-family:'Courier New',monospace;font-size:9px;cursor:pointer;border:none;background:#0d2040;color:#00aaff;border-right:1px solid #1a1d22;"
+            title="Mevcut sistem: tüm koordinatlar hesaplanmış">STD</button>
+          <button id="gopt-fanuc" onclick="setGcodeOption('fanuc')"
+            style="padding:3px 7px;font-family:'Courier New',monospace;font-size:9px;cursor:pointer;border:none;background:#111;color:#555;"
+            title="Fanuc ,A ,R ,C köşe geometrisi sözdizimi">,A,R,C</button>
+        </div>
+        <span id="editStatus" style="color:#555;font-size:10px;margin-left:4px;">Salt Okunur</span>
       </div>
       <textarea id="gcodeDisplay" readonly>G21 G40 G90 G95...</textarea>
     </div>
@@ -3742,6 +3754,24 @@ function _buildGCode(payload) {
 }
 
 /* ---- ANA GENERATE FONKSIYONU ---- */
+/* ---- G-KOD SEÇENEĞİ ---- */
+let _gcodeOption = 'std'; // 'std' | 'fanuc'
+
+function setGcodeOption(opt) {
+  _gcodeOption = opt;
+  const stdBtn   = document.getElementById('gopt-std');
+  const fanucBtn = document.getElementById('gopt-fanuc');
+  if (stdBtn) {
+    stdBtn.style.background   = opt === 'std'   ? '#0d2040' : '#111';
+    stdBtn.style.color        = opt === 'std'   ? '#00aaff' : '#555';
+  }
+  if (fanucBtn) {
+    fanucBtn.style.background = opt === 'fanuc' ? '#1a1a00' : '#111';
+    fanucBtn.style.color      = opt === 'fanuc' ? '#ffdd00' : '#555';
+  }
+  generateGCode();
+}
+
 function generateGCode() {
   const payload = {
     prog:    getParam('pProg', 'O1000'),
@@ -3758,15 +3788,126 @@ function generateGCode() {
       type: el.type, comp: el.comp,
       r: el.r || 0, c: el.c || 0,
       to: {x: el.to.x, z: el.to.z},
-      _cx: el._cx, _cz: el._cz
+      _cx: el._cx, _cz: el._cz, _ang: el._ang
     }))
   };
 
   try {
-    document.getElementById('gcodeDisplay').value = _buildGCode(payload);
+    const builder = (_gcodeOption === 'fanuc') ? _buildGCodeFanuc : _buildGCode;
+    document.getElementById('gcodeDisplay').value = builder(payload);
   } catch(e) {
     document.getElementById('gcodeDisplay').value = '(HATA: ' + (e && e.message ? e.message : e) + ')';
   }
+}
+
+/* ---- FANUC ,A ,R ,C G-KOD ÜRETİCİSİ ---- */
+// Fanuc köşe geometrisi: G01/G02/G03 bloklarına ,A ,R ,C ekleri
+// TNR (tnrOn): Fanuc ,A,R,C kullanılırken G41/G42 aktifse Fanuc halleder;
+// biz TNR'yi devre dışı bırakıyoruz (G40) çünkü iki üst üste telafi karışır.
+function _buildGCodeFanuc(payload) {
+  const { prog, tool, spin, speed, feed, retract, startPoint, elements } = payload;
+
+  let g = `${prog}\n(KONTUR AUTO NC - FANUC UYUMLU)\n`;
+  g += `(KOD SECENEGI: FANUC ,A ,R ,C - TNR FANUC TARAFINDA YAPILMALI)\n`;
+  g += `G21 G40 G90 G95\n${tool} ${spin} S${speed}\n`;
+
+  if (!startPoint) return g + 'M30\n%';
+
+  const sx = (startPoint.x * 2);
+  const sz = startPoint.z;
+  g += `G00 X${_gc_fmt(sx)} Z${_gc_fmt(sz)}\n`;
+
+  if (!elements || elements.length === 0) {
+    g += `G00 ${retract}\nM30\n%`;
+    return g;
+  }
+
+  let feedWritten = false;
+  let lastG = '';
+  let prevX = sx, prevZ = sz;
+
+  elements.forEach((el, i) => {
+    const tx = el.to.x * 2;
+    const tz = el.to.z;
+
+    if (Math.abs(tx - prevX) < 0.0005 && Math.abs(tz - prevZ) < 0.0005) return;
+
+    const nextEl = elements[i + 1];
+    let lineBase = '';
+    let suffix = '';
+
+    if (el.type === 'PAH') {
+      const pHalf = el.c || 0;
+      let coords = '';
+      if (Math.abs(tx - prevX) >= 0.0005) coords += ` X${_gc_fmt(tx)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) coords += ` Z${_gc_fmt(tz)}`;
+      if (!coords.trim()) return;
+      let line = (lastG !== 'G01') ? 'G01' : '';
+      lastG = 'G01';
+      line += coords;
+      if (!feedWritten) { line += ` F${feed}`; feedWritten = true; }
+      g += line.trim() + '\n';
+      prevX = parseFloat(tx.toFixed(3));
+      prevZ = parseFloat(tz.toFixed(3));
+      return;
+    }
+
+    if (el.type === 'G01' || el.type === 'ANG') {
+      let coords = '';
+      if (Math.abs(tx - prevX) >= 0.0005) coords += ` X${_gc_fmt(tx)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) coords += ` Z${_gc_fmt(tz)}`;
+      if (!coords.trim()) return;
+
+      lineBase = (lastG !== 'G01' ? 'G01' : '') + coords;
+      lastG = 'G01';
+
+      if (nextEl) {
+        if (nextEl.type === 'PAH' && (nextEl.c || 0) > 0) {
+          suffix = `,C${_gc_fmt(nextEl.c)}`;
+        } else if ((nextEl.type === 'G02' || nextEl.type === 'G03') && (nextEl.r || 0) > 0) {
+          suffix = `,R${_gc_fmt(nextEl.r)}`;
+        }
+        if (!suffix && typeof el._ang === 'number' && !isNaN(el._ang) && el._ang !== 0) {
+          suffix = `,A${_gc_fmt(Math.abs(el._ang))}`;
+        }
+      }
+
+    } else if (el.type === 'G02' || el.type === 'G03') {
+      const prevEl = i > 0 ? elements[i-1] : null;
+      const prevWillHaveR = prevEl &&
+        (prevEl.type === 'G01' || prevEl.type === 'ANG') &&
+        (el.type === 'G02' || el.type === 'G03') &&
+        (el.r || 0) > 0;
+
+      if (prevWillHaveR) {
+        prevX = parseFloat(tx.toFixed(3));
+        prevZ = parseFloat(tz.toFixed(3));
+        return;
+      }
+
+      const rVal = Math.abs(el.r) || 0;
+      let coords = '';
+      if (Math.abs(tx - prevX) >= 0.0005) coords += ` X${_gc_fmt(tx)}`;
+      if (Math.abs(tz - prevZ) >= 0.0005) coords += ` Z${_gc_fmt(tz)}`;
+      let line = (lastG !== el.type ? el.type : '') + coords + ` R${_gc_fmt(rVal)}`;
+      lastG = el.type;
+      if (!feedWritten) { line += ` F${feed}`; feedWritten = true; }
+      g += line.trim() + '\n';
+      prevX = parseFloat(tx.toFixed(3));
+      prevZ = parseFloat(tz.toFixed(3));
+      return;
+    }
+
+    let line = lineBase;
+    if (!feedWritten) { line += ` F${feed}`; feedWritten = true; }
+    if (suffix) line += suffix;
+    g += line.trim() + '\n';
+    prevX = parseFloat(tx.toFixed(3));
+    prevZ = parseFloat(tz.toFixed(3));
+  });
+
+  g += `G00 ${retract}\nM30\n%`;
+  return g;
 }
 
 function getParam(id, fallback) {
@@ -4614,10 +4755,12 @@ function toggleEdit() {
   const ta = document.getElementById('gcodeDisplay');
   const btn = document.getElementById('editBtn');
   const status = document.getElementById('editStatus');
+  const applyBtn = document.getElementById('gcodeApplyBtn');
   ta.readOnly = !gcodeEditable;
   ta.classList.toggle('editable', gcodeEditable);
   btn.textContent = gcodeEditable ? ' KİLİTLE' : '✏ DÜZENLE';
   status.textContent = gcodeEditable ? 'S Düzenleme Modu' : 'Salt Okunur';
+  if (applyBtn) applyBtn.style.display = gcodeEditable ? '' : 'none';
 }
 
 function copyGcode() {
@@ -4984,6 +5127,260 @@ function libNextId(list) {
   return max + 1;
 }
 
+// ============================================================
+// G-KOD IMPORT — Fanuc G-kodu parse et → elements dizisine yükle
+// ============================================================
+let _giDir = 'outer';
+
+function gcodeImportOpen() {
+  document.getElementById('gcode-import-overlay').style.display = 'block';
+  document.getElementById('gi-info').textContent = '';
+  gcodeImportSetDir('outer');
+}
+
+function gcodeImportClose() {
+  document.getElementById('gcode-import-overlay').style.display = 'none';
+}
+
+function gcodeImportSetDir(dir) {
+  _giDir = dir;
+  const ob = document.getElementById('gi-btn-outer');
+  const ib = document.getElementById('gi-btn-inner');
+  ob.style.background = dir === 'outer' ? '#0d2040' : '#111';
+  ob.style.borderColor = dir === 'outer' ? '#00aaff' : '#333';
+  ob.style.color       = dir === 'outer' ? '#00aaff' : '#555';
+  ib.style.background  = dir === 'inner' ? '#2a0d0d' : '#111';
+  ib.style.borderColor = dir === 'inner' ? '#e74c3c' : '#333';
+  ib.style.color       = dir === 'inner' ? '#e74c3c' : '#555';
+}
+
+// ---- G-KOD PARSER ----
+// Desteklenen: G00 G01 G02 G03
+// X = çap (Fanuc torna standardı), Z = eksen
+// R = yay yarıçapı (G02/G03 için)
+// I, K = yay merkez offsetleri (alternatif; R yoksa kullanılır)
+// Dönen: { ok, startPoint, elements, warnings }
+function parseGcode(code, toolR, dir) {
+  const lines = code.split('\n');
+  const warnings = [];
+  const pts = []; // {type, x_yari, z, r, fromRapid}
+
+  let curX_yari = 0, curZ = 0;
+  let curG = 0;
+  let hasStart = false;
+
+  function parseWord(line, letter) {
+    const re = new RegExp(letter + '([+-]?\\d*\\.?\\d+)', 'i');
+    const m = line.match(re);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  for (let raw of lines) {
+    const line = raw.trim().toUpperCase();
+    if (!line || line.startsWith('%') || line.startsWith('(') || line.startsWith(';')) continue;
+    const l = line.replace(/^N\d+\s*/, '');
+
+    const gMatch = l.match(/G(\d+)/);
+    if (gMatch) {
+      const gNum = parseInt(gMatch[1]);
+      if ([0,1,2,3].includes(gNum)) curG = gNum;
+    }
+
+    const xRaw = parseWord(l, 'X');
+    const zRaw = parseWord(l, 'Z');
+    const rRaw = parseWord(l, 'R');
+    const iRaw = parseWord(l, 'I');
+    const kRaw = parseWord(l, 'K');
+
+    if (xRaw === null && zRaw === null) continue;
+
+    const newX_yari = xRaw !== null ? xRaw / 2 : curX_yari;
+    const newZ      = zRaw !== null ? zRaw      : curZ;
+
+    if (!hasStart) {
+      if (curG === 0) {
+        curX_yari = newX_yari;
+        curZ = newZ;
+        continue;
+      }
+      hasStart = true;
+      pts.push({ type: 'START', x: curX_yari, z: curZ });
+    }
+
+    if (curG === 0) {
+      curX_yari = newX_yari; curZ = newZ;
+      continue;
+    }
+
+    if (curG === 1) {
+      pts.push({ type: 'G01', x: newX_yari, z: newZ });
+    } else if (curG === 2 || curG === 3) {
+      let arcR = rRaw;
+      if (arcR === null && iRaw !== null && kRaw !== null) {
+        const cx = curX_yari + iRaw;
+        const cz = curZ + kRaw;
+        arcR = Math.sqrt((newX_yari - cx)**2 + (newZ - cz)**2);
+        warnings.push(`I,K yay dönüştürüldü R=${arcR.toFixed(3)}`);
+      }
+      if (arcR === null) {
+        warnings.push(`Satır atlandı: R veya I,K yok → ${raw.trim()}`);
+        curX_yari = newX_yari; curZ = newZ;
+        continue;
+      }
+      pts.push({ type: curG === 2 ? 'G02' : 'G03', x: newX_yari, z: newZ, r: Math.abs(arcR) });
+    }
+
+    curX_yari = newX_yari;
+    curZ = newZ;
+  }
+
+  if (pts.length < 2) {
+    return { ok: false, reason: 'Yeterli hareket bulunamadı (en az 1 G01/G02/G03 lazım)' };
+  }
+
+  const startIdx = pts.findIndex(p => p.type === 'START');
+  if (startIdx < 0) {
+    return { ok: false, reason: 'Başlangıç noktası tespit edilemedi' };
+  }
+
+  const sp = pts[startIdx];
+  const movePts = pts.slice(startIdx + 1);
+
+  if (movePts.length === 0) {
+    return { ok: false, reason: 'Kesim hareketi bulunamadı' };
+  }
+
+  function applyOffset(pts_arr, R, isOuter) {
+    if (R <= 0) return pts_arr;
+    const sign = isOuter ? 1 : -1;
+    return pts_arr.map((pt, i) => {
+      const prev = i > 0 ? pts_arr[i-1] : { x: pt.x, z: pt.z + 1 };
+      const next = i < pts_arr.length - 1 ? pts_arr[i+1] : { x: pt.x, z: pt.z - 1 };
+      const dxi = pt.x - prev.x, dzi = pt.z - prev.z;
+      const li = Math.hypot(dxi, dzi);
+      const ni = li > 1e-10 ? { x: dzi/li, z: -dxi/li } : { x: sign, z: 0 };
+      const dxo = next.x - pt.x, dzo = next.z - pt.z;
+      const lo = Math.hypot(dxo, dzo);
+      const no = lo > 1e-10 ? { x: dzo/lo, z: -dxo/lo } : { x: sign, z: 0 };
+      let bx = ni.x + no.x, bz = ni.z + no.z;
+      const bl = Math.hypot(bx, bz);
+      if (bl > 1e-10) { bx /= bl; bz /= bl; }
+      else { bx = sign; bz = 0; }
+      const dot = ni.x * bx + ni.z * bz;
+      const dist = R / Math.max(Math.abs(dot), 0.15);
+      return {
+        ...pt,
+        x: pt.x + sign * bx * dist,
+        z: pt.z + sign * bz * dist
+      };
+    });
+  }
+
+  const R = toolR || 0;
+  const isOuter = dir === 'outer';
+
+  const moveCoordsOnly = movePts.map(p => ({ x: p.x, z: p.z }));
+  const offsetted = applyOffset(moveCoordsOnly, R, isOuter);
+
+  const finalStart = { x: sp.x, z: sp.z };
+  const finalElements = movePts.map((pt, i) => {
+    const oc = offsetted[i];
+    return {
+      type: pt.type,
+      to: { x: oc.x, z: oc.z },
+      r: pt.r || 0,
+      c: 0,
+      comp: 'G40'
+    };
+  });
+
+  return { ok: true, startPoint: finalStart, elements: finalElements, warnings };
+}
+
+function gcodeImportRun() {
+  const code = document.getElementById('gi-input').value;
+  const toolR = parseFloat(document.getElementById('gi-toolr').value) || 0;
+  const info = document.getElementById('gi-info');
+
+  if (!code.trim()) {
+    info.style.color = '#e74c3c';
+    info.textContent = 'G-kod boş.';
+    return;
+  }
+
+  const result = parseGcode(code, toolR, _giDir);
+
+  if (!result.ok) {
+    info.style.color = '#e74c3c';
+    info.textContent = 'HATA: ' + result.reason;
+    return;
+  }
+
+  _saveHistory();
+  startPoint = result.startPoint;
+  elements   = result.elements;
+  lastPoint  = elements.length > 0
+    ? elements[elements.length - 1].to
+    : startPoint;
+
+  if (result.warnings.length > 0) {
+    info.style.color = '#f39c12';
+    info.textContent = result.warnings.length + ' uyarı: ' + result.warnings[0];
+  } else {
+    info.style.color = '#27ae60';
+    info.textContent = result.elements.length + ' segment yüklendi.';
+  }
+
+  generateGCode();
+  autoFit();
+  renderFeatureList();
+  updateCoordsTable();
+
+  gcodeImportClose();
+  showTab('input');
+}
+
+// ============================================================
+// G-KOD SEKMESİNDEN CANLI UYGULAMA
+// DÜZENLE ile açılan textarea'daki (kullanıcı elle değiştirmiş)
+// metni tekrar nokta listesine işler. TNR karışıklığını önlemek
+// için burada HER ZAMAN toolR=0 kullanılır — yani textarea'da ne
+// yazıyorsa, elemanların YENİ nominal koordinatı OLDUĞU GİBİ o olur.
+// (TNR açıkken görüntülenen kod zaten offsetli olduğundan, "aynen
+// kaydet" burada doğru davranıştır; tekrar offset uygulanmaz.)
+function gcodeApplyFromEditor() {
+  const ta = document.getElementById('gcodeDisplay');
+  const code = ta ? ta.value : '';
+  if (!code.trim()) { alert('G-kod boş.'); return; }
+
+  const wasTnrOn = getParam('pTNRmode', 'on') === 'on';
+  if (wasTnrOn) {
+    const ok = confirm(
+      'TNR aktifken görüntülenen G-kod zaten telafili koordinatlar içeriyor.\n' +
+      'Bu metni AYNEN nokta listesine yeni nominal konum olarak işleyeceğim ' +
+      '(tekrar telafi uygulanmayacak).\n\nDevam edilsin mi?'
+    );
+    if (!ok) return;
+  }
+
+  const result = parseGcode(code, 0, _giDir || 'outer');
+  if (!result.ok) {
+    alert('HATA: ' + result.reason);
+    return;
+  }
+
+  _saveHistory();
+  startPoint = result.startPoint;
+  elements   = result.elements;
+  lastPoint  = elements.length > 0 ? elements[elements.length - 1].to : startPoint;
+
+  generateGCode();
+  autoFit();
+  renderFeatureList();
+  updateCoordsTable();
+}
+
+
 function libraryOpen() {
   document.getElementById('library-overlay').style.display = 'block';
   libraryLoadList();
@@ -5291,6 +5688,55 @@ function _refreshInputModeButtons() {
   <div id="dim-popup-footer">
     <button class="dim-ok-btn" onclick="applyDimPopup()">S UYGULA</button>
     <button class="dim-del-btn" onclick="deleteDimElement()" title="Sil">x</button>
+  </div>
+</div>
+
+
+<!-- G-KOD IMPORT MODAL -->
+<div id="gcode-import-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9100;font-family:'Courier New',monospace;">
+  <div style="background:#13161a;border:1px solid #6a1a6a;border-radius:8px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:94%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+
+    <div style="padding:12px 16px;border-bottom:1px solid #2a1a2a;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <span style="color:#cc88ff;font-size:13px;font-weight:bold;">↳ G-KOD'DAN PROFİL ÇIKAR</span>
+      <button onclick="gcodeImportClose()" style="background:none;border:none;color:#555;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+
+    <div style="padding:10px 16px;border-bottom:1px solid #1a1a2a;display:flex;gap:12px;flex-wrap:wrap;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:#666;font-size:10px;">TORNA YÖNÜ:</span>
+        <button id="gi-btn-outer" onclick="gcodeImportSetDir('outer')"
+          style="padding:3px 8px;font-size:10px;background:#0d2040;border:1px solid #00aaff;color:#00aaff;border-radius:3px;cursor:pointer;font-family:'Courier New',monospace;">Dış</button>
+        <button id="gi-btn-inner" onclick="gcodeImportSetDir('inner')"
+          style="padding:3px 8px;font-size:10px;background:#111;border:1px solid #333;color:#555;border-radius:3px;cursor:pointer;font-family:'Courier New',monospace;">İç</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="color:#666;font-size:10px;">UÇ RADÜSÜ:</span>
+        <input id="gi-toolr" type="number" min="0" max="5" step="0.1" value="0"
+          style="width:50px;background:#1e2228;border:1px solid #333;color:#00ff88;text-align:right;padding:2px 4px;font-size:11px;border-radius:3px;font-family:'Courier New',monospace;">
+        <span style="color:#444;font-size:10px;">mm (0=program yolu)</span>
+      </div>
+    </div>
+
+    <div style="padding:10px 16px 6px;flex-shrink:0;">
+      <div style="color:#555;font-size:9px;margin-bottom:4px;">G-KODU BURAYA YAPIŞTIRIN (G00/G01/G02/G03, X=çap, Z=eksen):</div>
+    </div>
+    <textarea id="gi-input" spellcheck="false"
+      style="flex:1;min-height:180px;margin:0 16px;background:#0a0c10;border:1px solid #2a1a2a;color:#ccc;font-family:'Courier New',monospace;font-size:11px;padding:8px;resize:none;outline:none;border-radius:4px;line-height:1.5;"
+      placeholder="O1000&#10;G21 G40 G90 G95&#10;T0101 M03 S1200&#10;G00 X52 Z2&#10;G01 X0 Z0 F0.15&#10;G01 X20 Z0&#10;G01 X20 Z-15&#10;G01 X40 Z-25&#10;G01 X40 Z-40&#10;G00 X200 Z100&#10;M30"></textarea>
+
+    <div id="gi-info" style="margin:6px 16px;font-size:10px;color:#666;min-height:16px;"></div>
+
+    <div style="padding:10px 16px;border-top:1px solid #1a1a2a;display:flex;gap:8px;flex-shrink:0;">
+      <button onclick="gcodeImportRun()"
+        style="flex:1;padding:8px;background:linear-gradient(135deg,#2a0a4a,#6a1a9a);border:1px solid #cc88ff;color:#fff;font-family:'Courier New',monospace;font-size:11px;font-weight:bold;border-radius:5px;cursor:pointer;">
+        ⚙ PROFİLİ ÇIKAR VE YÜKLE
+      </button>
+      <button onclick="gcodeImportClose()"
+        style="padding:8px 16px;background:#1a1a1a;border:1px solid #333;color:#555;font-family:'Courier New',monospace;font-size:11px;border-radius:5px;cursor:pointer;">
+        İPTAL
+      </button>
+    </div>
+
   </div>
 </div>
 
