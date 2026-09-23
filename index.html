@@ -3559,11 +3559,27 @@ function _buildGCode(payload) {
       }
     }
 
-    const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_outerNormal);
-    const sx = (c.x >= bisRef.x) ? 1 : -1;
-    const sz = (c.z >= bisRef.z) ? 1 : -1;
-    let ex = c.x - sx * toolR;
-    let ez = c.z - sz * toolR;
+    // TANJANT SUREKLILIK TESPITI: dIn ve dOut neredeyse ayni yondeyse (gercek
+    // kose yok, duz devam veya arc'in kendi tanjanti sonraki yonle ortusuyor),
+    // kosegen bisector-merkez + sx/sz-isaretli indirgeme formulu SAYISAL OLARAK
+    // KARARSIZ hale gelir (bir eksende cok kucuk kayan noktali kalinti, o eksenin
+    // isaretini rastgele secebilir, toolR buyuklugunde yanlis kaymaya yol acar).
+    // Bu durumda basit, dogrudan nokta-offset formulu kullan (izole duz segmentlerle
+    // ayni mantik): ex = pt + nIn*toolR.
+    const nInQuick = _gc_outerNormal(dIn);
+    const nOutQuick = _gc_outerNormal(dOut);
+    const parallelDot = nInQuick.x * nOutQuick.x + nInQuick.z * nOutQuick.z;
+    let ex, ez;
+    if (parallelDot > 1 - 1e-6) {
+      ex = pt.x + nInQuick.x * toolR;
+      ez = pt.z + nInQuick.z * toolR;
+    } else {
+      const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_outerNormal);
+      const sx = (c.x >= bisRef.x) ? 1 : -1;
+      const sz = (c.z >= bisRef.z) ? 1 : -1;
+      ex = c.x - sx * toolR;
+      ez = c.z - sz * toolR;
+    }
 
     const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : "G01";
     if ((curType === "G02" || curType === "G03") && arcFits(elements[ptIdx - 1]) && ptIdx < pts.length - 1) {
@@ -3594,7 +3610,15 @@ function _buildGCode(payload) {
           ex = x_line - toolR;
           ez = (arc_cz + zSign * Math.sqrt(z_sq)) - toolR;
         }
-        else if (z_sq >= -1e-6) { ex = pts[ptIdx].x; ez = pts[ptIdx].z - toolR; }
+        else if (z_sq >= -1e-6) {
+          // Tam tanjant (arc'in bitis tanjanti sonraki segmentle ayni yonde,
+          // gercek bir kose yok). Bu durumda offset dairesi cizgiye TEGET olur,
+          // "-toolR" duzeltmesi (genel acili kose formulunun bir parcasi) burada
+          // uygulanmamali: dogru cevap basit nokta-offsettir, izole duz segmentlerle
+          // ayni mantik (pt + nNext*toolR).
+          ex = pt.x + nNext.x * toolR;
+          ez = pt.z + nNext.z * toolR;
+        }
       }
     }
     return { x: ex, z: ez };
