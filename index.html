@@ -3571,14 +3571,14 @@ function _buildGCode(payload) {
     const parallelDot = nInQuick.x * nOutQuick.x + nInQuick.z * nOutQuick.z;
     let ex, ez;
     if (parallelDot > 1 - 1e-6) {
-      ex = pt.x + nInQuick.x * toolR;
-      ez = pt.z + nInQuick.z * toolR;
+      ex = pt.x + nInQuick.x * toolR - toolR;
+      ez = pt.z + nInQuick.z * toolR - toolR;
     } else {
       const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_outerNormal);
       const sx = (c.x >= bisRef.x) ? 1 : -1;
       const sz = (c.z >= bisRef.z) ? 1 : -1;
-      ex = c.x - sx * toolR;
-      ez = c.z - sz * toolR;
+      ex = c.x - toolR;   // DUZELTME: sx/sz isaret sezgisi concave koselerde 2R hata veriyordu
+      ez = c.z - toolR;
     }
 
     const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : "G01";
@@ -3601,23 +3601,21 @@ function _buildGCode(payload) {
         }
         const dNext = _gc_segDir(pt, next);
         const nNext = _gc_outerNormal(dNext);
-        const x_line = pt.x + nNext.x * toolR;
-        const z_sq = R_off * R_off - (x_line - arc_cx) ** 2;
-        if (z_sq > 1e-6) {
-          // sqrt isareti arc tipine bagli: G02 (saat yonu) -> arc altinda bitis,
-          // G03 (saat tersi) -> arc ustunde bitis
-          const zSign = (curType === "G02") ? -1 : 1;
-          ex = x_line - toolR;
-          ez = (arc_cz + zSign * Math.sqrt(z_sq)) - toolR;
-        }
-        else if (z_sq >= -1e-6) {
-          // Tam tanjant (arc'in bitis tanjanti sonraki segmentle ayni yonde,
-          // gercek bir kose yok). Bu durumda offset dairesi cizgiye TEGET olur,
-          // "-toolR" duzeltmesi (genel acili kose formulunun bir parcasi) burada
-          // uygulanmamali: dogru cevap basit nokta-offsettir, izole duz segmentlerle
-          // ayni mantik (pt + nNext*toolR).
-          ex = pt.x + nNext.x * toolR;
-          ez = pt.z + nNext.z * toolR;
+        // DUZELTME: sonraki hat yatay varsayilmiyordu; genel dogru-daire kesisimi
+        const lx = pt.x + nNext.x * toolR, lz = pt.z + nNext.z * toolR;
+        const fx = lx - arc_cx, fz = lz - arc_cz;
+        const bq = fx * dNext.x + fz * dNext.z;
+        const cq = fx * fx + fz * fz - R_off * R_off;
+        const disc = bq * bq - cq;
+        if (disc >= -1e-6) {
+          const sq = Math.sqrt(Math.max(0, disc));
+          const rr = Math.hypot(pt.x - arc_cx, pt.z - arc_cz) || 1;
+          const qx = arc_cx + (pt.x - arc_cx) * R_off / rr, qz = arc_cz + (pt.z - arc_cz) * R_off / rr;
+          const c1 = { x: lx + (-bq + sq) * dNext.x, z: lz + (-bq + sq) * dNext.z };
+          const c2 = { x: lx + (-bq - sq) * dNext.x, z: lz + (-bq - sq) * dNext.z };
+          const cc = (Math.hypot(c1.x - qx, c1.z - qz) <= Math.hypot(c2.x - qx, c2.z - qz)) ? c1 : c2;
+          ex = cc.x - toolR;
+          ez = cc.z - toolR;
         }
       }
     }
@@ -3850,9 +3848,42 @@ function _buildGCodeFanuc(payload) {
   let lastG = '';
   let prevX = sx, prevZ = sz;
 
+  // DUZELTME: ,R kose yuvarlama modunda G01 bitisi TEGET NOKTA degil, iki dogrunun
+  // KESISIM (kose) noktasi olmali. Yay teget degilse ,R kullanilamaz -> acik G02/G03.
+  function filletCorner(i) {
+    const arc = elements[i], pe = elements[i - 1], ne = elements[i + 1];
+    if (!arc || (arc.type !== 'G02' && arc.type !== 'G03') || !((arc.r || 0) > 0)) return null;
+    if (!pe || !ne || (pe.type !== 'G01' && pe.type !== 'ANG') || (ne.type !== 'G01' && ne.type !== 'ANG')) return null;
+    const P0 = i >= 2 ? elements[i - 2].to : startPoint;
+    const pE = pe.to, pX = arc.to, Q = ne.to;
+    const d1 = { x: pE.x - P0.x, z: pE.z - P0.z }, l1 = Math.hypot(d1.x, d1.z);
+    const d2 = { x: Q.x - pX.x, z: Q.z - pX.z }, l2 = Math.hypot(d2.x, d2.z);
+    if (l1 < 1e-9 || l2 < 1e-9) return null;
+    d1.x /= l1; d1.z /= l1; d2.x /= l2; d2.z /= l2;
+    const det = d1.x * (-d2.z) - d1.z * (-d2.x);
+    if (Math.abs(det) < 1e-9) return null;
+    const t = ((pX.x - pE.x) * (-d2.z) - (pX.z - pE.z) * (-d2.x)) / det;
+    if (t <= 0) return null;
+    const C = { x: pE.x + t * d1.x, z: pE.z + t * d1.z };
+    const dot = d1.x * d2.x + d1.z * d2.z;
+    const turn = Math.acos(Math.max(-1, Math.min(1, dot)));
+    const tt = arc.r * Math.tan(turn / 2);
+    if (Math.abs(Math.hypot(C.x - pE.x, C.z - pE.z) - tt) > 0.003) return null;
+    if (Math.abs(Math.hypot(C.x - pX.x, C.z - pX.z) - tt) > 0.003) return null;
+    // yay yonu, tegetsel fillet'in gercek yonuyle uyusmali (aksi halde ayna merkezli yay olur)
+    const crossT = d1.x * d2.z - d1.z * d2.x;
+    if ((crossT > 0 ? 'G02' : 'G03') !== arc.type) return null;
+    return C;
+  }
+
   elements.forEach((el, i) => {
-    const tx = el.to.x * 2;
-    const tz = el.to.z;
+    let tx = el.to.x * 2;
+    let tz = el.to.z;
+    let cornerForR = null;
+    if (el.type === 'G01' || el.type === 'ANG') {
+      const fcn = filletCorner(i + 1);
+      if (fcn) { cornerForR = fcn; tx = fcn.x * 2; tz = fcn.z; }
+    }
 
     if (Math.abs(tx - prevX) < 0.0005 && Math.abs(tz - prevZ) < 0.0005) return;
 
@@ -3888,7 +3919,7 @@ function _buildGCodeFanuc(payload) {
       if (nextEl) {
         if (nextEl.type === 'PAH' && (nextEl.c || 0) > 0) {
           suffix = `,C${_gc_fmt(nextEl.c)}`;
-        } else if ((nextEl.type === 'G02' || nextEl.type === 'G03') && (nextEl.r || 0) > 0) {
+        } else if ((nextEl.type === 'G02' || nextEl.type === 'G03') && (nextEl.r || 0) > 0 && cornerForR) {
           suffix = `,R${_gc_fmt(nextEl.r)}`;
         }
         if (!suffix && typeof el._ang === 'number' && !isNaN(el._ang) && el._ang !== 0) {
@@ -3898,14 +3929,10 @@ function _buildGCodeFanuc(payload) {
 
     } else if (el.type === 'G02' || el.type === 'G03') {
       const prevEl = i > 0 ? elements[i-1] : null;
-      const prevWillHaveR = prevEl &&
-        (prevEl.type === 'G01' || prevEl.type === 'ANG') &&
-        (el.type === 'G02' || el.type === 'G03') &&
-        (el.r || 0) > 0;
+      const prevWillHaveR = prevEl && filletCorner(i) !== null;
 
       if (prevWillHaveR) {
-        prevX = parseFloat(tx.toFixed(3));
-        prevZ = parseFloat(tz.toFixed(3));
+        // yay kontrolorde uretilecek; modal konum onceki bloktaki KOSE noktasinda kalir
         return;
       }
 
@@ -5303,6 +5330,14 @@ function parseGcode(code, toolR, dir) {
   const R = toolR || 0;
   const isOuter = dir === 'outer';
 
+  // DUZELTME: TNR telafili G-kodu geri yuklerken eski "tek yonlu offset" mantigi hem isaret
+  // hem de uc->merkez kaymasi bakimindan yanlisti (kontur her seferinde (-R,-R) kayiyordu).
+  // Artik uretecin kendisi tersine cozuluyor: G-kod ciktisi hedef yola esitlenene kadar iterasyon.
+  if (R > 0) {
+    const inv = _invertTnr(sp, movePts, R, isOuter);
+    if (inv) return { ok: true, startPoint: { x: sp.x, z: sp.z }, elements: inv, warnings };
+  }
+
   const moveCoordsOnly = movePts.map(p => ({ x: p.x, z: p.z }));
   const offsetted = applyOffset(moveCoordsOnly, R, isOuter);
 
@@ -5319,6 +5354,32 @@ function parseGcode(code, toolR, dir) {
   });
 
   return { ok: true, startPoint: finalStart, elements: finalElements, warnings };
+}
+
+function _invertTnr(sp, mv, R, isOuter) {
+  try {
+    const dir = isOuter ? 'outer' : 'inner';
+    const els = mv.map(p => {
+      const e = { type: p.type, to: { x: p.x, z: p.z }, r: p.r || 0, c: 0, comp: 'G40' };
+      if (e.type === 'G02' || e.type === 'G03') e.r = Math.max(0.001, ((e.type === 'G02') === isOuter) ? e.r + R : e.r - R);
+      return e;
+    });
+    for (let it = 0; it < 20; it++) {
+      const g = _buildGCode({ prog: 'O', tool: 'T', spin: 'M', speed: '1', feed: '1', retract: 'X0',
+        toolR: R, tnrDir: dir, tnrOn: true, startPoint: { x: sp.x, z: sp.z },
+        elements: els.map(e => ({ type: e.type, comp: 'G40', r: e.r, c: 0, to: { x: e.to.x, z: e.to.z }, _cx: e._cx, _cz: e._cz })) });
+      const q = parseGcode(g, 0, dir);
+      if (!q.ok || q.elements.length !== els.length) return null;
+      let mx = 0;
+      q.elements.forEach((e, i) => {
+        const dx = mv[i].x - e.to.x, dz = mv[i].z - e.to.z;
+        els[i].to.x += dx; els[i].to.z += dz; mx = Math.max(mx, Math.abs(dx), Math.abs(dz));
+        if (e.r && mv[i].r) { const dr = mv[i].r - e.r; els[i].r = Math.max(0.001, els[i].r + dr); mx = Math.max(mx, Math.abs(dr)); }
+      });
+      if (mx < 5e-4) break;
+    }
+    return els;
+  } catch (err) { return null; }
 }
 
 function gcodeImportRun() {
@@ -5343,6 +5404,8 @@ function gcodeImportRun() {
   _saveHistory();
   startPoint = result.startPoint;
   elements   = result.elements;
+  // DUZELTME: drawArc el.from yoksa global lastPoint'i (kontur SONU) baslangic sanip yayi duz cizgi ciziyordu
+  elements.forEach((el, i) => { el.from = i === 0 ? startPoint : elements[i - 1].to; });
   lastPoint  = elements.length > 0
     ? elements[elements.length - 1].to
     : startPoint;
@@ -5396,6 +5459,7 @@ function gcodeApplyFromEditor() {
   _saveHistory();
   startPoint = result.startPoint;
   elements   = result.elements;
+  elements.forEach((el, i) => { el.from = i === 0 ? startPoint : elements[i - 1].to; });
   lastPoint  = elements.length > 0 ? elements[elements.length - 1].to : startPoint;
 
   generateGCode();
