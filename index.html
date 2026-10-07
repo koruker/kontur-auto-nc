@@ -922,6 +922,7 @@ td.type-PAH{color:#ffff00;}
         </div>
         <span id="editStatus" style="color:#555;font-size:10px;margin-left:4px;">Salt Okunur</span>
       </div>
+      <div id="gcodeWarn" style="display:none;background:#3a2200;color:#ffb347;border-left:3px solid #ff9800;font-size:11px;padding:6px 10px;line-height:1.4;"></div>
       <textarea id="gcodeDisplay" readonly>G21 G40 G90 G95...</textarea>
     </div>
 
@@ -3859,6 +3860,29 @@ function setGcodeOption(opt) {
   generateGCode();
 }
 
+// TNR yolu fiziksel olarak uygulanabilir mi? Uc yolu bir elemanda konturun yonune ters donuyorsa
+// (ofsetli uzunluk negatif) ya da eleman yok oluyorsa o ozellik takim yaricapindan kucuktur.
+function _tnrFeasibility(payload, code) {
+  try {
+    if (!payload.tnrOn || !(payload.toolR > 0) || !payload.startPoint || !payload.elements.length) return [];
+    const q = parseGcode(code, 0, payload.tnrDir);
+    if (!q.ok) return [];
+    const els = payload.elements;
+    if (q.elements.length !== els.length) return ['?'];
+    const bad = [];
+    let pc = { x: payload.startPoint.x, z: payload.startPoint.z }, pt = { x: q.startPoint.x, z: q.startPoint.z };
+    els.forEach((el, i) => {
+      const c = el.to, t = q.elements[i].to;
+      if (el.type !== 'G02' && el.type !== 'G03') {
+        const cx = c.x - pc.x, cz = c.z - pc.z, tx = t.x - pt.x, tz = t.z - pt.z;
+        if (Math.hypot(cx, cz) > 0.01 && Math.hypot(tx, tz) > 0.002 && cx * tx + cz * tz < 0) bad.push(i + 1);
+      }
+      pc = c; pt = t;
+    });
+    return bad;
+  } catch (e) { return []; }
+}
+
 function generateGCode() {
   const payload = {
     prog:    getParam('pProg', 'O1000'),
@@ -3881,7 +3905,17 @@ function generateGCode() {
 
   try {
     const builder = (_gcodeOption === 'fanuc') ? _buildGCodeFanuc : _buildGCode;
-    document.getElementById('gcodeDisplay').value = builder(payload);
+    const code = builder(payload);
+    document.getElementById('gcodeDisplay').value = code;
+    const warnEl = document.getElementById('gcodeWarn');
+    if (warnEl) {
+      const bad = (_gcodeOption === 'fanuc') ? [] : _tnrFeasibility(payload, code);
+      if (bad.length) {
+        warnEl.style.display = 'block';
+        warnEl.textContent = 'UYARI: TNR yolu ' + (bad.includes('?') ? 'bazı elemanlarda yok oluyor' : bad.map(n => '#' + n).join(', ') + ' numaralı elemanlarda geri dönüyor') +
+          ': bu özellikler takım uç yarıçapından (' + payload.toolR + ' mm) küçük, o bölge işlenemez veya takım malzemeye girer. Konturu veya takımı kontrol edin.';
+      } else { warnEl.style.display = 'none'; warnEl.textContent = ''; }
+    }
   } catch(e) {
     document.getElementById('gcodeDisplay').value = '(HATA: ' + (e && e.message ? e.message : e) + ')';
   }
@@ -5285,6 +5319,17 @@ function parseGcode(code, toolR, dir) {
   let curG = 0;
   let hasStart = false;
 
+  // G71/G72/G73 P.. Q..: kontur yalnizca N(P)..N(Q) bloklari arasindadir (kaba/ince islem ayni programda)
+  let rng = null;
+  for (const ln of lines) {
+    const t = ln.toUpperCase().replace(/\([^)]*\)/g, '').replace(/;.*$/, '');
+    if (/G7[123]\b/.test(t)) {
+      const pm = t.match(/\bP(\d+)/), qm = t.match(/\bQ(\d+)/);
+      if (pm && qm) { rng = { p: parseInt(pm[1], 10), q: parseInt(qm[1], 10) }; break; }
+    }
+  }
+  let inRng = false, leadOutWarned = false;
+
   function parseWord(line, letter) {
     const re = new RegExp(letter + '([+-]?\\d*\\.?\\d+)', 'i');
     const m = line.match(re);
@@ -5318,6 +5363,24 @@ function parseGcode(code, toolR, dir) {
     const newX_yari = xRaw !== null ? xRaw / 2 : curX_yari;
     const newZ      = zRaw !== null ? zRaw      : curZ;
 
+    // kontur araligi disindaki bloklar (yaklasma, kesme dongusu, geri cekme) yalniz konumu gunceller
+    let active = true;
+    if (rng) {
+      const nm = line.match(/^N(\d+)/);
+      const nNo = nm ? parseInt(nm[1], 10) : null;
+      if (nNo === rng.p) inRng = true;
+      active = inRng;
+      if (nNo === rng.q) inRng = false;
+    }
+    if (!active) { curX_yari = newX_yari; curZ = newZ; continue; }
+
+    // G40 ile ayni satirdaki ilerleme = telafi iptal (cikis) hareketi, konturun parcasi degil
+    if (/G40\b/.test(l) && (curG === 1 || curG === 2 || curG === 3) && hasStart) {
+      if (!leadOutWarned) { warnings.push('G40 cikis hareketi konturdan cikarildi'); leadOutWarned = true; }
+      curX_yari = newX_yari; curZ = newZ;
+      continue;
+    }
+
     if (!hasStart) {
       if (curG === 0) {
         curX_yari = newX_yari;
@@ -5349,6 +5412,7 @@ function parseGcode(code, toolR, dir) {
         curX_yari = newX_yari; curZ = newZ;
         continue;
       }
+      if (arcR < 0) warnings.push('R negatif (180 derece ustu yay) kucuk yay olarak okundu: ' + raw.trim());
       pts.push({ type: curG === 2 ? 'G02' : 'G03', x: newX_yari, z: newZ, r: Math.abs(arcR) });
     }
 
@@ -5367,6 +5431,11 @@ function parseGcode(code, toolR, dir) {
 
   const sp = pts[startIdx];
   let movePts = pts.slice(startIdx + 1);
+  // eksen (X0) uzerindeki giris hareketi (ornegin Z2 -> Z0) konturun parcasi degil
+  while (movePts.length > 1 && movePts[0].type === 'G01' && Math.abs(sp.x) < 1e-6 && Math.abs(movePts[0].x) < 1e-6 && !(movePts[0].cR > 0 || movePts[0].cC > 0)) {
+    sp.x = movePts[0].x; sp.z = movePts[0].z; movePts = movePts.slice(1);
+    if (!warnings.some(w => w.startsWith('Eksen uzerindeki'))) warnings.push('Eksen uzerindeki giris hareketi konturdan cikarildi');
+  }
 
   if (movePts.length === 0) {
     return { ok: false, reason: 'Kesim hareketi bulunamadı' };
