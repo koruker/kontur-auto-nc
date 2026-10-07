@@ -3292,7 +3292,8 @@ function outerNormal(dir) {
 function innerNormal(dir) {
   const a = {x: -dir.z, z:  dir.x};
   const b = {x:  dir.z, z: -dir.x};
-  if (Math.abs(a.x - b.x) < 1e-10) return (a.z < b.z) ? a : b;
+  // DUZELTME: duvar (cizgi yonu +-X) icin takim ACIK taraftadir (+Z), dis torna ile ayni; eskiden -Z idi
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
   return (a.x < b.x) ? a : b;
 }
 
@@ -3476,7 +3477,8 @@ function _gc_outerNormal(dir) {
 function _gc_innerNormal(dir) {
   const a = { x: -dir.z, z: dir.x };
   const b = { x:  dir.z, z: -dir.x };
-  if (Math.abs(a.x - b.x) < 1e-10) return (a.z < b.z) ? a : b;
+  // DUZELTME: duvar (cizgi yonu +-X) icin takim ACIK taraftadir (+Z), dis torna ile ayni; eskiden -Z idi
+  if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
   return (a.x < b.x) ? a : b;
 }
 function _gc_bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
@@ -3525,7 +3527,7 @@ function _buildGCode(payload) {
     const next = pts[nextIdx];
     const prevEl = elements[ptIdx - 1];
     const dIn = (prevEl && !arcFits(prevEl) && ptIdx >= 2) ? _gc_segDir(pts[ptIdx - 2], pts[ptIdx - 1]) : _gc_segDir(prev, pt);
-    let dOut;
+    let dOut, nextArcC = null, nextArcRo = 0;
     const nextEl = elements[ptIdx];
     if (nextEl && (nextEl.type === "G02" || nextEl.type === "G03") && arcFits(nextEl)) {
       const pa = pts[ptIdx], pb = pts[ptIdx + 1];
@@ -3534,8 +3536,10 @@ function _buildGCode(payload) {
         const Ra = Math.abs(nextEl.r);
         const ha = Math.sqrt(Math.max(0, Ra * Ra - (La / 2) ** 2));
         const signA = nextEl.type === "G02" ? 1 : -1;
-        const arc_cxa = (pa.x + pb.x) / 2 + signA * ha * (-dza / La);
-        const arc_cza = (pa.z + pb.z) / 2 + signA * ha * (dxa / La);
+        const arc_cxa = nextEl._cx !== undefined ? nextEl._cx : (pa.x + pb.x) / 2 + signA * ha * (-dza / La);
+        const arc_cza = nextEl._cx !== undefined ? nextEl._cz : (pa.z + pb.z) / 2 + signA * ha * (dxa / La);
+        nextArcC = { x: arc_cxa, z: arc_cza };
+        nextArcRo = nextEl.type === "G02" ? Ra - toolR : Ra + toolR;
         const startA = Math.atan2(pa.x - arc_cxa, pa.z - arc_cza);
         dOut = nextEl.type === "G02" ? { x: -Math.cos(startA), z: Math.sin(startA) } : { x: Math.cos(startA), z: -Math.sin(startA) };
       } else { dOut = _gc_segDir(pt, next); }
@@ -3579,6 +3583,21 @@ function _buildGCode(payload) {
       const sz = (c.z >= bisRef.z) ? 1 : -1;
       ex = c.x - toolR;   // DUZELTME: sx/sz isaret sezgisi concave koselerde 2R hata veriyordu
       ez = c.z - toolR;
+      // DUZELTME: onceki eleman cizgi, sonraki yay ise merkez kosesi = offset cizgi ile offset DAIRENIN kesisimi
+      if (nextArcC && prevEl && prevEl.type !== "G02" && prevEl.type !== "G03" && nextArcRo > 0) {
+        const bx0 = pt.x + nInQuick.x * toolR, bz0 = pt.z + nInQuick.z * toolR;
+        const fx0 = bx0 - nextArcC.x, fz0 = bz0 - nextArcC.z;
+        const bq0 = fx0 * dIn.x + fz0 * dIn.z, cq0 = fx0 * fx0 + fz0 * fz0 - nextArcRo * nextArcRo, ds0 = bq0 * bq0 - cq0;
+        const tanS = Math.abs(Math.sqrt(Math.max(0, fx0 * fx0 + fz0 * fz0 - bq0 * bq0)) - nextArcRo) < 2e-3;
+        if (ds0 >= -1e-6 || tanS) {
+          const sq0 = (tanS ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
+          const qx0 = nextArcC.x + (pt.x - nextArcC.x) * nextArcRo / rr0, qz0 = nextArcC.z + (pt.z - nextArcC.z) * nextArcRo / rr0;
+          const k1 = { x: bx0 + (-bq0 + sq0) * dIn.x, z: bz0 + (-bq0 + sq0) * dIn.z };
+          const k2 = { x: bx0 + (-bq0 - sq0) * dIn.x, z: bz0 + (-bq0 - sq0) * dIn.z };
+          const kk = (Math.hypot(k1.x - qx0, k1.z - qz0) <= Math.hypot(k2.x - qx0, k2.z - qz0)) ? k1 : k2;
+          ex = kk.x - toolR; ez = kk.z - toolR;
+        }
+      }
     }
 
     const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : "G01";
@@ -3607,8 +3626,10 @@ function _buildGCode(payload) {
         const bq = fx * dNext.x + fz * dNext.z;
         const cq = fx * fx + fz * fz - R_off * R_off;
         const disc = bq * bq - cq;
-        if (disc >= -1e-6) {
-          const sq = Math.sqrt(Math.max(0, disc));
+        // teget kesisim kararsizligi: merkez-dogru mesafesi R_off'a 0.002 mm'den yakinsa tam teget kabul et
+        const tanE = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - R_off) < 2e-3;
+        if (disc >= -1e-6 || tanE) {
+          const sq = tanE ? 0 : Math.sqrt(Math.max(0, disc));
           const rr = Math.hypot(pt.x - arc_cx, pt.z - arc_cz) || 1;
           const qx = arc_cx + (pt.x - arc_cx) * R_off / rr, qz = arc_cz + (pt.z - arc_cz) * R_off / rr;
           const c1 = { x: lx + (-bq + sq) * dNext.x, z: lz + (-bq + sq) * dNext.z };
@@ -3630,7 +3651,7 @@ function _buildGCode(payload) {
     const next = pts[nextIdx];
     const prevEl = elements[ptIdx - 1];
     const dIn = (prevEl && !arcFits(prevEl) && ptIdx >= 2) ? _gc_segDir(pts[ptIdx - 2], pts[ptIdx - 1]) : _gc_segDir(prev, pt);
-    let dOut;
+    let dOut, nextArcC = null, nextArcRo = 0;
     const nextEl = elements[ptIdx];
     if (nextEl && (nextEl.type === "G02" || nextEl.type === "G03") && arcFits(nextEl)) {
       const pa = pts[ptIdx], pb = pts[ptIdx + 1];
@@ -3639,8 +3660,10 @@ function _buildGCode(payload) {
         const Ra = Math.abs(nextEl.r);
         const ha = Math.sqrt(Math.max(0, Ra * Ra - (La / 2) ** 2));
         const signA = nextEl.type === "G02" ? 1 : -1;
-        const arc_cxa = (pa.x + pb.x) / 2 + signA * ha * (-dza / La);
-        const arc_cza = (pa.z + pb.z) / 2 + signA * ha * (dxa / La);
+        const arc_cxa = nextEl._cx !== undefined ? nextEl._cx : (pa.x + pb.x) / 2 + signA * ha * (-dza / La);
+        const arc_cza = nextEl._cx !== undefined ? nextEl._cz : (pa.z + pb.z) / 2 + signA * ha * (dxa / La);
+        nextArcC = { x: arc_cxa, z: arc_cza };
+        nextArcRo = nextEl.type === "G03" ? Ra - toolR : Ra + toolR;
         const startA = Math.atan2(pa.x - arc_cxa, pa.z - arc_cza);
         dOut = nextEl.type === "G02" ? { x: -Math.cos(startA), z: Math.sin(startA) } : { x: Math.cos(startA), z: -Math.sin(startA) };
       } else { dOut = _gc_segDir(pt, next); }
@@ -3664,13 +3687,42 @@ function _buildGCode(payload) {
       }
     }
 
-    const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_innerNormal);
-    const sx = (c.x >= bisRef.x) ? 1 : -1;
-    let ex = c.x - sx * toolR;
-    let ez;
-    if (Math.abs(dIn.z) < 0.01) { ez = bisRef.z; }
-    else if (Math.abs(dOut.x) < 0.01) { ez = (c.z < bisRef.z) ? c.z : c.z - toolR; }
-    else { const sz = (c.z >= bisRef.z) ? -1 : 1; ez = c.z - sz * toolR; }
+    // TANJANT SUREKLILIK TESPITI: dIn ve dOut neredeyse ayni yondeyse (gercek
+    // kose yok, duz devam veya arc'in kendi tanjanti sonraki yonle ortusuyor),
+    // kosegen bisector-merkez + sx/sz-isaretli indirgeme formulu SAYISAL OLARAK
+    // KARARSIZ hale gelir (bir eksende cok kucuk kayan noktali kalinti, o eksenin
+    // isaretini rastgele secebilir, toolR buyuklugunde yanlis kaymaya yol acar).
+    // Bu durumda basit, dogrudan nokta-offset formulu kullan (izole duz segmentlerle
+    // ayni mantik): ex = pt + nIn*toolR.
+    const nInQuick = _gc_innerNormal(dIn);
+    const nOutQuick = _gc_innerNormal(dOut);
+    const parallelDot = nInQuick.x * nOutQuick.x + nInQuick.z * nOutQuick.z;
+    let ex, ez;
+    if (parallelDot > 1 - 1e-6) {
+      ex = pt.x + nInQuick.x * toolR + toolR;
+      ez = pt.z + nInQuick.z * toolR - toolR;
+    } else {
+      const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_innerNormal);
+      const sx = (c.x >= bisRef.x) ? 1 : -1;
+      const sz = (c.z >= bisRef.z) ? 1 : -1;
+      ex = c.x + toolR;   // IC TORNA: uc = merkez + (R,-R) // DUZELTME: sx/sz isaret sezgisi concave koselerde 2R hata veriyordu
+      ez = c.z - toolR;
+      // DUZELTME: onceki eleman cizgi, sonraki yay ise merkez kosesi = offset cizgi ile offset DAIRENIN kesisimi
+      if (nextArcC && prevEl && prevEl.type !== "G02" && prevEl.type !== "G03" && nextArcRo > 0) {
+        const bx0 = pt.x + nInQuick.x * toolR, bz0 = pt.z + nInQuick.z * toolR;
+        const fx0 = bx0 - nextArcC.x, fz0 = bz0 - nextArcC.z;
+        const bq0 = fx0 * dIn.x + fz0 * dIn.z, cq0 = fx0 * fx0 + fz0 * fz0 - nextArcRo * nextArcRo, ds0 = bq0 * bq0 - cq0;
+        const tanS = Math.abs(Math.sqrt(Math.max(0, fx0 * fx0 + fz0 * fz0 - bq0 * bq0)) - nextArcRo) < 2e-3;
+        if (ds0 >= -1e-6 || tanS) {
+          const sq0 = (tanS ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
+          const qx0 = nextArcC.x + (pt.x - nextArcC.x) * nextArcRo / rr0, qz0 = nextArcC.z + (pt.z - nextArcC.z) * nextArcRo / rr0;
+          const k1 = { x: bx0 + (-bq0 + sq0) * dIn.x, z: bz0 + (-bq0 + sq0) * dIn.z };
+          const k2 = { x: bx0 + (-bq0 - sq0) * dIn.x, z: bz0 + (-bq0 - sq0) * dIn.z };
+          const kk = (Math.hypot(k1.x - qx0, k1.z - qz0) <= Math.hypot(k2.x - qx0, k2.z - qz0)) ? k1 : k2;
+          ex = kk.x + toolR; ez = kk.z - toolR;
+        }
+      }
+    }
 
     const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : "G01";
     if ((curType === "G02" || curType === "G03") && arcFits(elements[ptIdx - 1]) && ptIdx < pts.length - 1) {
@@ -3691,12 +3743,25 @@ function _buildGCode(payload) {
           arc_cz = (p1.z + p2.z) / 2 + signArc * h_ * (dx_ / L_);
         }
         const dNext = _gc_segDir(pt, next);
-        const nNextFn = (dIn.x < -0.01) ? _gc_outerNormal : _gc_innerNormal;
-        const nNext = nNextFn(dNext);
-        const x_line = pt.x + nNext.x * toolR;
-        const z_sq = R_off * R_off - (x_line - arc_cx) ** 2;
-        if (z_sq > 1e-6) { ex = x_line - nNext.x * toolR; ez = (arc_cz + Math.sqrt(z_sq)) - nNext.z * toolR; }
-        else if (z_sq >= -1e-6) { ex = pts[ptIdx].x; ez = pts[ptIdx].z - toolR; }
+        const nNext = _gc_innerNormal(dNext);
+        // DUZELTME: sonraki hat yatay varsayilmiyordu; genel dogru-daire kesisimi
+        const lx = pt.x + nNext.x * toolR, lz = pt.z + nNext.z * toolR;
+        const fx = lx - arc_cx, fz = lz - arc_cz;
+        const bq = fx * dNext.x + fz * dNext.z;
+        const cq = fx * fx + fz * fz - R_off * R_off;
+        const disc = bq * bq - cq;
+        // teget kesisim kararsizligi: merkez-dogru mesafesi R_off'a 0.002 mm'den yakinsa tam teget kabul et
+        const tanE = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - R_off) < 2e-3;
+        if (disc >= -1e-6 || tanE) {
+          const sq = tanE ? 0 : Math.sqrt(Math.max(0, disc));
+          const rr = Math.hypot(pt.x - arc_cx, pt.z - arc_cz) || 1;
+          const qx = arc_cx + (pt.x - arc_cx) * R_off / rr, qz = arc_cz + (pt.z - arc_cz) * R_off / rr;
+          const c1 = { x: lx + (-bq + sq) * dNext.x, z: lz + (-bq + sq) * dNext.z };
+          const c2 = { x: lx + (-bq - sq) * dNext.x, z: lz + (-bq - sq) * dNext.z };
+          const cc = (Math.hypot(c1.x - qx, c1.z - qz) <= Math.hypot(c2.x - qx, c2.z - qz)) ? c1 : c2;
+          ex = cc.x + toolR;
+          ez = cc.z - toolR;
+        }
       }
     }
     return { x: ex, z: ez };
@@ -5229,12 +5294,17 @@ function parseGcode(code, toolR, dir) {
   for (let raw of lines) {
     const line = raw.trim().toUpperCase();
     if (!line || line.startsWith('%') || line.startsWith('(') || line.startsWith(';')) continue;
-    const l = line.replace(/^N\d+\s*/, '');
+    // DUZELTME: satir ici (...) ve ; yorumlari koordinat sanilmasin; satirdaki TUM G kodlari okunsun
+    // ("G42 G01 X.. Z.." gibi satirlarda yalniz ilk G'ye bakmak G01'i kaciriyordu)
+    const l = line.replace(/\([^)]*\)/g, '').replace(/;.*$/, '').replace(/^N\d+\s*/, '').trim();
+    if (!l) continue;
 
-    const gMatch = l.match(/G(\d+)/);
-    if (gMatch) {
-      const gNum = parseInt(gMatch[1]);
+    for (const gm of l.matchAll(/G(\d+)/g)) {
+      const gNum = parseInt(gm[1], 10);
       if ([0,1,2,3].includes(gNum)) curG = gNum;
+      if ((gNum === 41 || gNum === 42) && !warnings.some(w => w.startsWith('G41/G42'))) {
+        warnings.push('G41/G42 telafisi var: program yolu KONTUR olarak okundu (TNR yaricapini 0 kullanin)');
+      }
     }
 
     const xRaw = parseWord(l, 'X');
@@ -5264,7 +5334,8 @@ function parseGcode(code, toolR, dir) {
     }
 
     if (curG === 1) {
-      pts.push({ type: 'G01', x: newX_yari, z: newZ });
+      const mR = l.match(/,\s*R\s*([+-]?\d*\.?\d+)/), mC = l.match(/,\s*C\s*([+-]?\d*\.?\d+)/);
+      pts.push({ type: 'G01', x: newX_yari, z: newZ, cR: mR ? Math.abs(parseFloat(mR[1])) : 0, cC: mC ? Math.abs(parseFloat(mC[1])) : 0 });
     } else if (curG === 2 || curG === 3) {
       let arcR = rRaw;
       if (arcR === null && iRaw !== null && kRaw !== null) {
@@ -5295,11 +5366,36 @@ function parseGcode(code, toolR, dir) {
   }
 
   const sp = pts[startIdx];
-  const movePts = pts.slice(startIdx + 1);
+  let movePts = pts.slice(startIdx + 1);
 
   if (movePts.length === 0) {
     return { ok: false, reason: 'Kesim hareketi bulunamadı' };
   }
+
+  // Fanuc ,R (kose yuvarlama) ve ,C (pah): kose noktasi + iki komsu dogrudan teget/pah noktalari hesaplanir
+  function expandCorners(sp0, mv) {
+    const out = []; let prev = { x: sp0.x, z: sp0.z };
+    for (let i = 0; i < mv.length; i++) {
+      const p = mv[i], nx = mv[i + 1];
+      if ((p.cR > 0 || p.cC > 0) && p.type === 'G01' && nx && nx.type === 'G01') {
+        const l1 = Math.hypot(p.x - prev.x, p.z - prev.z), l2 = Math.hypot(nx.x - p.x, nx.z - p.z);
+        const d1 = { x: (p.x - prev.x) / (l1 || 1), z: (p.z - prev.z) / (l1 || 1) }, d2 = { x: (nx.x - p.x) / (l2 || 1), z: (nx.z - p.z) / (l2 || 1) };
+        const turn = Math.acos(Math.max(-1, Math.min(1, d1.x * d2.x + d1.z * d2.z)));
+        const t = p.cC > 0 ? p.cC : p.cR * Math.tan(turn / 2);
+        if (turn > 1e-6 && t > 1e-9 && t <= l1 + 1e-6 && t <= l2 + 1e-6) {
+          const A = { x: p.x - d1.x * t, z: p.z - d1.z * t }, B = { x: p.x + d2.x * t, z: p.z + d2.z * t };
+          out.push({ type: 'G01', x: A.x, z: A.z });
+          if (p.cC > 0) out.push({ type: 'G01', x: B.x, z: B.z });
+          else out.push({ type: (d1.z * d2.x - d1.x * d2.z) > 0 ? 'G03' : 'G02', x: B.x, z: B.z, r: p.cR });
+          prev = B; continue;
+        }
+        warnings.push('Kose parametresi (,R/,C) uygulanamadi (segment cok kisa)');
+      }
+      out.push(p); prev = { x: p.x, z: p.z };
+    }
+    return out;
+  }
+  movePts = expandCorners(sp, movePts);
 
   function applyOffset(pts_arr, R, isOuter) {
     if (R <= 0) return pts_arr;
@@ -5334,6 +5430,8 @@ function parseGcode(code, toolR, dir) {
   // hem de uc->merkez kaymasi bakimindan yanlisti (kontur her seferinde (-R,-R) kayiyordu).
   // Artik uretecin kendisi tersine cozuluyor: G-kod ciktisi hedef yola esitlenene kadar iterasyon.
   if (R > 0) {
+    const invA = _invertTnrA(sp, movePts, R, isOuter);
+    if (invA) return { ok: true, startPoint: invA.start || { x: sp.x, z: sp.z }, elements: invA, warnings };
     const inv = _invertTnr(sp, movePts, R, isOuter);
     if (inv) return { ok: true, startPoint: { x: sp.x, z: sp.z }, elements: inv, warnings };
   }
@@ -5354,6 +5452,104 @@ function parseGcode(code, toolR, dir) {
   });
 
   return { ok: true, startPoint: finalStart, elements: finalElements, warnings };
+}
+
+// ===== ANALITIK TERS TNR: uc yolu -> kontur (disaridan gelen G-kod icin) =====
+// Model: kontur --(dis normal yonunde R ofset)--> merkez yolu --(-R,-R)--> hayali uc yolu.
+// Ters: uc yolu --(+R,+R)--> merkez yolu --(ic normal yonunde R ofset)--> kontur. Koseler ofset
+// elemanlarin KESISIMINDEN bulunur (cizgi-cizgi, cizgi-daire, daire-daire). Ilk/son nokta
+// ofsetsiz (ham) kabul edilir: o cizgi, ham noktadan merkez dairesine (R) teget cizilir.
+function _invertTnrA(sp, mv, R, isOuter) {
+  try {
+    const n = mv.length; if (n < 2 || !(R > 0)) return null;
+    const hyp = Math.hypot, sx = isOuter ? 1 : -1, nf = isOuter ? _gc_outerNormal : _gc_innerNormal,
+      Q = [{ x: sp.x + sx * R, z: sp.z + R }].concat(mv.map(p => ({ x: p.x + sx * R, z: p.z + R })));
+    const normAt = (dx, dz) => { const l = hyp(dx, dz) || 1; return nf({ x: dx / l, z: dz / l }); };
+    // merkez yolu elemanlari
+    const E = [];
+    for (let i = 0; i < n; i++) {
+      const a = Q[i], b = Q[i + 1], m = mv[i];
+      if (m.type === 'G02' || m.type === 'G03') {
+        const dx = b.x - a.x, dz = b.z - a.z, d = hyp(dx, dz), Ro = m.r;
+        if (d < 1e-9 || !(Ro > 0) || d > 2 * Ro + 1e-6) return null;
+        const h = Math.sqrt(Math.max(0, Ro * Ro - d * d / 4)), sg = m.type === 'G02' ? 1 : -1;
+        const c = { x: (a.x + b.x) / 2 + sg * h * (-dz / d), z: (a.z + b.z) / 2 + sg * h * (dx / d) };
+        const a0 = Math.atan2(a.x - c.x, a.z - c.z), a1 = Math.atan2(b.x - c.x, b.z - c.z);
+        let tot = m.type === 'G02' ? a0 - a1 : a1 - a0; if (tot <= 0) tot += 2 * Math.PI; if (m.type === 'G02') tot = -tot;
+        const tg = th => { const s = tot < 0 ? -1 : 1; return { x: s * Math.cos(th), z: -s * Math.sin(th) }; };
+        const tM = tg(a0 + tot / 2), nM = normAt(tM.x, tM.z), pm = { x: c.x + Ro * Math.sin(a0 + tot / 2), z: c.z + Ro * Math.cos(a0 + tot / 2) };
+        const toC = (c.x - pm.x) * nM.x + (c.z - pm.z) * nM.z;
+        const rc = toC > 0 ? Ro + R : Ro - R; if (!(rc > 1e-6)) return null;
+        const t0 = tg(a0), t1 = tg(a1);
+        E.push({ arc: true, c, rc, type: m.type, n0: normAt(t0.x, t0.z), n1: normAt(t1.x, t1.z) });
+      } else {
+        const dx = b.x - a.x, dz = b.z - a.z, l = hyp(dx, dz); if (l < 1e-9) return null;
+        const d = { x: dx / l, z: dz / l }, nn = nf(d);
+        E.push({ arc: false, p: { x: a.x - R * nn.x, z: a.z - R * nn.z }, d, n0: nn, n1: nn });
+      }
+    }
+    // ilk/son cizgi: ham noktadan merkez dairesine teget
+    const tangentLine = (P, C, atStart, rd) => {
+      // iki teget cizgiden, ham uc segmentinin yonune (rd) en yakin olani sec
+      const L = hyp(C.x - P.x, C.z - P.z); if (L < R + 1e-9) return null;
+      const phi = Math.asin(R / L), u = { x: (C.x - P.x) / L, z: (C.z - P.z) / L };
+      let best = null, bs = -2;
+      for (const sgn of [1, -1]) {
+        const cs = Math.cos(sgn * phi), sn = Math.sin(sgn * phi);
+        let d = { x: u.x * cs - u.z * sn, z: u.x * sn + u.z * cs };
+        if (!atStart) d = { x: -d.x, z: -d.z };
+        const nn = nf(d);
+        if (Math.abs((C.x - P.x) * nn.x + (C.z - P.z) * nn.z - R) > 1e-6) continue;
+        const sc = d.x * rd.x + d.z * rd.z;
+        if (sc > bs) { bs = sc; best = { p: { x: P.x, z: P.z }, d, nn }; }
+      }
+      return best;
+    };
+    const unit = (a, b) => { const l = hyp(b.x - a.x, b.z - a.z) || 1; return { x: (b.x - a.x) / l, z: (b.z - a.z) / l }; };
+    // ilk cizgi egikse baslangic zaten uc cizgisi uzerindedir (uretec oyle kaydirir): dogrudan yon kullanilir
+    if (!E[0].arc && Math.abs(unit(sp, mv[0]).z) < 0.01) { const t = tangentLine(sp, Q[1], true, unit(sp, mv[0])); if (!t) return null; E[0].p = t.p; E[0].d = t.d; E[0].n0 = E[0].n1 = t.nn; }
+    if (!E[n - 1].arc) { const P = mv[n - 1], t = tangentLine({ x: P.x, z: P.z }, Q[n - 1], false, unit(n > 1 ? mv[n - 2] : sp, mv[n - 1])); if (!t) return null; E[n - 1].p = t.p; E[n - 1].d = t.d; E[n - 1].n0 = E[n - 1].n1 = t.nn; }
+    const join = (A, B, ref) => {
+      const near = (pts) => pts.reduce((b, p) => (!b || hyp(p.x - ref.x, p.z - ref.z) < hyp(b.x - ref.x, b.z - ref.z) ? p : b), null);
+      if (!A.arc && !B.arc) {
+        const det = A.d.x * (-B.d.z) - A.d.z * (-B.d.x); if (Math.abs(det) < 1e-9) return ref;
+        const t = ((B.p.x - A.p.x) * (-B.d.z) - (B.p.z - A.p.z) * (-B.d.x)) / det;
+        return { x: A.p.x + t * A.d.x, z: A.p.z + t * A.d.z };
+      }
+      if (A.arc !== B.arc) {
+        const Ln = A.arc ? B : A, Ar = A.arc ? A : B, fx = Ln.p.x - Ar.c.x, fz = Ln.p.z - Ar.c.z;
+        const bq = fx * Ln.d.x + fz * Ln.d.z, cq = fx * fx + fz * fz - Ar.rc * Ar.rc, disc = bq * bq - cq;
+        const tanJ = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - Ar.rc) < 2e-3;
+        if (disc < -1e-4 && !tanJ) return null; const sq = tanJ ? 0 : Math.sqrt(Math.max(0, disc));
+        return near([-bq + sq, -bq - sq].map(t => ({ x: Ln.p.x + t * Ln.d.x, z: Ln.p.z + t * Ln.d.z })));
+      }
+      const dx = B.c.x - A.c.x, dz = B.c.z - A.c.z, D = hyp(dx, dz); if (D < 1e-9) return null;
+      const aa = (A.rc * A.rc - B.rc * B.rc + D * D) / (2 * D), h2 = A.rc * A.rc - aa * aa; if (h2 < -1e-4) return null;
+      const h = Math.sqrt(Math.max(0, h2)), ux = dx / D, uz = dz / D, mx = A.c.x + aa * ux, mz = A.c.z + aa * uz;
+      return near([{ x: mx - h * uz, z: mz + h * ux }, { x: mx + h * uz, z: mz - h * ux }]);
+    };
+    const V = [];
+    for (let k = 1; k < n; k++) {
+      const nA = E[k - 1].n1, ref = { x: Q[k].x - R * nA.x, z: Q[k].z - R * nA.z };
+      const v = join(E[k - 1], E[k], ref); if (!v) return null; V.push(v);
+    }
+    const last = E[n - 1], endP = last.arc ? { x: Q[n].x - R * last.n1.x, z: Q[n].z - R * last.n1.z } : { x: mv[n - 1].x, z: mv[n - 1].z };
+    V.push(endP);
+    const q4 = v => Math.round(v * 1e4) / 1e4;   // ondalik gurultuyu temizle (G-kod cozunurlugunun cok altinda)
+    const outEls = mv.map((p, i) => {
+      const o = { type: p.type, to: { x: q4(V[i].x), z: q4(V[i].z) }, r: E[i].arc ? q4(E[i].rc) : 0, c: 0, comp: 'G40' };
+      if (E[i].arc) { o._cx = q4(E[i].c.x); o._cz = q4(E[i].c.z); }   // yay merkezi analitik olarak biliniyor
+      return o;
+    });
+    // baslangic: ilk cizgi egikse G00 baslangici uc cizgisi uzerindedir -> konturun gercek baslangici kontur cizgisinin z=sp.z'deki noktasi
+    let start = { x: sp.x, z: sp.z };
+    if (!E[0].arc && Math.abs(unit(sp, mv[0]).z) >= 0.01 && Math.abs(E[0].d.z) > 1e-9) {
+      const t0 = (sp.z - E[0].p.z) / E[0].d.z;
+      start = { x: q4(E[0].p.x + t0 * E[0].d.x), z: sp.z };
+    }
+    outEls.start = start;
+    return outEls;
+  } catch (e) { return null; }
 }
 
 function _invertTnr(sp, mv, R, isOuter) {
