@@ -5328,7 +5328,12 @@ function parseGcode(code, toolR, dir) {
       if (pm && qm) { rng = { p: parseInt(pm[1], 10), q: parseInt(qm[1], 10) }; break; }
     }
   }
+  if (rng) {
+    const hasP = lines.some(ln => { const m = ln.trim().toUpperCase().match(/^N(\d+)/); return m && parseInt(m[1], 10) === rng.p; });
+    if (!hasP) { warnings.push('G71 P' + rng.p + ' Q' + rng.q + ' icin N' + rng.p + ' blogu yok: tum hareketler kontur sayildi, kaba tarama bloklarini kontrol edin'); rng = null; }
+  }
   let inRng = false, leadOutWarned = false, incMode = false;
+  const skippedCycles = new Set();
 
   function parseWord(line, letter) {
     const re = new RegExp(letter + '([+-]?\\d*\\.?\\d+)', 'i');
@@ -5352,6 +5357,7 @@ function parseGcode(code, toolR, dir) {
       if (gNum === 90) incMode = false;
       // hareket olmayan G kodlari (bekleme, referans donusu, koordinat atama, kesme dongusu satirlari): X/Z/U/W konum degildir
       if ([4, 10, 28, 30, 50, 53, 70, 71, 72, 73, 74, 75, 76, 92].includes(gNum)) skipLine = true;
+      if ([74, 75, 76].includes(gNum)) skippedCycles.add('G' + gNum);
       if ((gNum === 41 || gNum === 42) && !warnings.some(w => w.startsWith('G41/G42'))) {
         warnings.push('G41/G42 telafisi var: program yolu KONTUR olarak okundu (TNR yaricapini 0 kullanin)');
       }
@@ -5441,6 +5447,7 @@ function parseGcode(code, toolR, dir) {
   }
 
   const sp = pts[startIdx];
+  if (skippedCycles.size) warnings.push('Kesme dongusu okunmadi, konturda yok: ' + [...skippedCycles].sort().join(', ') + ' (dis, kanal, delme)');
   let movePts = pts.slice(startIdx + 1);
   // eksen (X0) uzerindeki giris hareketi (ornegin Z2 -> Z0) konturun parcasi degil
   while (movePts.length > 1 && movePts[0].type === 'G01' && Math.abs(sp.x) < 1e-6 && Math.abs(movePts[0].x) < 1e-6 && !(movePts[0].cR > 0 || movePts[0].cC > 0)) {
