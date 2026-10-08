@@ -5328,7 +5328,7 @@ function parseGcode(code, toolR, dir) {
       if (pm && qm) { rng = { p: parseInt(pm[1], 10), q: parseInt(qm[1], 10) }; break; }
     }
   }
-  let inRng = false, leadOutWarned = false;
+  let inRng = false, leadOutWarned = false, incMode = false;
 
   function parseWord(line, letter) {
     const re = new RegExp(letter + '([+-]?\\d*\\.?\\d+)', 'i');
@@ -5344,24 +5344,35 @@ function parseGcode(code, toolR, dir) {
     const l = line.replace(/\([^)]*\)/g, '').replace(/;.*$/, '').replace(/^N\d+\s*/, '').trim();
     if (!l) continue;
 
+    let skipLine = false;
     for (const gm of l.matchAll(/G(\d+)/g)) {
       const gNum = parseInt(gm[1], 10);
       if ([0,1,2,3].includes(gNum)) curG = gNum;
+      if (gNum === 91) incMode = true;
+      if (gNum === 90) incMode = false;
+      // hareket olmayan G kodlari (bekleme, referans donusu, koordinat atama, kesme dongusu satirlari): X/Z/U/W konum degildir
+      if ([4, 10, 28, 30, 50, 53, 70, 71, 72, 73, 74, 75, 76, 92].includes(gNum)) skipLine = true;
       if ((gNum === 41 || gNum === 42) && !warnings.some(w => w.startsWith('G41/G42'))) {
         warnings.push('G41/G42 telafisi var: program yolu KONTUR olarak okundu (TNR yaricapini 0 kullanin)');
       }
     }
 
+    if (skipLine) continue;
     const xRaw = parseWord(l, 'X');
     const zRaw = parseWord(l, 'Z');
+    const uRaw = parseWord(l, 'U');
+    const wRaw = parseWord(l, 'W');
     const rRaw = parseWord(l, 'R');
     const iRaw = parseWord(l, 'I');
     const kRaw = parseWord(l, 'K');
 
-    if (xRaw === null && zRaw === null) continue;
+    if (xRaw === null && zRaw === null && uRaw === null && wRaw === null) continue;
 
-    const newX_yari = xRaw !== null ? xRaw / 2 : curX_yari;
-    const newZ      = zRaw !== null ? zRaw      : curZ;
+    // U/W = artimli (U capta); G91 modunda X/Z de artimlidir
+    const newX_yari = uRaw !== null ? curX_yari + uRaw / 2
+                    : xRaw !== null ? (incMode ? curX_yari + xRaw / 2 : xRaw / 2) : curX_yari;
+    const newZ      = wRaw !== null ? curZ + wRaw
+                    : zRaw !== null ? (incMode ? curZ + zRaw : zRaw) : curZ;
 
     // kontur araligi disindaki bloklar (yaklasma, kesme dongusu, geri cekme) yalniz konumu gunceller
     let active = true;
@@ -5677,7 +5688,8 @@ function gcodeImportRun() {
 
   if (result.warnings.length > 0) {
     info.style.color = '#f39c12';
-    info.textContent = result.warnings.length + ' uyarı: ' + result.warnings[0];
+    info.style.whiteSpace = 'pre-wrap';
+    info.textContent = result.elements.length + ' segment yüklendi. ' + result.warnings.length + ' uyarı:\n- ' + result.warnings.join('\n- ');
   } else {
     info.style.color = '#27ae60';
     info.textContent = result.elements.length + ' segment yüklendi.';
