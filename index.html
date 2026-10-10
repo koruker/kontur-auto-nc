@@ -3495,8 +3495,45 @@ function _gc_bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
 }
 function _gc_fmt(n) { return parseFloat(n.toFixed(3)).toString(); }
 
-/* ---- G-CODE URETICI (lokal, Fanuc) ---- */
+
+/* ---- Z+ YONLU PROGRAMLAR (arka mil / alt tezgah): uretici dis tornayi Z- yonunde varsayar.
+   Z ekseni aynalanarak ayni hesap yapilir, sonuc geri aynalanir. ---- */
+function _gcIsZMirrored(payload) {
+  try {
+    const els = payload.elements;
+    if (!payload.startPoint || !els || !els.length) return false;
+    return (els[els.length - 1].to.z - payload.startPoint.z) > 0.01;
+  } catch (e) { return false; }
+}
+function _mirrorPayload(p) {
+  const q = JSON.parse(JSON.stringify(p));
+  q.mir = false;
+  if (q.startPoint) q.startPoint.z = -q.startPoint.z;
+  q.elements.forEach(e => {
+    e.to.z = -e.to.z;
+    if (e._cz !== undefined && e._cz !== null) e._cz = -e._cz;
+    if (e.type === 'G02') e.type = 'G03'; else if (e.type === 'G03') e.type = 'G02';
+  });
+  if (typeof q.retract === 'string') q.retract = q.retract.replace(/Z(-?\d+\.?\d*)/i, (m, v) => 'Z' + _gc_fmt(-parseFloat(v)));
+  return q;
+}
+function _mirrorCode(code) {
+  return code.split('\n').map(l => l
+    .replace(/Z(-?\d+\.?\d*)/g, (m, v) => { const n = -parseFloat(v); return 'Z' + _gc_fmt(n === 0 ? 0 : n); })
+    .replace(/G0?([23])(?!\d)/g, (m, d) => (m.length === 3 ? 'G0' : 'G') + (d === '2' ? '3' : '2'))
+  ).join('\n');
+}
 function _buildGCode(payload) {
+  if (payload.mir) return _mirrorCode(_buildGCodeCore(_mirrorPayload(payload)));
+  return _buildGCodeCore(payload);
+}
+function _buildGCodeFanuc(payload) {
+  if (payload.mir) return _mirrorCode(_buildGCodeFanucCore(_mirrorPayload(payload)));
+  return _buildGCodeFanucCore(payload);
+}
+
+/* ---- G-CODE URETICI (lokal, Fanuc) ---- */
+function _buildGCodeCore(payload) {
   const { prog, tool, spin, speed, feed, retract, toolR, tnrDir, tnrOn, startPoint, elements } = payload;
 
   let g = `${prog}\n`;
@@ -3864,6 +3901,7 @@ function setGcodeOption(opt) {
 // (ofsetli uzunluk negatif) ya da eleman yok oluyorsa o ozellik takim yaricapindan kucuktur.
 function _tnrFeasibility(payload, code) {
   try {
+    if (payload.mir) { payload = _mirrorPayload(payload); code = _mirrorCode(code); }
     if (!payload.tnrOn || !(payload.toolR > 0) || !payload.startPoint || !payload.elements.length) return [];
     const q = parseGcode(code, 0, payload.tnrDir);
     if (!q.ok) return [];
@@ -3887,6 +3925,7 @@ function _tnrFeasibility(payload, code) {
 // Donus: { ok:false } karsilastirilamadi | { ok:true, dev } en buyuk nokta/yaricap farki (mm)
 function _verifyGcode(payload, code) {
   try {
+    if (payload.mir) { payload = _mirrorPayload(payload); code = _mirrorCode(code); }
     const useR = payload.tnrOn && _gcodeOption !== 'fanuc' ? payload.toolR : 0;
     const q = parseGcode(code, useR, payload.tnrDir);
     const els = payload.elements;
@@ -3908,7 +3947,7 @@ function _centerPathFromGcode(payload) {
   try {
     if (!payload.tnrOn || !(payload.toolR > 0) || _gcodeOption === 'fanuc' || !payload.startPoint || !payload.elements.length) return null;
     const R = payload.toolR, inner = payload.tnrDir === 'inner';
-    const ox = inner ? -R : R, oz = R;
+    const ox = inner ? -R : R, oz = payload.mir ? -R : R;
     const code = _buildGCode(payload);
     let cur = null, mode = 'G00', started = false;
     const pts = [];
@@ -3944,7 +3983,7 @@ function _centerPathFromGcode(payload) {
 }
 
 function _currentPayload() {
-  return {
+  const pl = {
     prog:    getParam('pProg', 'O1000'),
     tool:    getParam('pTool', 'T0101'),
     spin:    getParam('pSpin', 'M03'),
@@ -3962,9 +4001,38 @@ function _currentPayload() {
       _cx: el._cx, _cz: el._cz, _ang: el._ang
     }))
   };
+  pl.mir = _gcIsZMirrored(pl);
+  return pl;
+}
+
+// Yuklenen programin metni aynen gosterilir (makro, X degerleri, yorumlar degismez);
+// kontur veya parametre degisince uygulamanin kendi G-kodu uretilir.
+let _importedCode = null, _importedKey = '';
+function _gcStateKey() {
+  return JSON.stringify([startPoint, elements.map(e => [e.type, e.to.x, e.to.z, e.r, e.c, e.comp, e._cx, e._cz]),
+    getParam('pToolR', ''), getParam('pTNRmode', ''), getParam('pToolDir', ''), _gcodeOption]);
+}
+function _pinImportedCode(code) {
+  _importedCode = code; _importedKey = _gcStateKey();
+  showImportedCode();
+}
+function showImportedCode() {
+  document.getElementById('gcodeDisplay').value = _importedCode;
+  const warnEl = document.getElementById('gcodeWarn');
+  if (warnEl) { warnEl.style.display = 'none'; warnEl.textContent = ''; }
+  const verEl = document.getElementById('gcodeVerify');
+  if (verEl) {
+    verEl.style.display = 'block';
+    verEl.style.borderLeftColor = '#777'; verEl.style.color = '#aaa'; verEl.style.background = '#1a1a1a';
+    verEl.textContent = 'Yüklenen program aynen gösteriliyor. Kontürü veya TNR/takım ayarını değiştirirseniz uygulamanın G-kodu üretilir.';
+  }
 }
 
 function generateGCode() {
+  if (_importedCode !== null) {
+    if (_importedKey === _gcStateKey()) { showImportedCode(); return; }
+    _importedCode = null;
+  }
   const payload = _currentPayload();
 
   try {
@@ -4004,7 +4072,7 @@ function generateGCode() {
 // Fanuc köşe geometrisi: G01/G02/G03 bloklarına ,A ,R ,C ekleri
 // TNR (tnrOn): Fanuc ,A,R,C kullanılırken G41/G42 aktifse Fanuc halleder;
 // biz TNR'yi devre dışı bırakıyoruz (G40) çünkü iki üst üste telafi karışır.
-function _buildGCodeFanuc(payload) {
+function _buildGCodeFanucCore(payload) {
   const { prog, tool, spin, speed, feed, retract, startPoint, elements } = payload;
 
   let g = `${prog}\n`;
@@ -5368,6 +5436,8 @@ let _giDir = 'outer';
 function gcodeImportOpen() {
   document.getElementById('gcode-import-overlay').style.display = 'block';
   document.getElementById('gi-info').textContent = '';
+  const tr = document.getElementById('gi-toolr'); if (tr) tr.value = String(getParamFloat('pToolR', 0.8));
+  const pc = document.getElementById('gi-precomp'); if (pc) pc.checked = false;
   gcodeImportSetDir('outer');
 }
 
@@ -5393,65 +5463,178 @@ function gcodeImportSetDir(dir) {
 // R = yay yarıçapı (G02/G03 için)
 // I, K = yay merkez offsetleri (alternatif; R yoksa kullanılır)
 // Dönen: { ok, startPoint, elements, warnings }
-// Makro degiskenleri (#500=28) ve koseli ifadeler (Z[[11.1-0.347]+#520], X[#500+1]) sayisal degere cevrilir.
-// Yorumlar (...) ve ; silinir. Donus: yeni satir dizisi. Bilinmeyen/hesaplanamayan ifade -> uyari, satir ifadesiz birakilir.
+// Fanuc Custom Macro B yorumlayicisi: atama (#100=..), ifade [..], #[..] dolayli, MOD AND OR XOR, EQ NE GT LT GE LE,
+// SIN COS TAN ASIN ACOS ATAN SQRT ABS ROUND FIX FUP LN EXP, IF[..]GOTO n, IF[..]THEN #n=.., WHILE[..]DOn / ENDn, GOTO n.
+// Calistirilir ve hareket satirlari DUZ metin olarak (dongu acilmis halde) dondurulur. G65/M98 alt programlari yorumlanmaz.
 function _gcMacroExpand(code, warnings) {
   const vars = {};
-  const FN = { SIN: x => Math.sin(x * Math.PI / 180), COS: x => Math.cos(x * Math.PI / 180), TAN: x => Math.tan(x * Math.PI / 180),
-               ATAN: x => Math.atan(x) * 180 / Math.PI, SQRT: Math.sqrt, ABS: Math.abs, ROUND: Math.round, FIX: Math.floor, FUP: Math.ceil };
-  let undef = false;
-  // ifade ayristirici: + - * / , [ ], #n, sayi, fonksiyon[...]
+  const sysWarn = new Set();
+  const FN1 = { SIN: x => Math.sin(x * Math.PI / 180), COS: x => Math.cos(x * Math.PI / 180), TAN: x => Math.tan(x * Math.PI / 180),
+    ASIN: x => Math.asin(x) * 180 / Math.PI, ACOS: x => Math.acos(x) * 180 / Math.PI, SQRT: Math.sqrt, ABS: Math.abs,
+    ROUND: Math.round, FIX: Math.floor, FUP: Math.ceil, LN: Math.log, EXP: Math.exp, BIN: x => x, BCD: x => x };
+  function getVar(n) {
+    if (n in vars) return vars[n];
+    if (n >= 1000 || n === 0) sysWarn.add(n);   // sistem degiskenleri (#5001 vb.) okunamaz
+    return 0;
+  }
   function evalExpr(str) {
-    let i = 0;
     const src = str.replace(/\s+/g, '');
-    function peek() { return src[i]; }
+    let i = 0;
+    const rest = () => src.slice(i);
+    const peekWord = (w) => rest().startsWith(w);
     function primary() {
-      let c = peek();
+      const c = src[i];
       if (c === '+') { i++; return primary(); }
       if (c === '-') { i++; return -primary(); }
-      if (c === '[') { i++; const v = sum(); if (peek() !== ']') throw new Error('] yok'); i++; return v; }
-      if (c === '#') { i++; const m = src.slice(i).match(/^\d+/); if (!m) throw new Error('# no'); i += m[0].length;
-        if (!(m[0] in vars)) { undef = true; return 0; } return vars[m[0]]; }
-      const fm = src.slice(i).match(/^([A-Z]+)\[/);
-      if (fm && FN[fm[1]]) { i += fm[1].length + 1; const v = sum(); if (peek() !== ']') throw new Error('] yok'); i++; return FN[fm[1]](v); }
-      const nm = src.slice(i).match(/^\d+\.\d*|^\.\d+|^\d+/);
+      if (c === '[') { i++; const v = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return v; }
+      if (c === '#') {
+        i++;
+        if (src[i] === '[') { i++; const k = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return getVar(Math.round(k)); }
+        const m = rest().match(/^\d+/); if (!m) throw new Error('#'); i += m[0].length; return getVar(parseInt(m[0], 10));
+      }
+      const fm = rest().match(/^([A-Z]+)\[/);
+      if (fm) {
+        i += fm[1].length + 1; const a = cmp();
+        if (fm[1] === 'ATAN') {
+          if (src[i] !== ']') throw new Error('ATAN');
+          i++;
+          if (src[i] === '/' && src[i + 1] === '[') { i += 2; const b = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return Math.atan2(a, b) * 180 / Math.PI; }
+          return Math.atan(a) * 180 / Math.PI;
+        }
+        if (src[i] !== ']') throw new Error('] yok'); i++;
+        if (!FN1[fm[1]]) throw new Error('fonksiyon ' + fm[1]);
+        return FN1[fm[1]](a);
+      }
+      const nm = rest().match(/^\d+\.\d*|^\.\d+|^\d+/);
       if (!nm) throw new Error('sayi yok');
       i += nm[0].length; return parseFloat(nm[0]);
     }
-    function prod() { let v = primary(); while (peek() === '*' || peek() === '/') { const o = src[i++]; const r = primary(); v = o === '*' ? v * r : v / r; } return v; }
-    function sum() { let v = prod(); while (peek() === '+' || peek() === '-') { const o = src[i++]; const r = prod(); v = o === '+' ? v + r : v - r; } return v; }
-    const v = sum();
+    function prod() {
+      let v = primary();
+      for (;;) {
+        if (src[i] === '*') { i++; v *= primary(); }
+        else if (src[i] === '/') { i++; v /= primary(); }
+        else if (peekWord('MOD')) { i += 3; const r = primary(); v = v % r; }
+        else if (peekWord('AND')) { i += 3; const r = primary(); v = (Math.round(v) & Math.round(r)); }
+        else break;
+      }
+      return v;
+    }
+    function sum() {
+      let v = prod();
+      for (;;) {
+        if (src[i] === '+') { i++; v += prod(); }
+        else if (src[i] === '-') { i++; v -= prod(); }
+        else if (peekWord('OR')) { i += 2; v = (Math.round(v) | Math.round(prod())); }
+        else if (peekWord('XOR')) { i += 3; v = (Math.round(v) ^ Math.round(prod())); }
+        else break;
+      }
+      return v;
+    }
+    function cmp() {
+      const a = sum();
+      for (const [w, f] of [['EQ', (x, y) => x === y], ['NE', (x, y) => x !== y], ['GT', (x, y) => x > y], ['LT', (x, y) => x < y], ['GE', (x, y) => x >= y], ['LE', (x, y) => x <= y]]) {
+        if (peekWord(w)) { i += 2; const b = sum(); return f(a, b) ? 1 : 0; }
+      }
+      return a;
+    }
+    const v = cmp();
     if (i < src.length) throw new Error('fazla karakter');
     return v;
   }
   const fmtN = v => String(+v.toFixed(6));
-  const out = [];
-  let bad = 0;
-  for (const raw of code.split('\n')) {
-    let t = raw.toUpperCase().replace(/\([^)]*\)/g, '').replace(/;.*$/, '').trim();
-    if (!t) { out.push(''); continue; }
-    if (!/[#\[]/.test(t)) { out.push(t); continue; }
-    try {
-      const am = t.match(/^(?:N\d+\s*)?#(\d+)\s*=\s*(.+)$/);
-      if (am) { vars[am[1]] = evalExpr(am[2]); out.push(''); continue; }
-      // satir ici: [..] ve #n -> sayi (fonksiyon adi varsa birlikte)
-      let res = '', i = 0;
-      while (i < t.length) {
-        const fm = t.slice(i).match(/^([A-Z]*)\[/);
-        if (fm && (fm[1] === '' || FN[fm[1]])) {
-          let j = i + fm[0].length, d = 1;
-          for (; j < t.length && d > 0; j++) { if (t[j] === '[') d++; else if (t[j] === ']') d--; }
-          if (d !== 0) throw new Error('] yok');
-          res += fmtN(evalExpr(t.slice(i, j))); i = j; continue;
-        }
-        if (t[i] === '#') { const m = t.slice(i + 1).match(/^\d+/); if (!m) throw new Error('#'); res += fmtN(evalExpr('#' + m[0])); i += 1 + m[0].length; continue; }
-        res += t[i++];
+  // [..] ile eslesen kapanisi bul (acilis index'i verilir)
+  function matchBr(t, o) { let d = 0; for (let j = o; j < t.length; j++) { if (t[j] === '[') d++; else if (t[j] === ']') { d--; if (!d) return j; } } return -1; }
+  function addNum(res, v) {   // 'Z-' + (-5) -> 'Z5'
+    if (v < 0 && /[-+]$/.test(res)) return res.slice(0, -1) + (res.endsWith('-') ? '' : '-') + fmtN(-v);
+    return res + fmtN(v);
+  }
+  // satir icindeki [..] ve #n ifadelerini sayiya cevir
+  function subst(t) {
+    let res = '', i = 0;
+    while (i < t.length) {
+      const fm = t.slice(i).match(/^([A-Z]*)\[/);
+      if (fm && (fm[1] === '' || FN1[fm[1]] || fm[1] === 'ATAN')) {
+        const o = i + fm[1].length;
+        let j = matchBr(t, o);
+        if (j < 0) throw new Error('] yok');
+        if (fm[1] === 'ATAN' && t[j + 1] === '/' && t[j + 2] === '[') { j = matchBr(t, j + 2); if (j < 0) throw new Error('] yok'); }
+        res = addNum(res, evalExpr(t.slice(i, j + 1))); i = j + 1; continue;
       }
-      out.push(res);
+      if (t[i] === '#') {
+        let j = i + 1;
+        if (t[j] === '[') { j = matchBr(t, j); if (j < 0) throw new Error('] yok'); j++; }
+        else { const m = t.slice(j).match(/^\d+/); if (!m) throw new Error('#'); j += m[0].length; }
+        res = addNum(res, evalExpr(t.slice(i, j))); i = j; continue;
+      }
+      res += t[i++];
+    }
+    return res;
+  }
+  // LHS "#n=" / "#[expr]=" -> {idx, rhs}
+  function parseAssign(t) {
+    const m = t.match(/^#(\d+|\[)/);
+    if (!m) return null;
+    let idx, j;
+    if (m[1] === '[') { const e = matchBr(t, 1); if (e < 0) return null; idx = Math.round(evalExpr(t.slice(1, e + 1))); j = e + 1; }
+    else { idx = parseInt(m[1], 10); j = 1 + m[1].length; }
+    if (t[j] !== '=') return null;
+    return { idx, rhs: t.slice(j + 1) };
+  }
+
+  const src = code.split('\n').map(raw => raw.toUpperCase().replace(/\([^)]*\)/g, '').replace(/;.*$/, '').trim());
+  const labels = {};
+  src.forEach((t, k) => { const m = t.match(/^N(\d+)/); if (m && !(m[1] in labels)) labels[m[1]] = k; });
+  const out = [];
+  let bad = 0, steps = 0, loopLimit = false, subWarn = false;
+  const STEP_MAX = 200000;
+  let pc = 0;
+  function gotoLabel(n) { if (!(n in labels)) throw new Error('GOTO N' + n + ' yok'); pc = labels[n]; }
+  while (pc < src.length) {
+    if (++steps > STEP_MAX) { loopLimit = true; break; }
+    let t = src[pc++];
+    if (!t) { continue; }
+    if (!/[#\[]|WHILE|GOTO|DO\d|END\d|^IF|M98|G65/.test(t)) { out.push(t); continue; }
+    try {
+      let body = t.replace(/^N\d+\s*/, '');
+      if (/M98|G65|G66/.test(body)) { subWarn = true; }
+      let m;
+      // IF[..]GOTO n  /  IF[..]THEN stmt
+      if ((m = body.match(/^IF/)) && body[2] === '[') {
+        const e = matchBr(body, 2); const cond = evalExpr(body.slice(2, e + 1)); const tail = body.slice(e + 1);
+        const gm = tail.match(/^GOTO(\d+)$/);
+        if (gm) { if (cond) gotoLabel(gm[1]); continue; }
+        const tm = tail.match(/^THEN(.+)$/);
+        if (tm) { if (cond) { const a = parseAssign(tm[1].trim()); if (!a) throw new Error('THEN'); vars[a.idx] = evalExpr(a.rhs); } continue; }
+        throw new Error('IF');
+      }
+      if ((m = body.match(/^GOTO(\d+)$/))) { gotoLabel(m[1]); continue; }
+      if ((m = body.match(/^WHILE\[/))) {
+        const e = matchBr(body, 5); const cond = evalExpr(body.slice(5, e + 1)); const dm = body.slice(e + 1).match(/^DO(\d+)$/);
+        if (!dm) throw new Error('WHILE');
+        if (!cond) {  // karsilik gelen END'e atla
+          let k = pc; while (k < src.length && !new RegExp('^(N\\d+\\s*)?END' + dm[1] + '$').test(src[k])) k++;
+          if (k >= src.length) throw new Error('END yok');
+          pc = k + 1;
+        }
+        continue;
+      }
+      if ((m = body.match(/^END(\d+)$/))) {   // en yakin onceki WHILE...DOn satirina don
+        let k = pc - 2; const re = new RegExp('^(N\\d+\\s*)?(WHILE\\[.*\\])?DO' + m[1] + '$');
+        while (k >= 0 && !re.test(src[k])) k--;
+        if (k < 0) throw new Error('DO yok');
+        pc = k; continue;
+      }
+      if (/^DO\d+$/.test(body)) continue;
+      const a = parseAssign(body);
+      if (a) { vars[a.idx] = evalExpr(a.rhs); continue; }
+      out.push(subst(t));
     } catch (e) { bad++; out.push(t.replace(/[A-Z]*\[[^\]]*\]/g, '').replace(/#\d+/g, '')); }
   }
-  if (bad) warnings.push('Makro ifadesi hesaplanamadi (' + bad + ' satir): ilgili eksen degeri atlandi');
-  if (undef) warnings.push('Tanimsiz makro degiskeni 0 sayildi');
+  if (bad) warnings.push('Makro ifadesi hesaplanamadi (' + bad + ' satir): ilgili satirdaki deger atlandi');
+  if (loopLimit) warnings.push('Makro dongusu ' + STEP_MAX + ' adimda bitmedi, durduruldu');
+  if (subWarn) warnings.push('G65/G66/M98 alt program ve makro cagrilari yorumlanmadi');
+  if (sysWarn.size) warnings.push('Tanimsiz veya sistem makro degiskeni 0 sayildi: #' + [...sysWarn].sort((x, y) => x - y).join(', #'));
   return out;
 }
 
@@ -5827,7 +6010,8 @@ function gcodeImportRun() {
     return;
   }
 
-  const result = parseGcode(code, toolR, _giDir);
+  const preComp = !!(document.getElementById('gi-precomp') || {}).checked;
+  const result = parseGcode(code, preComp ? toolR : 0, _giDir);
 
   if (!result.ok) {
     info.style.color = '#e74c3c';
@@ -5835,6 +6019,10 @@ function gcodeImportRun() {
     return;
   }
 
+  // yol kontur olarak okundu: girilen uc radusu telafi parametresi olur (CIMCO ile ayni cizim, telafi ustune)
+  if (!preComp && toolR > 0) {
+    const pr = document.getElementById('pToolR'); if (pr) pr.value = String(toolR);
+  }
   _saveHistory();
   startPoint = result.startPoint;
   elements   = result.elements;
@@ -5844,6 +6032,7 @@ function gcodeImportRun() {
     ? elements[elements.length - 1].to
     : startPoint;
 
+  if (preComp && toolR > 0) result.warnings.unshift('Uç radüsü ' + toolR + ' mm: yol TNR telafili kabul edilip kontur geri hesaplandı; çizim program yolundan farklı olur.');
   if (result.warnings.length > 0) {
     info.style.color = '#f39c12';
     info.style.whiteSpace = 'pre-wrap';
@@ -5853,7 +6042,9 @@ function gcodeImportRun() {
     info.textContent = result.elements.length + ' segment yüklendi.';
   }
 
+  _importedCode = null;
   generateGCode();
+  _pinImportedCode(code);
   autoFit();
   renderFeatureList();
   updateCoordsTable();
@@ -5897,7 +6088,9 @@ function gcodeApplyFromEditor() {
   elements.forEach((el, i) => { el.from = i === 0 ? startPoint : elements[i - 1].to; });
   lastPoint  = elements.length > 0 ? elements[elements.length - 1].to : startPoint;
 
+  _importedCode = null;
   generateGCode();
+  _pinImportedCode(code);
   autoFit();
   renderFeatureList();
   updateCoordsTable();
@@ -6236,8 +6429,11 @@ function _refreshInputModeButtons() {
         <span style="color:#666;font-size:10px;">UÇ RADÜSÜ:</span>
         <input id="gi-toolr" type="number" min="0" max="5" step="0.1" value="0"
           style="width:50px;background:#1e2228;border:1px solid #333;color:#00ff88;text-align:right;padding:2px 4px;font-size:11px;border-radius:3px;font-family:'Courier New',monospace;">
-        <span style="color:#444;font-size:10px;">mm (0=program yolu)</span>
+        <span style="color:#444;font-size:10px;">mm</span>
       </div>
+      <label style="display:flex;align-items:center;gap:5px;color:#888;font-size:10px;cursor:pointer;" title="Işaretliyse yüklenen yol zaten TNR telafili sayılır ve kontur geri hesaplanır (bu uygulamanın TNR açık çıktısını geri okumak için). İşaretsizse yüklenen yol kontur olarak aynen çizilir, uç radüsü yalnızca telafi/önizleme için parametrelere yazılır.">
+        <input type="checkbox" id="gi-precomp"> yol zaten TNR telafili
+      </label>
     </div>
 
     <div style="padding:10px 16px 6px;flex-shrink:0;">
