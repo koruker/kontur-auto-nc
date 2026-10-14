@@ -959,12 +959,12 @@ td.type-PAH{color:#ffff00;}
       <div class="p-group">
         <h4>Yapay Zeka Ayarları</h4>
         <div class="p-row"><label>Sağlayıcı</label><select id="ai-prov" onchange="aiSetProv(this.value)"><option value="gemini">Google Gemini (ücretsiz)</option><option value="groq">Groq (ücretsiz)</option><option value="openrouter">OpenRouter (ücretsiz modeller)</option><option value="custom">Özel (OpenAI uyumlu)</option></select></div>
-        <div class="p-row"><label>API anahtarı</label><input type="password" id="ai-key" autocomplete="off" oninput="aiSetKey(this.value)" onchange="aiSetKey(this.value)"></div>
-        <div class="p-row"><label>Model</label><input type="text" id="ai-model" list="ai-models" oninput="aiSetModel(this.value)" onchange="aiSetModel(this.value)"><datalist id="ai-models"></datalist></div>
+        <div class="p-row"><label>API anahtarı</label><input type="password" id="ai-key" autocomplete="new-password" name="ai-key-x" oninput="aiSetKey(this.value)" onchange="aiSetKey(this.value)"></div>
+        <div class="p-row"><label>Model</label><input type="text" id="ai-model" autocomplete="off" name="ai-model-x" list="ai-models" oninput="aiSetModel(this.value)" onchange="aiSetModel(this.value)"><datalist id="ai-models"></datalist></div>
         <div class="p-row" id="ai-baserow" style="display:none"><label>Taban adres</label><input type="text" id="ai-base" placeholder="https://.../v1" onchange="aiSetBase(this.value)"></div>
         <div class="p-row"><label>Anahtarı bu tarayıcıda sakla</label><input type="checkbox" id="ai-keep" onchange="aiSetKeep(this.checked)"></div>
         <div id="ai-link" style="font-size:11px;color:#888;margin-bottom:6px"></div>
-        <button onclick="aiTest()">BAĞLANTIYI SINA</button><button onclick="aiListModels()">MODELLERİ LİSTELE</button><button onclick="aiClearKey()">ANAHTARI SİL</button>
+        <button onclick="aiTest()">BAĞLANTIYI SINA</button><button onclick="aiListModels()">MODELLERİ LİSTELE</button><button onclick="aiClearKey()">ANAHTARI SİL</button><button onclick="aiResetModel()">MODELİ VARSAYILANA DÖNDÜR</button>
         <div style="font-size:10px;color:#777;margin-top:6px">Anahtar yalnızca bu tarayıcıda durur ve doğrudan sağlayıcıya gönderilir. Kontur ve G-kod, seçilen sağlayıcıya gider.</div>
       </div>
       <div class="p-group">
@@ -6601,6 +6601,7 @@ function _refreshInputModeButtons() {
 
 
 
+
 // ============================================================
 // YZ (YAPAY ZEKA) KATMANI: konturu ve G-kodu inceler, TNR/ofsetli G-kodu uretir veya duzeltir.
 // Cevrimici, ucretsiz anahtarli saglayicilar (tarayicidan dogrudan cagrilir; anahtar sadece bu tarayicida tutulur).
@@ -6935,6 +6936,8 @@ function aiRenderSettings() {
   const l = _aiEl('ai-link'); if (l) l.innerHTML = P.link ? 'Ucretsiz anahtar: <a href="' + P.link + '" target="_blank" rel="noopener" style="color:#c084fc">' + P.link.replace('https://', '') + '</a>' : '';
 }
 try { _aiLoad(); } catch (e) {}
+
+function aiResetModel() { delete _aiSet.models[_aiSet.prov]; _aiSave(); aiRenderSettings(); _aiLog('Model varsayilana dondu: ' + _aiModel(), 'ok'); }
 
 </script>
 
