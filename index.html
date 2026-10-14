@@ -141,6 +141,13 @@ td.type-PAH{color:#ffff00;}
 .cell-edit:focus{border-color:#00aaff;outline:none;}
 .cell-edit-sel{background:#0d0f12;border:1px solid #2a2d33;color:#ccc;padding:1px 2px;font-size:10px;border-radius:2px;max-width:52px;}
 
+/* ---------- YZ TAB ---------- */
+#tab-ai{padding:0.8vh 0.8vw;gap:0.6vh;flex-direction:column;overflow-y:auto;}
+#tab-ai .p-row select,#tab-ai .p-row input[type=text],#tab-ai .p-row input[type=password],#tab-ai .p-row input[type=number]{background:#0d0f12;border:1px solid var(--border);color:#ffaa00;width:60%;text-align:left;font-size:12px;padding:3px 5px;border-radius:4px;font-family:'Courier New',monospace;}
+#tab-ai button{background:#2a2140;border:1px solid #6b46c1;color:#d8b4fe;border-radius:4px;padding:6px 10px;font-size:11px;cursor:pointer;margin:2px 4px 2px 0;}
+#tab-ai button:hover{background:#3b2d5c;}
+#tab-ai textarea{width:100%;background:#0d0f12;color:#ccc;border:1px solid var(--border);border-radius:4px;font-family:'Courier New',monospace;font-size:12px;padding:6px;box-sizing:border-box;}
+#ai-log{background:#0d0f12;border:1px solid var(--border);border-radius:4px;padding:6px;font-family:'Courier New',monospace;font-size:11px;min-height:70px;max-height:230px;overflow-y:auto;}
 /* ---------- PARAMS TAB ---------- */
 #tab-params{padding:0.8vh 0.8vw;gap:0.6vh;flex-direction:column;overflow-y:auto;}
 .p-group{background:#1e2228;border:1px solid var(--border);border-radius:6px;padding:10px;}
@@ -703,6 +710,7 @@ td.type-PAH{color:#ffff00;}
     <div class="tab" onclick="showTab('gcode')">G-KOD</div>
     <div class="tab" onclick="showTab('coords')">NOKTA LİSTESİ</div>
     <div class="tab" onclick="showTab('params')">PARAMETRELER</div>
+    <div class="tab" onclick="showTab('ai')">YZ</div>
   </div>
 </div>
 
@@ -932,7 +940,7 @@ td.type-PAH{color:#ffff00;}
       <div style="display:flex;gap:4px;padding:6px 0;border-bottom:1px solid #1a1d22;margin-bottom:4px">
         <button class="tbtn" onclick="copyPointList()" title="Nokta listesini panoya kopyala">↩ KOPYALA</button>
         <button class="tbtn" onclick="pastePointList()" title="Panodaki nokta listesini yükle"> YAPIŞTIR</button>
-        <button class="tbtn" style="margin-left:auto;color:#ff6666" onclick="if(confirm('Tüm noktaları sil?')){elements=[];startPoint=null;lastPoint=null;generateGCode();redraw();updateCoordsTable();}"> TEMİZLE</button>
+        <button class="tbtn" style="margin-left:auto;color:#ff6666" onclick="if(confirm('Tüm noktaları sil?')){elements=[];_cycles=[];startPoint=null;lastPoint=null;generateGCode();redraw();updateCoordsTable();}"> TEMİZLE</button>
       </div>
       <div id="coordsTable">
         <table>
@@ -943,6 +951,43 @@ td.type-PAH{color:#ffff00;}
           </tr></thead>
           <tbody id="coordsBody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- -- YZ TAB -- -->
+    <div id="tab-ai" class="tabcontent">
+      <div class="p-group">
+        <h4>Yapay Zeka Ayarları</h4>
+        <div class="p-row"><label>Sağlayıcı</label><select id="ai-prov" onchange="aiSetProv(this.value)"><option value="gemini">Google Gemini (ücretsiz)</option><option value="groq">Groq (ücretsiz)</option><option value="openrouter">OpenRouter (ücretsiz modeller)</option><option value="custom">Özel (OpenAI uyumlu)</option></select></div>
+        <div class="p-row"><label>API anahtarı</label><input type="password" id="ai-key" autocomplete="off" onchange="aiSetKey(this.value)"></div>
+        <div class="p-row"><label>Model</label><input type="text" id="ai-model" list="ai-models" onchange="aiSetModel(this.value)"><datalist id="ai-models"></datalist></div>
+        <div class="p-row" id="ai-baserow" style="display:none"><label>Taban adres</label><input type="text" id="ai-base" placeholder="https://.../v1" onchange="aiSetBase(this.value)"></div>
+        <div class="p-row"><label>Anahtarı bu tarayıcıda sakla</label><input type="checkbox" id="ai-keep" onchange="aiSetKeep(this.checked)"></div>
+        <div id="ai-link" style="font-size:11px;color:#888;margin-bottom:6px"></div>
+        <button onclick="aiTest()">BAĞLANTIYI SINA</button><button onclick="aiListModels()">MODELLERİ LİSTELE</button><button onclick="aiClearKey()">ANAHTARI SİL</button>
+        <div style="font-size:10px;color:#777;margin-top:6px">Anahtar yalnızca bu tarayıcıda durur ve doğrudan sağlayıcıya gönderilir. Kontur ve G-kod, seçilen sağlayıcıya gider.</div>
+      </div>
+      <div class="p-group">
+        <h4>Kontur ve G-Kod İşlemleri</h4>
+        <div class="p-row"><label>En çok deneme</label><input type="number" id="ai-tries" value="3" min="1" max="6" style="width:60px"></div>
+        <textarea id="ai-note" rows="2" placeholder="İsteğe bağlı not (örn: TNR sağ taraf, dış takım)"></textarea>
+        <div style="margin-top:6px">
+          <button class="ai-act" onclick="aiReview()">KONTURU İNCELE</button>
+          <button class="ai-act" onclick="aiGenerate('gen')">TNR/OFSETLİ G-KOD ÜRET</button>
+          <button class="ai-act" onclick="aiGenerate('fix')">MEVCUT G-KODU DÜZELT</button>
+          <button id="ai-stop" onclick="aiStop()" style="display:none">DURDUR</button>
+        </div>
+        <div id="ai-log" style="margin-top:6px"></div>
+      </div>
+      <div class="p-group" id="ai-res" style="display:none">
+        <h4>YZ Sonucu</h4>
+        <div id="ai-resstat" style="font-size:11px;margin-bottom:6px"></div>
+        <textarea id="ai-code" rows="12" readonly></textarea>
+        <div style="margin-top:6px">
+          <button id="ai-apply" onclick="aiApply()">G-KODA UYGULA</button>
+          <button onclick="aiCompare()">ANALİTİKLE KARŞILAŞTIR</button>
+          <button onclick="aiUseAnalytic()">ANALİTİK G-KODA DÖN</button>
+        </div>
       </div>
     </div>
 
@@ -1017,6 +1062,7 @@ td.type-PAH{color:#ffff00;}
 /* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   STATE
 "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
 let elements = [], startPoint = null, lastPoint = null;
+var _cycles = [];
 let _history = [], _redoHistory = [];  // undo/redo stacks
 function _saveHistory() {
   _history.push({
@@ -2158,12 +2204,13 @@ window.onload = () => {
 "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
 function showTab(name) {
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    const names=['input','gcode','coords','params'];
+    const names=['input','gcode','coords','params','ai'];
     t.classList.toggle('active', names[i]===name);
   });
   document.querySelectorAll('.tabcontent').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   if (name==='coords') updateCoordsTable();
+  if (name==='ai' && typeof aiRenderSettings==='function') aiRenderSettings();
 }
 
 /* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   SHOPTURN FEATURE UI
@@ -3289,6 +3336,8 @@ function outerNormal(dir) {
   const a = {x: -dir.z, z:  dir.x};
   const b = {x:  dir.z, z: -dir.x};
   if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  // duvara yakin yonlerde (|n.x|<0.5) takim hep +Z (acik) tarafta: yay boyunca normal surekli kalir
+  if (Math.abs(a.x) < 0.5 && Math.abs(a.z - b.z) > 1e-10) return (a.z > b.z) ? a : b;
   return (a.x > b.x) ? a : b;
 }
 function innerNormal(dir) {
@@ -3296,6 +3345,7 @@ function innerNormal(dir) {
   const b = {x:  dir.z, z: -dir.x};
   // DUZELTME: duvar (cizgi yonu +-X) icin takim ACIK taraftadir (+Z), dis torna ile ayni; eskiden -Z idi
   if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  if (Math.abs(a.x) < 0.5 && Math.abs(a.z - b.z) > 1e-10) return (a.z > b.z) ? a : b;
   return (a.x < b.x) ? a : b;
 }
 
@@ -3474,6 +3524,8 @@ function _gc_outerNormal(dir) {
   const a = { x: -dir.z, z: dir.x };
   const b = { x:  dir.z, z: -dir.x };
   if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  // duvara yakin yonlerde (|n.x|<0.5) takim hep +Z (acik) tarafta: yay boyunca normal surekli kalir
+  if (Math.abs(a.x) < 0.5 && Math.abs(a.z - b.z) > 1e-10) return (a.z > b.z) ? a : b;
   return (a.x > b.x) ? a : b;
 }
 function _gc_innerNormal(dir) {
@@ -3481,7 +3533,20 @@ function _gc_innerNormal(dir) {
   const b = { x:  dir.z, z: -dir.x };
   // DUZELTME: duvar (cizgi yonu +-X) icin takim ACIK taraftadir (+Z), dis torna ile ayni; eskiden -Z idi
   if (Math.abs(a.x - b.x) < 1e-10) return (a.z > b.z) ? a : b;
+  if (Math.abs(a.x) < 0.5 && Math.abs(a.z - b.z) > 1e-10) return (a.z > b.z) ? a : b;
   return (a.x < b.x) ? a : b;
+}
+// Yayin hangi tarafinda takim var: +1 = takim merkez tarafinda (ofset yaricap r-R), -1 = disinda (r+R).
+// Yay boyunca birkac noktada normalin yonu oylanir; tek noktadaki isaret donmesi (duvara yakin teget) sonucu bozmaz.
+function _gc_arcSide(cx, cz, r, a0, tot, nf) {
+  let v = 0;
+  const sg = tot < 0 ? -1 : 1;
+  for (const t of [0.1, 0.3, 0.5, 0.7, 0.9]) {
+    const th = a0 + tot * t, tg = { x: sg * Math.cos(th), z: -sg * Math.sin(th) }, n = nf(tg);
+    const px = cx + r * Math.sin(th), pz = cz + r * Math.cos(th);
+    v += ((cx - px) * n.x + (cz - pz) * n.z) > 0 ? 1 : -1;
+  }
+  return v > 0 ? 1 : -1;
 }
 function _gc_bisectorCenter(pt, dIn, dOut, toolR, normalFn) {
   const nIn = normalFn(dIn), nOut = normalFn(dOut);
@@ -3551,9 +3616,92 @@ function _buildGCodeCore(payload) {
     else return el.type === "G03" ? R > toolR : true;
   }
 
+  // Yay ucu (ilk/son eleman yay ise): takim merkezi = kontur noktasi + normal*R (yaya teget), uc = merkez - (R,R) [dis] / (+R,-R) [ic]
+  function arcEndTip(elIdx, atEnd) {
+    const el = elements[elIdx];
+    if (!el || (el.type !== "G02" && el.type !== "G03") || !(toolR > 0) || !arcFits(el)) return null;
+    const p1 = pts[elIdx], p2 = pts[elIdx + 1], P = atEnd ? p2 : p1;
+    const R_ = Math.abs(el.r) || 0, dx_ = p2.x - p1.x, dz_ = p2.z - p1.z, L_ = Math.hypot(dx_, dz_);
+    let cx, cz;
+    if (el._cx !== undefined && el._cz !== undefined) { cx = el._cx; cz = el._cz; }
+    else {
+      if (L_ < 1e-10 || L_ > 2 * R_ + 1e-9) return null;
+      const h_ = Math.sqrt(Math.max(0, R_ * R_ - (L_ / 2) ** 2)), sg = el.type === "G02" ? 1 : -1;
+      cx = (p1.x + p2.x) / 2 + sg * h_ * (-dz_ / L_); cz = (p1.z + p2.z) / 2 + sg * h_ * (dx_ / L_);
+    }
+    const og = offGeom(elIdx);
+    if (!og) return null;
+    const ur = Math.hypot(P.x - cx, P.z - cz) || 1, ux = (P.x - cx) / ur, uz = (P.z - cz) / ur;
+    const nn = og.side > 0 ? { x: -ux, z: -uz } : { x: ux, z: uz };
+    const ccx = P.x + nn.x * toolR, ccz = P.z + nn.z * toolR;
+    return tnrDir === "inner" ? { x: ccx + toolR, z: ccz - toolR } : { x: ccx - toolR, z: ccz - toolR };
+  }
+
+  // Genel analitik kose: onceki ve sonraki elemanin OFSET egrilerinin (cizgi: oteleme, yay: es merkezli daire) kesisimi.
+  // Yay iceren her komsulukta kullanilir; cizgi-cizgi kose eski, kanitlanmis formulle kalir.
+  function offGeom(i) {
+    const el = elements[i], a = pts[i], b = pts[i + 1], nf = tnrDir === "inner" ? _gc_innerNormal : _gc_outerNormal;
+    const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+    if (L < 1e-9) return null;
+    if (el.type === "G02" || el.type === "G03") {
+      const r = Math.abs(el.r) || 0;
+      if (!(r > 0) || L > 2 * r + 1e-9) return null;
+      let cx, cz;
+      if (el._cx !== undefined && el._cz !== undefined) { cx = el._cx; cz = el._cz; }
+      else { const h = Math.sqrt(Math.max(0, r * r - L * L / 4)), sg = el.type === "G02" ? 1 : -1; cx = (a.x + b.x) / 2 + sg * h * (-dz / L); cz = (a.z + b.z) / 2 + sg * h * (dx / L); }
+      const a0 = Math.atan2(a.x - cx, a.z - cz), a1 = Math.atan2(b.x - cx, b.z - cz);
+      let tot = el.type === "G02" ? a0 - a1 : a1 - a0; if (tot <= 0) tot += 2 * Math.PI; if (el.type === "G02") tot = -tot;
+      const tg = th => { const sg = tot < 0 ? -1 : 1; return { x: sg * Math.cos(th), z: -sg * Math.sin(th) }; };
+      const side = _gc_arcSide(cx, cz, r, a0, tot, nf);
+      const ro = side > 0 ? r - toolR : r + toolR;
+      if (!(ro > 1e-6)) return null;
+      return { arc: true, c: { x: cx, z: cz }, ro, side };
+    }
+    const d = { x: dx / L, z: dz / L }, nn = nf(d);
+    return { arc: false, p: { x: a.x + nn.x * toolR, z: a.z + nn.z * toolR }, d, n: nn };
+  }
+  function offJoin(A, B, ref) {
+    const hyp = Math.hypot;
+    const near = (q) => q.reduce((best, v) => (!best || hyp(v.x - ref.x, v.z - ref.z) < hyp(best.x - ref.x, best.z - ref.z) ? v : best), null);
+    if (!A.arc && !B.arc) return null;
+    if (A.arc !== B.arc) {
+      const Ln = A.arc ? B : A, Ar = A.arc ? A : B, fx = Ln.p.x - Ar.c.x, fz = Ln.p.z - Ar.c.z;
+      const bq = fx * Ln.d.x + fz * Ln.d.z, cq = fx * fx + fz * fz - Ar.ro * Ar.ro, disc = bq * bq - cq;
+      const tanJ = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - Ar.ro) < 2e-3;
+      if (disc < -1e-4 && !tanJ) return null;
+      const sq = (tanJ && disc < 0) ? 0 : Math.sqrt(Math.max(0, disc));
+      return near([-bq + sq, -bq - sq].map(t => ({ x: Ln.p.x + t * Ln.d.x, z: Ln.p.z + t * Ln.d.z })));
+    }
+    const dx = B.c.x - A.c.x, dz = B.c.z - A.c.z, D = hyp(dx, dz);
+    if (D < 1e-9) return null;
+    const aa = (A.ro * A.ro - B.ro * B.ro + D * D) / (2 * D), h2 = A.ro * A.ro - aa * aa;
+    if (h2 < -1e-4) return null;
+    const h = Math.sqrt(Math.max(0, h2)), ux = dx / D, uz = dz / D, mx = A.c.x + aa * ux, mz = A.c.z + aa * uz;
+    return near([{ x: mx - h * uz, z: mz + h * ux }, { x: mx + h * uz, z: mz - h * ux }]);
+  }
+  function arcJointTip(ptIdx) {
+    const pe = elements[ptIdx - 1], ne = elements[ptIdx];
+    const isArc = e => e && (e.type === "G02" || e.type === "G03");
+    if (!(isArc(pe) || isArc(ne)) || !arcFits(pe) || !arcFits(ne)) return null;
+    const A = offGeom(ptIdx - 1), B = offGeom(ptIdx);
+    if (!A || !B) return null;
+    // referans: onceki elemanin kontur noktasi + normal*R (bitis tegetindeki normal)
+    const P = pts[ptIdx];
+    const urj = A.arc ? (Math.hypot(P.x - A.c.x, P.z - A.c.z) || 1) : 1;
+    const nA = A.arc ? (A.side > 0 ? { x: -(P.x - A.c.x) / urj, z: -(P.z - A.c.z) / urj } : { x: (P.x - A.c.x) / urj, z: (P.z - A.c.z) / urj }) : A.n;
+    const ref = { x: P.x + nA.x * toolR, z: P.z + nA.z * toolR };
+    const v = offJoin(A, B, ref);
+    if (!v) return null;
+    return tnrDir === "inner" ? { x: v.x + toolR, z: v.z - toolR } : { x: v.x - toolR, z: v.z - toolR };
+  }
+
   function tnrExitPoint(ptIdx) {
     if (!tnrOn || toolR === 0 || ptIdx <= 0) return { x: pts[ptIdx].x, z: pts[ptIdx].z };
-    if (ptIdx >= pts.length - 1) return { x: pts[ptIdx].x, z: pts[ptIdx].z };
+    if (ptIdx < pts.length - 1) { const aj = arcJointTip(ptIdx); if (aj) return aj; }
+    if (ptIdx >= pts.length - 1) {
+      const at = tnrOn ? arcEndTip(elements.length - 1, true) : null;
+      return at || { x: pts[ptIdx].x, z: pts[ptIdx].z };
+    }
     return tnrDir === "inner" ? tnrExitPointInner(ptIdx) : tnrExitPointOuter(ptIdx);
   }
 
@@ -3628,7 +3776,7 @@ function _buildGCodeCore(payload) {
         const bq0 = fx0 * dIn.x + fz0 * dIn.z, cq0 = fx0 * fx0 + fz0 * fz0 - nextArcRo * nextArcRo, ds0 = bq0 * bq0 - cq0;
         const tanS = Math.abs(Math.sqrt(Math.max(0, fx0 * fx0 + fz0 * fz0 - bq0 * bq0)) - nextArcRo) < 2e-3;
         if (ds0 >= -1e-6 || tanS) {
-          const sq0 = (tanS ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
+          const sq0 = ((tanS && ds0 < 0) ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
           const qx0 = nextArcC.x + (pt.x - nextArcC.x) * nextArcRo / rr0, qz0 = nextArcC.z + (pt.z - nextArcC.z) * nextArcRo / rr0;
           const k1 = { x: bx0 + (-bq0 + sq0) * dIn.x, z: bz0 + (-bq0 + sq0) * dIn.z };
           const k2 = { x: bx0 + (-bq0 - sq0) * dIn.x, z: bz0 + (-bq0 - sq0) * dIn.z };
@@ -3667,7 +3815,7 @@ function _buildGCodeCore(payload) {
         // teget kesisim kararsizligi: merkez-dogru mesafesi R_off'a 0.002 mm'den yakinsa tam teget kabul et
         const tanE = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - R_off) < 2e-3;
         if (disc >= -1e-6 || tanE) {
-          const sq = tanE ? 0 : Math.sqrt(Math.max(0, disc));
+          const sq = (tanE && disc < 0) ? 0 : Math.sqrt(Math.max(0, disc));
           const rr = Math.hypot(pt.x - arc_cx, pt.z - arc_cz) || 1;
           const qx = arc_cx + (pt.x - arc_cx) * R_off / rr, qz = arc_cz + (pt.z - arc_cz) * R_off / rr;
           const c1 = { x: lx + (-bq + sq) * dNext.x, z: lz + (-bq + sq) * dNext.z };
@@ -3752,7 +3900,7 @@ function _buildGCodeCore(payload) {
         const bq0 = fx0 * dIn.x + fz0 * dIn.z, cq0 = fx0 * fx0 + fz0 * fz0 - nextArcRo * nextArcRo, ds0 = bq0 * bq0 - cq0;
         const tanS = Math.abs(Math.sqrt(Math.max(0, fx0 * fx0 + fz0 * fz0 - bq0 * bq0)) - nextArcRo) < 2e-3;
         if (ds0 >= -1e-6 || tanS) {
-          const sq0 = (tanS ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
+          const sq0 = ((tanS && ds0 < 0) ? 0 : Math.sqrt(Math.max(0, ds0))), rr0 = Math.hypot(pt.x - nextArcC.x, pt.z - nextArcC.z) || 1;
           const qx0 = nextArcC.x + (pt.x - nextArcC.x) * nextArcRo / rr0, qz0 = nextArcC.z + (pt.z - nextArcC.z) * nextArcRo / rr0;
           const k1 = { x: bx0 + (-bq0 + sq0) * dIn.x, z: bz0 + (-bq0 + sq0) * dIn.z };
           const k2 = { x: bx0 + (-bq0 - sq0) * dIn.x, z: bz0 + (-bq0 - sq0) * dIn.z };
@@ -3791,7 +3939,7 @@ function _buildGCodeCore(payload) {
         // teget kesisim kararsizligi: merkez-dogru mesafesi R_off'a 0.002 mm'den yakinsa tam teget kabul et
         const tanE = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - R_off) < 2e-3;
         if (disc >= -1e-6 || tanE) {
-          const sq = tanE ? 0 : Math.sqrt(Math.max(0, disc));
+          const sq = (tanE && disc < 0) ? 0 : Math.sqrt(Math.max(0, disc));
           const rr = Math.hypot(pt.x - arc_cx, pt.z - arc_cz) || 1;
           const qx = arc_cx + (pt.x - arc_cx) * R_off / rr, qz = arc_cz + (pt.z - arc_cz) * R_off / rr;
           const c1 = { x: lx + (-bq + sq) * dNext.x, z: lz + (-bq + sq) * dNext.z };
@@ -3807,7 +3955,9 @@ function _buildGCodeCore(payload) {
 
   let g00x = pts[0].x * 2;
   let g00z = pts[0].z;
-  if (tnrOn && toolR > 0 && elements.length > 0) {
+  const arcStart = (tnrOn && toolR > 0 && elements.length > 0) ? arcEndTip(0, false) : null;
+  if (arcStart) { g00x = arcStart.x * 2; g00z = arcStart.z; }
+  else if (tnrOn && toolR > 0 && elements.length > 0) {
     const ep1 = tnrExitPoint(1);
     const dFirst = _gc_segDir(pts[0], pts[1]);
     if (Math.abs(dFirst.z) >= 0.01 && Math.abs(dFirst.z) > 1e-10) {
@@ -4295,6 +4445,33 @@ function redraw() {
     }
   });
   ctx.stroke();
+
+  // G75 kanal / G76 dis bolgeleri (kontur disinda, yalniz gosterim)
+  if (_cycles && _cycles.length) {
+    ctx.save();
+    _cycles.forEach(c => {
+      if (c.kind === 'groove') {
+        const x0 = toSX(c.zHi), x1 = toSX(c.zLo), ya = toSY(c.xs / 2), yb = toSY(c.xb / 2);
+        ctx.fillStyle = 'rgba(255,120,60,0.18)'; ctx.strokeStyle = '#ff7a3c'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+        ctx.fillRect(Math.min(x0, x1), Math.min(ya, yb), Math.abs(x1 - x0), Math.abs(yb - ya));
+        ctx.strokeRect(Math.min(x0, x1), Math.min(ya, yb), Math.abs(x1 - x0), Math.abs(yb - ya));
+        ctx.fillStyle = '#ff7a3c'; ctx.font = '10px Courier New';
+        ctx.fillText('G75 kanal \u00D8' + c.xb.toFixed(2), Math.min(x0, x1), Math.min(ya, yb) - 4);
+      } else {
+        const x0 = toSX(c.z0), x1 = toSX(c.z1), ya = toSY(c.xRoot / 2), yb = toSY(c.xCrest / 2);
+        ctx.fillStyle = 'rgba(80,220,120,0.15)'; ctx.strokeStyle = '#3ddc78'; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+        const lx = Math.min(x0, x1), w = Math.abs(x1 - x0), ty = Math.min(ya, yb), hh = Math.abs(yb - ya);
+        ctx.fillRect(lx, ty, w, hh); ctx.strokeRect(lx, ty, w, hh);
+        const stp = Math.max(4, (c.pitch || 1) * scale);
+        ctx.lineWidth = 1; ctx.beginPath();
+        for (let xx = lx; xx < lx + w; xx += stp) { ctx.moveTo(xx, ty + hh); ctx.lineTo(Math.min(xx + stp / 2, lx + w), ty); }
+        ctx.stroke();
+        ctx.fillStyle = '#3ddc78'; ctx.font = '10px Courier New';
+        ctx.fillText('G76 dis \u00D8' + c.xRoot.toFixed(2) + (c.pitch ? ' P' + c.pitch : ''), lx, ty - 4);
+      }
+    });
+    ctx.restore();
+  }
 
   // Takım merkezi yolu (TNR offset hayalet çizgisi)
   if (showComp && tnrOn2 && toolR2 > 0 && elements.length > 0) {
@@ -5213,7 +5390,7 @@ function redo() {
 function resetAll() {
   if (!confirm('Tüm noktalar silinsin mi?')) return;
   setTnrDir('outer');
-  elements = []; startPoint = null; lastPoint = null;
+  elements = []; _cycles = []; startPoint = null; lastPoint = null;
   generateGCode(); redraw(); updateCoordsTable(); renderFeatureList(); openNewFeature();
   document.getElementById('gcodeDisplay').value = '(Program box)';
 }
@@ -5472,7 +5649,13 @@ function _gcMacroExpand(code, warnings) {
   const FN1 = { SIN: x => Math.sin(x * Math.PI / 180), COS: x => Math.cos(x * Math.PI / 180), TAN: x => Math.tan(x * Math.PI / 180),
     ASIN: x => Math.asin(x) * 180 / Math.PI, ACOS: x => Math.acos(x) * 180 / Math.PI, SQRT: Math.sqrt, ABS: Math.abs,
     ROUND: Math.round, FIX: Math.floor, FUP: Math.ceil, LN: Math.log, EXP: Math.exp, BIN: x => x, BCD: x => x };
+  // yerel degiskenler (#1..#33) her program/G65 cagrisi icin ayri; genel degiskenler (#100+) ortak
+  const callStack = [];
+  let mainLoc = {};
+  const curLoc = () => callStack.length ? callStack[callStack.length - 1].loc : mainLoc;
+  function setVar(n, v) { if (n >= 1 && n <= 33) curLoc()[n] = v; else vars[n] = v; }
   function getVar(n) {
+    if (n >= 1 && n <= 33) { const l = curLoc(); return (n in l) ? l[n] : 0; }
     if (n in vars) return vars[n];
     if (n >= 1000 || n === 0) sysWarn.add(n);   // sistem degiskenleri (#5001 vb.) okunamaz
     return 0;
@@ -5486,19 +5669,19 @@ function _gcMacroExpand(code, warnings) {
       const c = src[i];
       if (c === '+') { i++; return primary(); }
       if (c === '-') { i++; return -primary(); }
-      if (c === '[') { i++; const v = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return v; }
+      if (c === '[') { i++; const v = logic(); if (src[i] !== ']') throw new Error('] yok'); i++; return v; }
       if (c === '#') {
         i++;
-        if (src[i] === '[') { i++; const k = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return getVar(Math.round(k)); }
+        if (src[i] === '[') { i++; const k = logic(); if (src[i] !== ']') throw new Error('] yok'); i++; return getVar(Math.round(k)); }
         const m = rest().match(/^\d+/); if (!m) throw new Error('#'); i += m[0].length; return getVar(parseInt(m[0], 10));
       }
       const fm = rest().match(/^([A-Z]+)\[/);
       if (fm) {
-        i += fm[1].length + 1; const a = cmp();
+        i += fm[1].length + 1; const a = logic();
         if (fm[1] === 'ATAN') {
           if (src[i] !== ']') throw new Error('ATAN');
           i++;
-          if (src[i] === '/' && src[i + 1] === '[') { i += 2; const b = cmp(); if (src[i] !== ']') throw new Error('] yok'); i++; return Math.atan2(a, b) * 180 / Math.PI; }
+          if (src[i] === '/' && src[i + 1] === '[') { i += 2; const b = logic(); if (src[i] !== ']') throw new Error('] yok'); i++; return Math.atan2(a, b) * 180 / Math.PI; }
           return Math.atan(a) * 180 / Math.PI;
         }
         if (src[i] !== ']') throw new Error('] yok'); i++;
@@ -5515,7 +5698,6 @@ function _gcMacroExpand(code, warnings) {
         if (src[i] === '*') { i++; v *= primary(); }
         else if (src[i] === '/') { i++; v /= primary(); }
         else if (peekWord('MOD')) { i += 3; const r = primary(); v = v % r; }
-        else if (peekWord('AND')) { i += 3; const r = primary(); v = (Math.round(v) & Math.round(r)); }
         else break;
       }
       return v;
@@ -5525,8 +5707,6 @@ function _gcMacroExpand(code, warnings) {
       for (;;) {
         if (src[i] === '+') { i++; v += prod(); }
         else if (src[i] === '-') { i++; v -= prod(); }
-        else if (peekWord('OR')) { i += 2; v = (Math.round(v) | Math.round(prod())); }
-        else if (peekWord('XOR')) { i += 3; v = (Math.round(v) ^ Math.round(prod())); }
         else break;
       }
       return v;
@@ -5538,7 +5718,17 @@ function _gcMacroExpand(code, warnings) {
       }
       return a;
     }
-    const v = cmp();
+    function logic() {
+      let v = cmp();
+      for (;;) {
+        if (peekWord('AND')) { i += 3; v = (Math.round(v) & Math.round(cmp())); }
+        else if (peekWord('XOR')) { i += 3; v = (Math.round(v) ^ Math.round(cmp())); }
+        else if (peekWord('OR')) { i += 2; v = (Math.round(v) | Math.round(cmp())); }
+        else break;
+      }
+      return v;
+    }
+    const v = logic();
     if (i < src.length) throw new Error('fazla karakter');
     return v;
   }
@@ -5585,27 +5775,57 @@ function _gcMacroExpand(code, warnings) {
   const src = code.split('\n').map(raw => raw.toUpperCase().replace(/\([^)]*\)/g, '').replace(/;.*$/, '').trim());
   const labels = {};
   src.forEach((t, k) => { const m = t.match(/^N(\d+)/); if (m && !(m[1] in labels)) labels[m[1]] = k; });
+  const oLabels = {};
+  src.forEach((t, k) => { const m = t.match(/^O0*(\d+)/); if (m && !(parseInt(m[1], 10) in oLabels)) oLabels[parseInt(m[1], 10)] = k; });
+  const LETTER_VAR = { A: 1, B: 2, C: 3, I: 4, J: 5, K: 6, D: 7, E: 8, F: 9, H: 11, M: 13, Q: 17, R: 18, S: 19, T: 20, U: 21, V: 22, W: 23, X: 24, Y: 25, Z: 26 };
   const out = [];
-  let bad = 0, steps = 0, loopLimit = false, subWarn = false;
+  let bad = 0, steps = 0, loopLimit = false, subWarn = false, mainStarted = false, stop = false;
   const STEP_MAX = 200000;
   let pc = 0;
   function gotoLabel(n) { if (!(n in labels)) throw new Error('GOTO N' + n + ' yok'); pc = labels[n]; }
-  while (pc < src.length) {
+  while (pc < src.length && !stop) {
     if (++steps > STEP_MAX) { loopLimit = true; break; }
     let t = src[pc++];
     if (!t) { continue; }
-    if (!/[#\[]|WHILE|GOTO|DO\d|END\d|^IF|M98|G65/.test(t)) { out.push(t); continue; }
+    if (/^O0*\d+/.test(t)) {   // program basligi: ilk program ana program, sonraki bir O satirina dusmek programin sonudur
+      if (mainStarted && !callStack.length) break;
+      mainStarted = true; out.push(t); continue;
+    }
+    if (!/[#\[]|WHILE|GOTO|DO\d|END\d|^IF|M98|M99|M30|M02|G65|G66/.test(t)) { out.push(t); continue; }
     try {
       let body = t.replace(/^N\d+\s*/, '');
-      if (/M98|G65|G66/.test(body)) { subWarn = true; }
       let m;
+      if (/(^|[^A-Z])M0?2(?!\d)|(^|[^A-Z])M30(?!\d)/.test(body) && !/^(WHILE|IF)/.test(body)) { out.push(t); stop = true; continue; }
+      if (/(^|[^A-Z])M99(?!\d)/.test(body)) {   // alt programdan don
+        if (!callStack.length) { stop = true; continue; }
+        const fr = callStack[callStack.length - 1];
+        if (--fr.left > 0) { pc = fr.start; if (fr.args) fr.loc = Object.assign({}, fr.args); }
+        else { pc = fr.ret; callStack.pop(); }
+        continue;
+      }
+      if (/(^|[^A-Z])G66(?!\d)/.test(body)) { subWarn = true; continue; }
+      const callM = body.match(/(^|[^A-Z])(M98|G65)(?!\d)/);
+      if (callM && !/^(WHILE|IF)/.test(body)) {
+        const exp = subst(body);
+        const words = {}; for (const w of exp.matchAll(/([A-Z])(-?\d*\.?\d+)/g)) words[w[1]] = parseFloat(w[2]);
+        let prog = words.P, reps = words.L !== undefined ? Math.max(1, Math.round(words.L)) : 1;
+        if (callM[2] === 'M98' && prog >= 10000) { reps = Math.floor(prog / 10000); prog = prog % 10000; }
+        prog = Math.round(prog);
+        if (!(prog in oLabels)) { warnings.push((callM[2] === 'M98' ? 'M98' : 'G65') + ' P' + prog + ' alt programi dosyada yok: cagri atlandi'); continue; }
+        if (callStack.length >= 20) { warnings.push('Alt program ic ice cagri siniri (20) asildi'); stop = true; continue; }
+        let args = null, loc = curLoc();
+        if (callM[2] === 'G65') { args = {}; for (const k in words) if (k !== 'P' && k !== 'L' && (k in LETTER_VAR)) args[LETTER_VAR[k]] = words[k]; loc = Object.assign({}, args); }
+        callStack.push({ ret: pc, start: oLabels[prog] + 1, left: reps, loc, args });
+        pc = oLabels[prog] + 1;
+        continue;
+      }
       // IF[..]GOTO n  /  IF[..]THEN stmt
       if ((m = body.match(/^IF/)) && body[2] === '[') {
         const e = matchBr(body, 2); const cond = evalExpr(body.slice(2, e + 1)); const tail = body.slice(e + 1);
         const gm = tail.match(/^GOTO(\d+)$/);
         if (gm) { if (cond) gotoLabel(gm[1]); continue; }
         const tm = tail.match(/^THEN(.+)$/);
-        if (tm) { if (cond) { const a = parseAssign(tm[1].trim()); if (!a) throw new Error('THEN'); vars[a.idx] = evalExpr(a.rhs); } continue; }
+        if (tm) { if (cond) { const a = parseAssign(tm[1].trim()); if (!a) throw new Error('THEN'); setVar(a.idx, evalExpr(a.rhs)); } continue; }
         throw new Error('IF');
       }
       if ((m = body.match(/^GOTO(\d+)$/))) { gotoLabel(m[1]); continue; }
@@ -5627,18 +5847,43 @@ function _gcMacroExpand(code, warnings) {
       }
       if (/^DO\d+$/.test(body)) continue;
       const a = parseAssign(body);
-      if (a) { vars[a.idx] = evalExpr(a.rhs); continue; }
+      if (a) { setVar(a.idx, evalExpr(a.rhs)); continue; }
       out.push(subst(t));
     } catch (e) { bad++; out.push(t.replace(/[A-Z]*\[[^\]]*\]/g, '').replace(/#\d+/g, '')); }
   }
   if (bad) warnings.push('Makro ifadesi hesaplanamadi (' + bad + ' satir): ilgili satirdaki deger atlandi');
   if (loopLimit) warnings.push('Makro dongusu ' + STEP_MAX + ' adimda bitmedi, durduruldu');
-  if (subWarn) warnings.push('G65/G66/M98 alt program ve makro cagrilari yorumlanmadi');
+  if (subWarn) warnings.push('G66 (modal makro cagrisi) yorumlanmadi');
   if (sysWarn.size) warnings.push('Tanimsiz veya sistem makro degiskeni 0 sayildi: #' + [...sysWarn].sort((x, y) => x - y).join(', #'));
   return out;
 }
 
+var _gcCycTmp = [], _gcGrvW = 3;
 function parseGcode(code, toolR, dir) {
+  _gcCycTmp = [];
+  const res = _parseGcodeCore(code, toolR, dir);
+  const cyc = _gcCycTmp.slice();
+  if (!res.ok && cyc.length) {
+    // yalniz G75/G76 iceren program: kontur yerine dongu geometrisinin dis cizgisi kullanilir
+    const c = cyc[0];
+    const els = [];
+    let st;
+    if (c.kind === 'groove') {
+      st = { x: c.xs / 2, z: c.zHi };
+      els.push({ type: 'G01', to: { x: c.xb / 2, z: c.zHi }, r: 0, c: 0, comp: 'G40' });
+      els.push({ type: 'G01', to: { x: c.xb / 2, z: c.zLo }, r: 0, c: 0, comp: 'G40' });
+      els.push({ type: 'G01', to: { x: c.xs / 2, z: c.zLo }, r: 0, c: 0, comp: 'G40' });
+    } else {
+      st = { x: c.xCrest / 2, z: c.z0 };
+      els.push({ type: 'G01', to: { x: c.xCrest / 2, z: c.z1 }, r: 0, c: 0, comp: 'G40' });
+    }
+    return { ok: true, startPoint: st, elements: els, warnings: (res.warnings || []).concat(['Programda G01/G02/G03 konturu yok: dongu geometrisi kontur olarak cizildi']), cycles: cyc };
+  }
+  if (res.ok) res.cycles = cyc;
+  return res;
+}
+
+function _parseGcodeCore(code, toolR, dir) {
   const warnings = [];
   const lines = _gcMacroExpand(code, warnings);
   const pts = []; // {type, x_yari, z, r, fromRapid}
@@ -5691,7 +5936,27 @@ function parseGcode(code, toolR, dir) {
       }
     }
 
-    if (skipLine) continue;
+    if (skipLine) {
+      const g75 = /G75(?!\d)/.test(l), g76 = /G76(?!\d)/.test(l);
+      if (g75 || g76) {
+        const cx = parseWord(l, 'X'), cu = parseWord(l, 'U'), cz = parseWord(l, 'Z'), cw = parseWord(l, 'W');
+        const xe = cx !== null ? cx : (cu !== null ? curX_yari * 2 + cu : null);
+        const ze = cz !== null ? cz : (cw !== null ? curZ + cw : null);
+        if (xe !== null && (cz !== null || cw !== null || g76 || g75)) {
+          if (g75) {
+            const wd = _gcGrvW > 0 ? _gcGrvW : 3;
+            const za = curZ, zb = ze === null ? curZ : ze;
+            _gcCycTmp.push({ kind: 'groove', xs: curX_yari * 2, xb: xe, zHi: Math.max(za, zb) + wd / 2, zLo: Math.min(za, zb) - wd / 2, width: wd, zA: za, zB: zb });
+          } else if (ze !== null) {
+            const pH = parseWord(l, 'P'), pit = parseWord(l, 'F') !== null ? parseWord(l, 'F') : parseWord(l, 'K');
+            const h = pH !== null ? pH / 1000 : (pit ? 0.6134 * pit : 0);
+            const sgn = (curX_yari * 2 - xe) >= 0 ? 1 : -1;
+            _gcCycTmp.push({ kind: 'thread', xRoot: xe, xCrest: xe + sgn * 2 * h, z0: curZ, z1: ze, pitch: pit || 0, h: h, xStart: curX_yari * 2 });
+          }
+        }
+      }
+      continue;
+    }
     const xRaw = parseWord(l, 'X');
     const zRaw = parseWord(l, 'Z');
     const uRaw = parseWord(l, 'U');
@@ -5781,7 +6046,9 @@ function parseGcode(code, toolR, dir) {
   }
 
   const sp = pts[startIdx];
-  if (skippedCycles.size) warnings.push('Kesme dongusu okunmadi, konturda yok: ' + [...skippedCycles].sort().join(', ') + ' (dis, kanal, delme)');
+  const skippedOnly = [...skippedCycles].filter(g => g !== 'G75' && g !== 'G76');
+  if (skippedOnly.length) warnings.push('Kesme dongusu okunmadi, konturda yok: ' + skippedOnly.sort().join(', ') + ' (delme)');
+  if (_gcCycTmp.length) warnings.push('G75/G76 dongusu cizime kanal/dis bolgesi olarak eklendi (' + _gcCycTmp.map(c => c.kind === 'groove' ? 'kanal' : 'dis').join(', ') + '); kanal genisligi ' + (_gcGrvW > 0 ? _gcGrvW : 3) + ' mm varsayildi');
   let movePts = pts.slice(startIdx + 1);
   // eksen (X0) uzerindeki giris hareketi (ornegin Z2 -> Z0) konturun parcasi degil
   while (movePts.length > 1 && movePts[0].type === 'G01' && Math.abs(sp.x) < 1e-6 && Math.abs(movePts[0].x) < 1e-6 && !(movePts[0].cR > 0 || movePts[0].cC > 0)) {
@@ -5851,7 +6118,19 @@ function parseGcode(code, toolR, dir) {
   // hem de uc->merkez kaymasi bakimindan yanlisti (kontur her seferinde (-R,-R) kayiyordu).
   // Artik uretecin kendisi tersine cozuluyor: G-kod ciktisi hedef yola esitlenene kadar iterasyon.
   if (R > 0) {
-    const invA = _invertTnrA(sp, movePts, R, isOuter);
+    // Z+ yonlu program (parca Z pozitifte): Z aynalanip ters hesap yapilir, sonuc geri aynalanir
+    const mirrored = movePts.length && (movePts[movePts.length - 1].z - sp.z) > 0.01;
+    const swapT = t => t === 'G02' ? 'G03' : t === 'G03' ? 'G02' : t;
+    if (mirrored) {
+      const spM = { x: sp.x, z: -sp.z }, mvM = movePts.map(p => ({ ...p, z: -p.z, type: swapT(p.type) }));
+      const iM = _invertTnrA(spM, mvM, R, isOuter);
+      if (iM) {
+        const els = iM.map(e => { const o = { ...e, type: swapT(e.type), to: { x: e.to.x, z: -e.to.z } }; if (e._cz !== undefined) o._cz = -e._cz; return o; });
+        const st = iM.start || spM;
+        return { ok: true, startPoint: { x: st.x, z: -st.z }, elements: els, warnings };
+      }
+    }
+    const invA = mirrored ? null : _invertTnrA(sp, movePts, R, isOuter);
     if (invA) return { ok: true, startPoint: invA.start || { x: sp.x, z: sp.z }, elements: invA, warnings };
     const inv = _invertTnr(sp, movePts, R, isOuter);
     if (inv) return { ok: true, startPoint: { x: sp.x, z: sp.z }, elements: inv, warnings };
@@ -5897,12 +6176,10 @@ function _invertTnrA(sp, mv, R, isOuter) {
         const c = { x: (a.x + b.x) / 2 + sg * h * (-dz / d), z: (a.z + b.z) / 2 + sg * h * (dx / d) };
         const a0 = Math.atan2(a.x - c.x, a.z - c.z), a1 = Math.atan2(b.x - c.x, b.z - c.z);
         let tot = m.type === 'G02' ? a0 - a1 : a1 - a0; if (tot <= 0) tot += 2 * Math.PI; if (m.type === 'G02') tot = -tot;
-        const tg = th => { const s = tot < 0 ? -1 : 1; return { x: s * Math.cos(th), z: -s * Math.sin(th) }; };
-        const tM = tg(a0 + tot / 2), nM = normAt(tM.x, tM.z), pm = { x: c.x + Ro * Math.sin(a0 + tot / 2), z: c.z + Ro * Math.cos(a0 + tot / 2) };
-        const toC = (c.x - pm.x) * nM.x + (c.z - pm.z) * nM.z;
-        const rc = toC > 0 ? Ro + R : Ro - R; if (!(rc > 1e-6)) return null;
-        const t0 = tg(a0), t1 = tg(a1);
-        E.push({ arc: true, c, rc, type: m.type, n0: normAt(t0.x, t0.z), n1: normAt(t1.x, t1.z) });
+        const side = _gc_arcSide(c.x, c.z, Ro, a0, tot, nf);
+        const rc = side > 0 ? Ro + R : Ro - R; if (!(rc > 1e-6)) return null;
+        const radN = (P) => { const l = hyp(P.x - c.x, P.z - c.z) || 1, ux = (P.x - c.x) / l, uz = (P.z - c.z) / l; return side > 0 ? { x: -ux, z: -uz } : { x: ux, z: uz }; };
+        E.push({ arc: true, c, rc, type: m.type, n0: radN(a), n1: radN(b) });
       } else {
         const dx = b.x - a.x, dz = b.z - a.z, l = hyp(dx, dz); if (l < 1e-9) return null;
         const d = { x: dx / l, z: dz / l }, nn = nf(d);
@@ -5941,7 +6218,7 @@ function _invertTnrA(sp, mv, R, isOuter) {
         const Ln = A.arc ? B : A, Ar = A.arc ? A : B, fx = Ln.p.x - Ar.c.x, fz = Ln.p.z - Ar.c.z;
         const bq = fx * Ln.d.x + fz * Ln.d.z, cq = fx * fx + fz * fz - Ar.rc * Ar.rc, disc = bq * bq - cq;
         const tanJ = Math.abs(Math.sqrt(Math.max(0, fx * fx + fz * fz - bq * bq)) - Ar.rc) < 2e-3;
-        if (disc < -1e-4 && !tanJ) return null; const sq = tanJ ? 0 : Math.sqrt(Math.max(0, disc));
+        if (disc < -1e-4 && !tanJ) return null; const sq = (tanJ && disc < 0) ? 0 : Math.sqrt(Math.max(0, disc));
         return near([-bq + sq, -bq - sq].map(t => ({ x: Ln.p.x + t * Ln.d.x, z: Ln.p.z + t * Ln.d.z })));
       }
       const dx = B.c.x - A.c.x, dz = B.c.z - A.c.z, D = hyp(dx, dz); if (D < 1e-9) return null;
@@ -5968,6 +6245,7 @@ function _invertTnrA(sp, mv, R, isOuter) {
       const t0 = (sp.z - E[0].p.z) / E[0].d.z;
       start = { x: q4(E[0].p.x + t0 * E[0].d.x), z: sp.z };
     }
+    if (E[0].arc) start = { x: q4(Q[0].x - R * E[0].n0.x), z: q4(Q[0].z - R * E[0].n0.z) };
     outEls.start = start;
     return outEls;
   } catch (e) { return null; }
@@ -6011,6 +6289,7 @@ function gcodeImportRun() {
   }
 
   const preComp = !!(document.getElementById('gi-precomp') || {}).checked;
+  _gcGrvW = parseFloat((document.getElementById('gi-grvw') || {}).value) || 3;
   const result = parseGcode(code, preComp ? toolR : 0, _giDir);
 
   if (!result.ok) {
@@ -6024,6 +6303,7 @@ function gcodeImportRun() {
     const pr = document.getElementById('pToolR'); if (pr) pr.value = String(toolR);
   }
   _saveHistory();
+  _cycles = result.cycles || [];
   startPoint = result.startPoint;
   elements   = result.elements;
   // DUZELTME: drawArc el.from yoksa global lastPoint'i (kontur SONU) baslangic sanip yayi duz cizgi ciziyordu
@@ -6084,6 +6364,7 @@ function gcodeApplyFromEditor() {
 
   _saveHistory();
   startPoint = result.startPoint;
+  _cycles = result.cycles || [];
   elements   = result.elements;
   elements.forEach((el, i) => { el.from = i === 0 ? startPoint : elements[i - 1].to; });
   lastPoint  = elements.length > 0 ? elements[elements.length - 1].to : startPoint;
@@ -6317,6 +6598,336 @@ function _refreshInputModeButtons() {
   }
 }
 
+
+
+// ============================================================
+// YZ (YAPAY ZEKA) KATMANI: konturu ve G-kodu inceler, TNR/ofsetli G-kodu uretir veya duzeltir.
+// Cevrimici, ucretsiz anahtarli saglayicilar (tarayicidan dogrudan cagrilir; anahtar sadece bu tarayicida tutulur).
+// YZ ciktisi ASLA dogrudan kabul edilmez: uygulamanin kendi geri okuma + ofset denetimi gecerse uygulanir,
+// gecmezse hata raporu YZ'ye geri verilip yeniden denenir.
+// ============================================================
+var _AI_PROV = {
+  gemini: { name: 'Google Gemini (ucretsiz anahtar)', model: 'gemini-2.5-flash', link: 'https://aistudio.google.com/apikey' },
+  groq: { name: 'Groq (ucretsiz anahtar)', model: 'llama-3.3-70b-versatile', link: 'https://console.groq.com/keys' },
+  openrouter: { name: 'OpenRouter (ucretsiz modeller)', model: 'meta-llama/llama-3.3-70b-instruct:free', link: 'https://openrouter.ai/keys' },
+  custom: { name: 'Ozel (OpenAI uyumlu)', model: '', link: '' }
+};
+var _aiSet = { prov: 'gemini', keys: {}, models: {}, base: '', keep: true };
+var _aiBusy = false, _aiAbort = null, _aiResult = null, _aiPinnedCode = null;
+
+function _aiLoad() {
+  try {
+    const s = JSON.parse(localStorage.getItem('kontur_ai_v1') || 'null');
+    if (s && s.prov && _AI_PROV[s.prov]) { _aiSet = Object.assign(_aiSet, s); if (!_aiSet.keys) _aiSet.keys = {}; if (!_aiSet.models) _aiSet.models = {}; }
+  } catch (e) {}
+}
+function _aiSave() {
+  try {
+    const c = JSON.parse(JSON.stringify(_aiSet));
+    if (!_aiSet.keep) c.keys = {};
+    localStorage.setItem('kontur_ai_v1', JSON.stringify(c));
+  } catch (e) {}
+}
+function _aiEl(id) { return document.getElementById(id); }
+function _aiLog(t, cls) {
+  const el = _aiEl('ai-log'); if (!el) return;
+  const d = document.createElement('div');
+  d.style.color = cls === 'err' ? '#ff8a80' : cls === 'ok' ? '#7ddf9a' : cls === 'warn' ? '#ffb347' : '#9aa3b2';
+  d.textContent = t; el.appendChild(d); el.scrollTop = el.scrollHeight;
+}
+function _aiClearLog() { const el = _aiEl('ai-log'); if (el) el.innerHTML = ''; }
+function _aiModel() { return (_aiSet.models[_aiSet.prov] || _AI_PROV[_aiSet.prov].model || '').trim(); }
+function _aiKey() { return (_aiSet.keys[_aiSet.prov] || '').trim(); }
+
+// ---------------- SAGLAYICI CAGRISI ----------------
+// messages: [{role:'user'|'assistant', text}]
+async function _aiChat(system, messages, opt) {
+  opt = opt || {};
+  const prov = _aiSet.prov, key = _aiKey(), model = _aiModel();
+  if (!key) throw new Error('API anahtari girilmemis (YZ sekmesi > Ayarlar).');
+  if (!model) throw new Error('Model adi bos.');
+  const ctl = new AbortController(); _aiAbort = ctl;
+  const to = setTimeout(() => ctl.abort(), opt.timeout || 120000);
+  try {
+    let url, headers, body;
+    if (prov === 'gemini') {
+      url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent';
+      headers = { 'Content-Type': 'application/json', 'x-goog-api-key': key };
+      body = {
+        systemInstruction: { parts: [{ text: system }] },
+        contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] })),
+        generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+      };
+    } else {
+      const base = prov === 'groq' ? 'https://api.groq.com/openai/v1' : prov === 'openrouter' ? 'https://openrouter.ai/api/v1' : (_aiSet.base || '').replace(/\/+$/, '');
+      if (!base) throw new Error('Ozel saglayici icin taban adres (base URL) girilmeli.');
+      url = base + '/chat/completions';
+      headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+      if (prov === 'openrouter') { headers['X-Title'] = 'Kontur Auto NC'; }
+      body = { model, temperature: 0, max_tokens: 6000, messages: [{ role: 'system', content: system }].concat(messages.map(m => ({ role: m.role, content: m.text }))) };
+    }
+    let res;
+    try { res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
+    catch (e) {
+      if (e && e.name === 'AbortError') throw new Error('Istek iptal edildi veya zaman asimina ugradi.');
+      throw new Error('Saglayiciya ulasilamadi (ag, CORS veya engelleyici eklenti): ' + (e && e.message ? e.message : e));
+    }
+    const txt = await res.text();
+    let js = null; try { js = JSON.parse(txt); } catch (e) {}
+    if (!res.ok) {
+      const msg = (js && (js.error && (js.error.message || js.error) || js.message)) || txt.slice(0, 300);
+      if (res.status === 401 || res.status === 403) throw new Error('Anahtar reddedildi (' + res.status + '): ' + msg);
+      if (res.status === 429) throw new Error('Ucretsiz kullanim siniri doldu (429). Biraz bekleyin veya baska model/saglayici secin. ' + msg);
+      if (res.status === 404) throw new Error('Model bulunamadi (404): "' + model + '". MODELLERI LISTELE ile gecerli bir ad secin. ' + msg);
+      throw new Error('Saglayici hatasi ' + res.status + ': ' + msg);
+    }
+    if (!js) throw new Error('Saglayici cevabi okunamadi.');
+    let out;
+    if (prov === 'gemini') {
+      const c = js.candidates && js.candidates[0];
+      out = c && c.content && c.content.parts ? c.content.parts.map(p => p.text || '').join('') : '';
+      if (!out) throw new Error('Gemini bos cevap verdi' + (c && c.finishReason ? ' (' + c.finishReason + ')' : (js.promptFeedback ? ' (' + JSON.stringify(js.promptFeedback) + ')' : '')) + '.');
+    } else {
+      out = js.choices && js.choices[0] && js.choices[0].message && js.choices[0].message.content;
+      if (!out) throw new Error('Model bos cevap verdi.');
+    }
+    return out;
+  } finally { clearTimeout(to); _aiAbort = null; }
+}
+function _aiExtractJson(text) {
+  let t = String(text).trim();
+  const f = t.match(/```(?:json)?\s*([\s\S]*?)```/i); if (f) t = f[1].trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a < 0 || b <= a) throw new Error('Cevapta JSON bulunamadi.');
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+// ---------------- BAGLAM ----------------
+function _aiN(v) { return parseFloat(Number(v).toFixed(4)); }
+function _aiContext() {
+  if (!startPoint || !elements.length) throw new Error('Once CIZIM sekmesinde bir kontur olusturun.');
+  const pl = _currentPayload();
+  const els = pl.elements.map((e, i) => {
+    const o = { n: i + 1, type: e.type, X: _aiN(e.to.x * 2), Z: _aiN(e.to.z) };
+    if ((e.type === 'G02' || e.type === 'G03') && e.r) o.R = _aiN(Math.abs(e.r));
+    return o;
+  });
+  const code = (_aiEl('gcodeDisplay') || {}).value || '';
+  let feas = [];
+  try { feas = _gcodeOption === 'fanuc' ? [] : _tnrFeasibility(pl, _buildGCode(pl)); } catch (e) {}
+  return {
+    pl,
+    data: {
+      units: 'mm', X_is_diameter: true,
+      tool: { nose_radius_R: pl.toolR, side: pl.tnrDir, tnr_enabled: pl.tnrOn, tool: pl.tool, spindle: pl.spin, S: pl.speed, feed_F: pl.feed, retract: pl.retract },
+      contour: { start: { X: _aiN(pl.startPoint.x * 2), Z: _aiN(pl.startPoint.z) }, elements: els },
+      z_positive_program: !!pl.mir,
+      current_gcode: code,
+      app_feasibility_flags_element_numbers: feas
+    }
+  };
+}
+
+// ---------------- SISTEM ISTEMLERI ----------------
+var _AI_SPEC = [
+  'You are a CNC lathe (Fanuc style, mm) programming expert embedded in a web app. All JSON answers must be valid JSON only (no markdown).',
+  'DATA: "contour" is the FINISHED PART profile as the imaginary tool-tip corner path (before nose-radius compensation). X values are DIAMETERS, Z values are axial positions. Element types: G01 line, G02 clockwise arc, G03 counter-clockwise arc (R = arc radius, end point X,Z). The path starts at "start" and follows the elements in order.',
+  'TNR (tool nose radius compensation) is written EXPLICITLY into coordinates: the program uses G40 only (never G41/G42). The nose centre travels on the offset curve at distance R (the tool nose radius) from the contour on the free side of the material (outer tool: radially outside the part; inner tool: inside the bore). The programmed point is the imaginary tool tip: outer tool tip = centre - (R in radius, R in Z) i.e. X_dia = 2*(centre_x - R), Z = centre_z - R; inner tool tip = centre + (R in radius, -R in Z). Offset lines move by R along the normal; offset arcs are concentric (radius R_prog = R_contour - R or + R depending on which side the tool is). At corners use the intersection of the neighbouring offset curves. Straight lines parallel to an axis end up as plain X or Z moves with the tip shift already applied.',
+  'GCODE FORMAT (exactly, NO comment lines or parentheses anywhere): line1 = program name (e.g. O1000); line2 = "G21 G40 G90 G95"; line3 = "<tool> <spindle> S<speed>" (e.g. "T0101 M03 S1200"); then "G00 X.. Z.." to the compensated start tip; then one motion block per contour element in order (G01/G02/G03, feed "F<feed>" on the first G01 only, modal G codes may be omitted on following blocks, arcs as "G03 X.. Z.. R.."); then "G00 <retract>", "M30", "%". Numbers: at most 3 decimals, no trailing zeros.',
+  'EXAMPLE (outer tool R0.8): contour start X0 Z0; G01 X10 Z0 (wait: X in the contour list is diameter) -> elements: G01 X20 Z0; G01 X20 Z-15; G03 X30 Z-20 R5; G01 X30 Z-30; G01 X0 Z-30. Correct program:',
+  'O1000\nG21 G40 G90 G95\nT0101 M03 S1200\nG00 X0 Z0\nG01 X20 F0.15\nZ-15.055\nG03 X30 Z-20.8 R5.8\nG01 Z-30\nX0\nG00 X200 Z100\nM30\n%',
+  'The app will independently read your program back (undoing the compensation) and compare every element with the contour; any deviation above 0.01 mm is rejected and reported to you. Do not invent geometry. If the contour is impossible for the tool (a feature smaller than R, undercut the tool cannot reach) say so in the issues list.'
+].join('\n');
+
+function _aiPromptReview(ctx) {
+  return {
+    system: _AI_SPEC + '\nTASK: REVIEW. Inspect the contour, tool settings and current_gcode. Check: arc directions (G02/G03) versus geometry, element continuity, features smaller than the nose radius, undercuts the tool cannot reach, TNR side (outer/inner) plausibility, compensated coordinates, missing/odd header or footer lines, comment lines, retract safety. Answer ONLY JSON: {"verdict":"ok|warning|error","summary":"short Turkish summary","issues":[{"severity":"info|warning|error","where":"element n or gcode line text","problem":"Turkish","suggestion":"Turkish"}]}.',
+    user: JSON.stringify(ctx.data)
+  };
+}
+function _aiPromptGen(ctx, mode, extra) {
+  const base = _AI_SPEC + '\nTASK: ' + (mode === 'fix'
+    ? 'FIX. current_gcode may contain mistakes (wrong compensation, wrong arc direction, wrong coordinates, comments). Correct it so it matches the contour exactly under the rules above.'
+    : 'GENERATE. Ignore current_gcode and write the complete compensated program from the contour.') +
+    ' Answer ONLY JSON: {"gcode":"<full program, lines separated by \\n>","notes":"short Turkish explanation of what you did/changed"}.';
+  return { system: base, user: JSON.stringify(ctx.data) + (extra ? '\nUSER_NOTE: ' + extra : '') };
+}
+
+// ---------------- DOGRULAMA (YZ'den bagimsiz) ----------------
+function _aiSanitize(code) {
+  return String(code).replace(/\r/g, '').split('\n')
+    .map(l => l.replace(/\(.*?\)/g, '').replace(/;.*$/, '').replace(/[ \t]+$/, ''))
+    .filter(l => l.trim() !== '').join('\n');
+}
+function _aiLint(code) {
+  const L = code.split('\n').map(s => s.trim()), e = [];
+  if (!/^O\d+/.test(L[0] || '')) e.push('Ilk satir program adi olmali (ornek O1000).');
+  if (!/^G21\b.*G40\b/.test(L[1] || '')) e.push('Ikinci satir "G21 G40 G90 G95" olmali.');
+  if (L[L.length - 1] !== '%' || L[L.length - 2] !== 'M30') e.push('Program "M30" ve "%" ile bitmeli.');
+  if (/G4[12]\b/.test(code)) e.push('G41/G42 kullanilmamali: telafi koordinatlara islenir, yalnizca G40.');
+  return e;
+}
+// geri okuma: eleman eleman sapma
+function _aiReadback(pl, code) {
+  let p = pl, c = code;
+  if (p.mir) { p = _mirrorPayload(p); c = _mirrorCode(c); }
+  const useR = p.tnrOn && _gcodeOption !== 'fanuc' ? p.toolR : 0;
+  const q = parseGcode(c, useR, p.tnrDir);
+  if (!q.ok) return { ok: false, reason: 'Program geri okunamadi (' + ((q.warnings && q.warnings[0]) || 'cozumleme hatasi') + ').' };
+  if (q.elements.length !== p.elements.length) return { ok: false, reason: 'Geri okunan hareket blogu sayisi ' + q.elements.length + ', konturda ' + p.elements.length + ' eleman var: her eleman icin tam bir hareket blogu olmali.' };
+  const bad = []; let dev = Math.max(Math.abs(q.startPoint.x - p.startPoint.x), Math.abs(q.startPoint.z - p.startPoint.z)) * 2;
+  if (dev > 0.01) bad.push('Baslangic: geri okunan X' + _aiN(q.startPoint.x * 2) + ' Z' + _aiN(q.startPoint.z) + ', beklenen X' + _aiN(p.startPoint.x * 2) + ' Z' + _aiN(p.startPoint.z));
+  p.elements.forEach((e, i) => {
+    const b = q.elements[i];
+    const d = Math.max(Math.abs(b.to.x - e.to.x) * 2, Math.abs(b.to.z - e.to.z));
+    let dr = 0;
+    if ((e.type === 'G02' || e.type === 'G03') && (e.r || 0) > 0 && (b.r || 0) > 0) dr = Math.abs(b.r - e.r);
+    const typeBad = (e.type !== b.type) && (e.type === 'G02' || e.type === 'G03' || b.type === 'G02' || b.type === 'G03');
+    dev = Math.max(dev, d, dr);
+    if (d > 0.01 || dr > 0.01 || typeBad) bad.push('Eleman ' + (i + 1) + ' (' + e.type + '): geri okunan ' + b.type + ' X' + _aiN(b.to.x * 2) + ' Z' + _aiN(b.to.z) + (b.r ? ' R' + _aiN(b.r) : '') + ', beklenen ' + e.type + ' X' + _aiN(e.to.x * 2) + ' Z' + _aiN(e.to.z) + (e.r ? ' R' + _aiN(Math.abs(e.r)) : '') + ' (sapma ' + _aiN(Math.max(d, dr)) + ' mm)');
+  });
+  return { ok: bad.length === 0, dev, bad, reason: bad.length ? 'Geri okunan kontur beklenenden sapiyor.' : '' };
+}
+function _aiVerify(pl, code) {
+  const rep = { ok: true, msgs: [], dev: null };
+  const lint = _aiLint(code); if (lint.length) { rep.ok = false; rep.msgs.push(...lint); }
+  let rb; try { rb = _aiReadback(pl, code); } catch (e) { rb = { ok: false, reason: 'Geri okuma hatasi: ' + e.message }; }
+  rep.dev = rb.dev === undefined ? null : rb.dev;
+  if (!rb.ok) { rep.ok = false; rep.msgs.push(rb.reason); if (rb.bad) rep.msgs.push(...rb.bad.slice(0, 12)); }
+  return rep;
+}
+
+// ---------------- ANA AKISLAR ----------------
+function _aiStart() { if (_aiBusy) return false; _aiBusy = true; _aiClearLog(); _aiResult = null; _aiShowResult(); _aiBtns(); return true; }
+function _aiEnd() { _aiBusy = false; _aiBtns(); }
+function _aiBtns() { document.querySelectorAll('#tab-ai .ai-act').forEach(b => { b.disabled = _aiBusy; b.style.opacity = _aiBusy ? 0.5 : 1; }); const st = _aiEl('ai-stop'); if (st) st.style.display = _aiBusy ? 'inline-block' : 'none'; }
+function aiStop() { if (_aiAbort) _aiAbort.abort(); }
+
+async function aiReview() {
+  if (!_aiStart()) return;
+  try {
+    const ctx = _aiContext();
+    _aiLog('Kontur ve G-kod gonderiliyor (' + _AI_PROV[_aiSet.prov].name + ', ' + _aiModel() + ')...');
+    const pr = _aiPromptReview(ctx);
+    const txt = await _aiChat(pr.system, [{ role: 'user', text: pr.user }]);
+    const js = _aiExtractJson(txt);
+    const iss = Array.isArray(js.issues) ? js.issues : [];
+    _aiLog('Sonuc: ' + (js.verdict || '?') + (js.summary ? ' - ' + js.summary : ''), js.verdict === 'ok' ? 'ok' : js.verdict === 'error' ? 'err' : 'warn');
+    iss.forEach(i => _aiLog('[' + (i.severity || 'info') + '] ' + (i.where ? i.where + ': ' : '') + (i.problem || '') + (i.suggestion ? '  >> ' + i.suggestion : ''), i.severity === 'error' ? 'err' : i.severity === 'warning' ? 'warn' : ''));
+    // uygulamanin kendi denetimi de yanina
+    const code = ctx.data.current_gcode;
+    if (code) { const v = _aiVerify(ctx.pl, _aiSanitize(code)); _aiLog('Uygulamanin kendi denetimi: ' + (v.ok ? 'gecti' + (v.dev !== null ? ' (en buyuk sapma ' + _aiN(v.dev) + ' mm)' : '') : 'KALDI - ' + v.msgs.join(' | ')), v.ok ? 'ok' : 'err'); }
+  } catch (e) { _aiLog('Hata: ' + (e && e.message ? e.message : e), 'err'); }
+  _aiEnd();
+}
+
+async function aiGenerate(mode) {
+  if (!_aiStart()) return;
+  const maxTry = Math.max(1, Math.min(6, parseInt((_aiEl('ai-tries') || {}).value, 10) || 3));
+  try {
+    const ctx = _aiContext();
+    const extra = ((_aiEl('ai-note') || {}).value || '').trim();
+    const pr = _aiPromptGen(ctx, mode, extra);
+    const msgs = [{ role: 'user', text: pr.user }];
+    let best = null, lastRep = null;
+    for (let t = 1; t <= maxTry; t++) {
+      _aiLog('Deneme ' + t + '/' + maxTry + ': ' + _AI_PROV[_aiSet.prov].name + ' / ' + _aiModel() + ' cevap uretiyor...');
+      const txt = await _aiChat(pr.system, msgs);
+      let js; try { js = _aiExtractJson(txt); } catch (e) { _aiLog('Cevap JSON degil: ' + e.message, 'warn'); msgs.push({ role: 'assistant', text: txt }, { role: 'user', text: 'Your answer was not valid JSON. Answer ONLY with {"gcode":"...","notes":"..."}.' }); continue; }
+      const code = _aiSanitize(js.gcode || '');
+      if (!code) { _aiLog('Cevapta gcode alani bos.', 'warn'); msgs.push({ role: 'assistant', text: txt }, { role: 'user', text: 'The "gcode" field was empty. Return the full program.' }); continue; }
+      const rep = _aiVerify(ctx.pl, code); lastRep = rep;
+      if (js.notes) _aiLog('YZ notu: ' + js.notes);
+      if (rep.ok) { best = { code, rep, notes: js.notes || '', tries: t }; _aiLog('Dogrulama GECTI (deneme ' + t + '): geri okuma sapmasi ' + (rep.dev !== null ? _aiN(rep.dev) + ' mm' : '-') + '.', 'ok'); break; }
+      _aiLog('Dogrulama KALDI: ' + rep.msgs.slice(0, 6).join(' | '), 'err');
+      if (!best) best = { code, rep, notes: js.notes || '', tries: t, failed: true };
+      msgs.push({ role: 'assistant', text: JSON.stringify({ gcode: code, notes: js.notes || '' }) },
+        { role: 'user', text: 'VERIFIER REPORT (independent check by the app, fix every item and return the full corrected program as JSON {"gcode","notes"}):\n- ' + rep.msgs.join('\n- ') + '\nCurrent program was:\n' + code });
+    }
+    if (best && !best.failed) { _aiResult = best; _aiLog('Sonuc hazir. G-KODA UYGULA ile sabitleyebilirsiniz.', 'ok'); }
+    else if (best) { _aiResult = best; _aiLog('YZ ' + maxTry + ' denemede dogrulamayi gecen kod uretemedi. Son cikti asagida gosteriliyor ama UYGULANAMAZ; uygulamanin analitik G-kodunu kullanin veya daha guclu bir model deneyin.', 'err'); }
+  } catch (e) { _aiLog('Hata: ' + (e && e.message ? e.message : e), 'err'); }
+  _aiShowResult(); _aiEnd();
+}
+function _aiShowResult() {
+  const box = _aiEl('ai-res'); if (!box) return;
+  if (!_aiResult) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  _aiEl('ai-code').value = _aiResult.code;
+  const ap = _aiEl('ai-apply'); if (ap) { ap.disabled = !!_aiResult.failed; ap.style.opacity = _aiResult.failed ? 0.4 : 1; }
+  const st = _aiEl('ai-resstat');
+  if (st) { st.style.color = _aiResult.failed ? '#ff8a80' : '#7ddf9a'; st.textContent = _aiResult.failed ? 'Dogrulama gecemedi: ' + _aiResult.rep.msgs.slice(0, 3).join(' | ') : 'Dogrulandi (' + _aiResult.tries + '. denemede).'; }
+}
+function aiApply() {
+  if (!_aiResult || _aiResult.failed) return;
+  const pl = _currentPayload(), v = _aiVerify(pl, _aiResult.code);
+  if (!v.ok) { _aiLog('Uygulama durduruldu: kontur degismis, kod artik dogrulanmiyor. Yeniden uretin.', 'err'); return; }
+  _aiPinnedCode = _aiResult.code;
+  _pinImportedCode(_aiResult.code);
+  const ve = _aiEl('gcodeVerify');
+  if (ve) { ve.style.display = 'block'; ve.style.borderLeftColor = '#c084fc'; ve.style.color = '#d8b4fe'; ve.style.background = '#1c1226'; ve.textContent = 'Bu program YZ tarafindan uretildi ve uygulamanin kendi geri okuma denetiminden gecti (sapma ' + (v.dev !== null ? _aiN(v.dev) : '-') + ' mm). Kontur veya takim degisirse uygulamanin analitik G-koduna doner.'; }
+  try { redraw(); } catch (e) {}
+  showTab('gcode');
+}
+function aiCompare() {
+  if (!_aiResult) return;
+  const pl = _currentPayload();
+  const mine = (_gcodeOption === 'fanuc' ? _buildGCodeFanuc : _buildGCode)(pl).split('\n'), ai = _aiResult.code.split('\n');
+  const n = Math.max(mine.length, ai.length), diffs = [];
+  for (let i = 0; i < n; i++) if ((mine[i] || '').trim() !== (ai[i] || '').trim()) diffs.push('satir ' + (i + 1) + ':  YZ "' + (ai[i] || '') + '"   analitik "' + (mine[i] || '') + '"');
+  _aiLog(diffs.length ? 'Analitik uretici ile ' + diffs.length + ' satir farkli:' : 'YZ kodu uygulamanin analitik G-koduyla birebir ayni.', diffs.length ? 'warn' : 'ok');
+  diffs.slice(0, 20).forEach(d => _aiLog(d));
+}
+function aiUseAnalytic() {
+  _aiPinnedCode = null; _importedCode = null; generateGCode(); try { redraw(); } catch (e) {}
+  _aiLog('Uygulamanin analitik G-kodu geri yuklendi.', 'ok'); showTab('gcode');
+}
+
+// ---------------- AYARLAR / MODEL LISTESI / TEST ----------------
+function aiSetProv(v) { _aiSet.prov = v; _aiSave(); aiRenderSettings(); }
+function aiSetKey(v) { _aiSet.keys[_aiSet.prov] = v.trim(); _aiSave(); }
+function aiSetModel(v) { _aiSet.models[_aiSet.prov] = v.trim(); _aiSave(); }
+function aiSetBase(v) { _aiSet.base = v.trim(); _aiSave(); }
+function aiSetKeep(v) { _aiSet.keep = !!v; _aiSave(); }
+function aiClearKey() { delete _aiSet.keys[_aiSet.prov]; _aiSave(); aiRenderSettings(); _aiLog('Anahtar bu tarayicidan silindi.', 'ok'); }
+async function aiListModels() {
+  const prov = _aiSet.prov, key = _aiKey();
+  if (!key) { _aiLog('Once API anahtarini girin.', 'warn'); return; }
+  try {
+    let url, headers = {};
+    if (prov === 'gemini') { url = 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=100'; headers['x-goog-api-key'] = key; }
+    else { const base = prov === 'groq' ? 'https://api.groq.com/openai/v1' : prov === 'openrouter' ? 'https://openrouter.ai/api/v1' : (_aiSet.base || '').replace(/\/+$/, ''); url = base + '/models'; headers['Authorization'] = 'Bearer ' + key; }
+    const res = await fetch(url, { headers }); const js = await res.json();
+    if (!res.ok) throw new Error((js.error && (js.error.message || js.error)) || res.status);
+    let ids;
+    if (prov === 'gemini') ids = (js.models || []).filter(m => (m.supportedGenerationMethods || []).indexOf('generateContent') >= 0).map(m => m.name.replace(/^models\//, ''));
+    else if (prov === 'openrouter') ids = (js.data || []).filter(m => m.pricing && parseFloat(m.pricing.prompt) === 0 && parseFloat(m.pricing.completion) === 0).map(m => m.id);
+    else ids = (js.data || []).map(m => m.id);
+    const dl = _aiEl('ai-models'); if (dl) dl.innerHTML = ids.map(i => '<option value="' + i + '">').join('');
+    _aiLog(ids.length + ' model listelendi (Model alanina tiklayip secin).', 'ok');
+  } catch (e) { _aiLog('Model listesi alinamadi: ' + (e && e.message ? e.message : e), 'err'); }
+}
+async function aiTest() {
+  if (_aiBusy) return; _aiBusy = true; _aiBtns(); _aiClearLog();
+  try {
+    _aiLog('Baglanti deneniyor...');
+    const t = await _aiChat('Answer only with JSON {"ok":true}.', [{ role: 'user', text: 'ping' }], { timeout: 30000 });
+    _aiLog('Baglanti basarili: ' + t.slice(0, 80), 'ok');
+  } catch (e) { _aiLog('Hata: ' + (e && e.message ? e.message : e), 'err'); }
+  _aiEnd();
+}
+function aiRenderSettings() {
+  const P = _AI_PROV[_aiSet.prov];
+  const s = _aiEl('ai-prov'); if (s) s.value = _aiSet.prov;
+  const k = _aiEl('ai-key'); if (k) k.value = _aiKey();
+  const m = _aiEl('ai-model'); if (m) m.value = _aiModel();
+  const b = _aiEl('ai-baserow'); if (b) b.style.display = _aiSet.prov === 'custom' ? 'flex' : 'none';
+  const bi = _aiEl('ai-base'); if (bi) bi.value = _aiSet.base || '';
+  const kp = _aiEl('ai-keep'); if (kp) kp.checked = !!_aiSet.keep;
+  const l = _aiEl('ai-link'); if (l) l.innerHTML = P.link ? 'Ucretsiz anahtar: <a href="' + P.link + '" target="_blank" rel="noopener" style="color:#c084fc">' + P.link.replace('https://', '') + '</a>' : '';
+}
+try { _aiLoad(); } catch (e) {}
+
 </script>
 
 <!-- PASTE MODAL -->
@@ -6428,6 +7039,12 @@ function _refreshInputModeButtons() {
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="color:#666;font-size:10px;">UÇ RADÜSÜ:</span>
         <input id="gi-toolr" type="number" min="0" max="5" step="0.1" value="0"
+          style="width:50px;background:#1e2228;border:1px solid #333;color:#00ff88;text-align:right;padding:2px 4px;font-size:11px;border-radius:3px;font-family:'Courier New',monospace;">
+        <span style="color:#444;font-size:10px;">mm</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;" title="G75 kanal dongusunde takim genisligi (programda yoktur); kanal alani cizimi icin kullanilir">
+        <span style="color:#666;font-size:10px;">KANAL TAKIMI:</span>
+        <input id="gi-grvw" type="number" min="0.1" max="30" step="0.1" value="3"
           style="width:50px;background:#1e2228;border:1px solid #333;color:#00ff88;text-align:right;padding:2px 4px;font-size:11px;border-radius:3px;font-family:'Courier New',monospace;">
         <span style="color:#444;font-size:10px;">mm</span>
       </div>
