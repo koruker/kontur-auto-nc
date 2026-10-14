@@ -959,8 +959,8 @@ td.type-PAH{color:#ffff00;}
       <div class="p-group">
         <h4>Yapay Zeka Ayarları</h4>
         <div class="p-row"><label>Sağlayıcı</label><select id="ai-prov" onchange="aiSetProv(this.value)"><option value="gemini">Google Gemini (ücretsiz)</option><option value="groq">Groq (ücretsiz)</option><option value="openrouter">OpenRouter (ücretsiz modeller)</option><option value="custom">Özel (OpenAI uyumlu)</option></select></div>
-        <div class="p-row"><label>API anahtarı</label><input type="password" id="ai-key" autocomplete="off" onchange="aiSetKey(this.value)"></div>
-        <div class="p-row"><label>Model</label><input type="text" id="ai-model" list="ai-models" onchange="aiSetModel(this.value)"><datalist id="ai-models"></datalist></div>
+        <div class="p-row"><label>API anahtarı</label><input type="password" id="ai-key" autocomplete="off" oninput="aiSetKey(this.value)" onchange="aiSetKey(this.value)"></div>
+        <div class="p-row"><label>Model</label><input type="text" id="ai-model" list="ai-models" oninput="aiSetModel(this.value)" onchange="aiSetModel(this.value)"><datalist id="ai-models"></datalist></div>
         <div class="p-row" id="ai-baserow" style="display:none"><label>Taban adres</label><input type="text" id="ai-base" placeholder="https://.../v1" onchange="aiSetBase(this.value)"></div>
         <div class="p-row"><label>Anahtarı bu tarayıcıda sakla</label><input type="checkbox" id="ai-keep" onchange="aiSetKeep(this.checked)"></div>
         <div id="ai-link" style="font-size:11px;color:#888;margin-bottom:6px"></div>
@@ -6600,6 +6600,7 @@ function _refreshInputModeButtons() {
 
 
 
+
 // ============================================================
 // YZ (YAPAY ZEKA) KATMANI: konturu ve G-kodu inceler, TNR/ofsetli G-kodu uretir veya duzeltir.
 // Cevrimici, ucretsiz anahtarli saglayicilar (tarayicidan dogrudan cagrilir; anahtar sadece bu tarayicida tutulur).
@@ -6607,7 +6608,7 @@ function _refreshInputModeButtons() {
 // gecmezse hata raporu YZ'ye geri verilip yeniden denenir.
 // ============================================================
 var _AI_PROV = {
-  gemini: { name: 'Google Gemini (ucretsiz anahtar)', model: 'gemini-2.5-flash', link: 'https://aistudio.google.com/apikey' },
+  gemini: { name: 'Google Gemini (ucretsiz anahtar)', model: 'gemini-3.8-flash', link: 'https://aistudio.google.com/apikey' },
   groq: { name: 'Groq (ucretsiz anahtar)', model: 'llama-3.3-70b-versatile', link: 'https://console.groq.com/keys' },
   openrouter: { name: 'OpenRouter (ucretsiz modeller)', model: 'meta-llama/llama-3.3-70b-instruct:free', link: 'https://openrouter.ai/keys' },
   custom: { name: 'Ozel (OpenAI uyumlu)', model: '', link: '' }
@@ -6636,8 +6637,8 @@ function _aiLog(t, cls) {
   d.textContent = t; el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 function _aiClearLog() { const el = _aiEl('ai-log'); if (el) el.innerHTML = ''; }
-function _aiModel() { return (_aiSet.models[_aiSet.prov] || _AI_PROV[_aiSet.prov].model || '').trim(); }
-function _aiKey() { return (_aiSet.keys[_aiSet.prov] || '').trim(); }
+function _aiModel() { const f = _aiEl('ai-model'); const v = f && f.value ? f.value : (_aiSet.models[_aiSet.prov] || ''); return (v || _AI_PROV[_aiSet.prov].model || '').trim(); }
+function _aiKey() { const f = _aiEl('ai-key'); const v = f && f.value ? f.value : (_aiSet.keys[_aiSet.prov] || ''); return String(v).replace(/[\s\u200b"']/g, ''); }
 
 // ---------------- SAGLAYICI CAGRISI ----------------
 // messages: [{role:'user'|'assistant', text}]
@@ -6667,10 +6668,17 @@ async function _aiChat(system, messages, opt) {
       body = { model, temperature: 0, max_tokens: 6000, messages: [{ role: 'system', content: system }].concat(messages.map(m => ({ role: m.role, content: m.text }))) };
     }
     let res;
-    try { res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
+    try {
+      try { res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctl.signal }); }
+      catch (e0) {
+        if (prov !== 'gemini' || (e0 && e0.name === 'AbortError')) throw e0;
+        const h2 = { 'Content-Type': 'application/json' };
+        res = await fetch(url + '?key=' + encodeURIComponent(key), { method: 'POST', headers: h2, body: JSON.stringify(body), signal: ctl.signal });
+      }
+    }
     catch (e) {
       if (e && e.name === 'AbortError') throw new Error('Istek iptal edildi veya zaman asimina ugradi.');
-      throw new Error('Saglayiciya ulasilamadi (ag, CORS veya engelleyici eklenti): ' + (e && e.message ? e.message : e));
+      throw new Error('Saglayiciya ulasilamadi (ag, CORS, reklam/guvenlik eklentisi veya dosya olarak acilmis sayfa; adres https:// ile baslamali): ' + (e && e.message ? e.message : e));
     }
     const txt = await res.text();
     let js = null; try { js = JSON.parse(txt); } catch (e) {}
