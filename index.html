@@ -977,7 +977,8 @@ td.type-PAH{color:#ffff00;}
           <button class="ai-act" onclick="aiGenerate('fix')">MEVCUT G-KODU DÜZELT</button>
           <button id="ai-stop" onclick="aiStop()" style="display:none">DURDUR</button>
         </div>
-        <div id="ai-log" style="margin-top:6px"></div>
+        <div id="ai-timer" style="font-size:11px;color:#c084fc;margin-top:6px"></div>
+        <div id="ai-log" style="margin-top:4px"></div>
       </div>
       <div class="p-group" id="ai-res" style="display:none">
         <h4>YZ Sonucu</h4>
@@ -6602,6 +6603,7 @@ function _refreshInputModeButtons() {
 
 
 
+
 // ============================================================
 // YZ (YAPAY ZEKA) KATMANI: konturu ve G-kodu inceler, TNR/ofsetli G-kodu uretir veya duzeltir.
 // Cevrimici, ucretsiz anahtarli saglayicilar (tarayicidan dogrudan cagrilir; anahtar sadece bu tarayicida tutulur).
@@ -6615,6 +6617,7 @@ var _AI_PROV = {
   custom: { name: 'Ozel (OpenAI uyumlu)', model: '', link: '' }
 };
 var _aiSet = { prov: 'gemini', keys: {}, models: {}, base: '', keep: true };
+var _aiTimer = null, _aiT0 = 0;
 var _aiBusy = false, _aiAbort = null, _aiResult = null, _aiPinnedCode = null;
 
 function _aiLoad() {
@@ -6658,7 +6661,7 @@ async function _aiChat(system, messages, opt) {
       body = {
         systemInstruction: { parts: [{ text: system }] },
         contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] })),
-        generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+        generationConfig: Object.assign({ temperature: 0, responseMimeType: 'application/json' }, opt.fast && !opt.noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {})
       };
     } else {
       const base = prov === 'groq' ? 'https://api.groq.com/openai/v1' : prov === 'openrouter' ? 'https://openrouter.ai/api/v1' : (_aiSet.base || '').replace(/\/+$/, '');
@@ -6688,6 +6691,7 @@ async function _aiChat(system, messages, opt) {
       if (res.status === 401 || res.status === 403) throw new Error('Anahtar reddedildi (' + res.status + '): ' + msg);
       if (res.status === 429) throw new Error('Ucretsiz kullanim siniri doldu (429). Biraz bekleyin veya baska model/saglayici secin. ' + msg);
       if (res.status === 404) throw new Error('Model bulunamadi (404): "' + model + '". MODELLERI LISTELE ile gecerli bir ad secin. ' + msg);
+      if (res.status === 400 && prov === 'gemini' && opt.fast && !opt.noThink && /think/i.test(String(msg))) { return _aiChat(system, messages, Object.assign({}, opt, { noThink: true })); }
       throw new Error('Saglayici hatasi ' + res.status + ': ' + msg);
     }
     if (!js) throw new Error('Saglayici cevabi okunamadi.');
@@ -6749,9 +6753,11 @@ var _AI_SPEC = [
 ].join('\n');
 
 function _aiPromptReview(ctx) {
+  const d = ctx.data;
+  const short = { tool: d.tool, contour: d.contour, gcode: d.current_gcode };
   return {
-    system: _AI_SPEC + '\nTASK: REVIEW. Inspect the contour, tool settings and current_gcode. Check: arc directions (G02/G03) versus geometry, element continuity, features smaller than the nose radius, undercuts the tool cannot reach, TNR side (outer/inner) plausibility, compensated coordinates, missing/odd header or footer lines, comment lines, retract safety. Answer ONLY JSON: {"verdict":"ok|warning|error","summary":"short Turkish summary","issues":[{"severity":"info|warning|error","where":"element n or gcode line text","problem":"Turkish","suggestion":"Turkish"}]}.',
-    user: JSON.stringify(ctx.data)
+    system: 'You are a CNC lathe (Fanuc, mm) expert. X is DIAMETER. Contour = finished part profile; G-code uses explicit nose-radius compensation (G40 only, outer tip = centre-(R,R), arcs R+-toolR). Quickly review: arc directions, continuity, features smaller than nose radius, wrong compensation, comments, odd header/footer. Be brief. Answer ONLY JSON: {"verdict":"ok|warning|error","summary":"1 short Turkish sentence","issues":[{"severity":"info|warning|error","where":"...","problem":"Turkish","suggestion":"Turkish"}]} with at most 5 issues.',
+    user: JSON.stringify(short)
   };
 }
 function _aiPromptGen(ctx, mode, extra) {
@@ -6807,8 +6813,9 @@ function _aiVerify(pl, code) {
 }
 
 // ---------------- ANA AKISLAR ----------------
-function _aiStart() { if (_aiBusy) return false; _aiBusy = true; _aiClearLog(); _aiResult = null; _aiShowResult(); _aiBtns(); return true; }
-function _aiEnd() { _aiBusy = false; _aiBtns(); }
+function _aiTick() { const el = _aiEl('ai-timer'); if (el) el.textContent = _aiBusy ? 'Bekleniyor: ' + Math.round((Date.now() - _aiT0) / 1000) + ' sn (DURDUR ile iptal edebilirsiniz)' : ''; }
+function _aiStart() { if (_aiBusy) return false; _aiBusy = true; _aiT0 = Date.now(); clearInterval(_aiTimer); _aiTimer = setInterval(_aiTick, 1000); _aiClearLog(); _aiResult = null; _aiShowResult(); _aiBtns(); return true; }
+function _aiEnd() { _aiBusy = false; clearInterval(_aiTimer); _aiTick(); _aiBtns(); }
 function _aiBtns() { document.querySelectorAll('#tab-ai .ai-act').forEach(b => { b.disabled = _aiBusy; b.style.opacity = _aiBusy ? 0.5 : 1; }); const st = _aiEl('ai-stop'); if (st) st.style.display = _aiBusy ? 'inline-block' : 'none'; }
 function aiStop() { if (_aiAbort) _aiAbort.abort(); }
 
@@ -6816,16 +6823,16 @@ async function aiReview() {
   if (!_aiStart()) return;
   try {
     const ctx = _aiContext();
-    _aiLog('Kontur ve G-kod gonderiliyor (' + _AI_PROV[_aiSet.prov].name + ', ' + _aiModel() + ')...');
+    const code = ctx.data.current_gcode;
+    if (code) { const v = _aiVerify(ctx.pl, _aiSanitize(code)); _aiLog('Uygulamanin kendi denetimi (aninda): ' + (v.ok ? 'GECTI' + (v.dev !== null ? ' (en buyuk sapma ' + _aiN(v.dev) + ' mm)' : '') : 'KALDI - ' + v.msgs.join(' | ')), v.ok ? 'ok' : 'err'); }
+    if (ctx.data.app_feasibility_flags_element_numbers && ctx.data.app_feasibility_flags_element_numbers.length) _aiLog('Takimin ulasamadigi elemanlar: ' + ctx.data.app_feasibility_flags_element_numbers.join(', '), 'warn');
+    _aiLog('Yapay zeka yorumu isteniyor (' + _AI_PROV[_aiSet.prov].name + ', ' + _aiModel() + ')...');
     const pr = _aiPromptReview(ctx);
-    const txt = await _aiChat(pr.system, [{ role: 'user', text: pr.user }]);
+    const txt = await _aiChat(pr.system, [{ role: 'user', text: pr.user }], { fast: true, timeout: 90000 });
     const js = _aiExtractJson(txt);
     const iss = Array.isArray(js.issues) ? js.issues : [];
-    _aiLog('Sonuc: ' + (js.verdict || '?') + (js.summary ? ' - ' + js.summary : ''), js.verdict === 'ok' ? 'ok' : js.verdict === 'error' ? 'err' : 'warn');
+    _aiLog('YZ sonucu: ' + (js.verdict || '?') + (js.summary ? ' - ' + js.summary : ''), js.verdict === 'ok' ? 'ok' : js.verdict === 'error' ? 'err' : 'warn');
     iss.forEach(i => _aiLog('[' + (i.severity || 'info') + '] ' + (i.where ? i.where + ': ' : '') + (i.problem || '') + (i.suggestion ? '  >> ' + i.suggestion : ''), i.severity === 'error' ? 'err' : i.severity === 'warning' ? 'warn' : ''));
-    // uygulamanin kendi denetimi de yanina
-    const code = ctx.data.current_gcode;
-    if (code) { const v = _aiVerify(ctx.pl, _aiSanitize(code)); _aiLog('Uygulamanin kendi denetimi: ' + (v.ok ? 'gecti' + (v.dev !== null ? ' (en buyuk sapma ' + _aiN(v.dev) + ' mm)' : '') : 'KALDI - ' + v.msgs.join(' | ')), v.ok ? 'ok' : 'err'); }
   } catch (e) { _aiLog('Hata: ' + (e && e.message ? e.message : e), 'err'); }
   _aiEnd();
 }
@@ -6841,7 +6848,7 @@ async function aiGenerate(mode) {
     let best = null, lastRep = null;
     for (let t = 1; t <= maxTry; t++) {
       _aiLog('Deneme ' + t + '/' + maxTry + ': ' + _AI_PROV[_aiSet.prov].name + ' / ' + _aiModel() + ' cevap uretiyor...');
-      const txt = await _aiChat(pr.system, msgs);
+      const txt = await _aiChat(pr.system, msgs, { fast: true });
       let js; try { js = _aiExtractJson(txt); } catch (e) { _aiLog('Cevap JSON degil: ' + e.message, 'warn'); msgs.push({ role: 'assistant', text: txt }, { role: 'user', text: 'Your answer was not valid JSON. Answer ONLY with {"gcode":"...","notes":"..."}.' }); continue; }
       const code = _aiSanitize(js.gcode || '');
       if (!code) { _aiLog('Cevapta gcode alani bos.', 'warn'); msgs.push({ role: 'assistant', text: txt }, { role: 'user', text: 'The "gcode" field was empty. Return the full program.' }); continue; }
