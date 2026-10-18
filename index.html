@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kontur Auto NC</title>
+<title>Kontur Auto NC  Fanuc CNC Editör</title>
 <style>
 :root {
   --bg:#0b0d0f; --panel:#13161a; --panel2:#1a1d22;
@@ -6426,7 +6426,7 @@ function jacobian(S, vars, drag, central) {
 }
 function maxAbs(a) { let m = 0; for (const v of a) { const x = Math.abs(v); if (x > m) m = x; } return m; }
 function solve(S, drag, maxIter) {
-  maxIter = maxIter || 60;
+  maxIter = maxIter || (drag ? 60 : 150);
   const vars = getVars(S); const n = vars.length * 2;
   const res = []; allResiduals(S, drag, res);
   if (!n) return { ok: maxAbs(res) < 1e-7, maxRes: maxAbs(res), iters: 0 };
@@ -6521,9 +6521,23 @@ function analyze(S) {
 function snapshotPts(S) { const o = {}; for (const k in S.pts) o[k] = [S.pts[k].x, S.pts[k].y]; return o; }
 function restorePts(S, snap) { for (const k in snap) if (S.pts[k]) { S.pts[k].x = snap[k][0]; S.pts[k].y = snap[k][1]; } }
 // kisiti ekle ve coz; celiskiliyse geri al
+function purgeDangling(S) {   // silinmis nokta/elemana bagli kalan iliskileri temizle
+  const n0 = S.cons.length;
+  S.cons = S.cons.filter(c => c.refs.every(r => (r[0] === 'p' ? !!S.pts[r] : !!S.ents[r])));
+  return n0 - S.cons.length;
+}
+function degenerateIds(S) {   // sifir uzunluklu cizgi / sifir yaricapli yay-daire
+  const o = [];
+  for (const k in S.ents) { const e = S.ents[k]; if (e.ax || e.t === 'cline') continue;
+    if (e.t === 'line') { const a = S.pts[e.a], b = S.pts[e.b]; if (a && b && hyp(a.x - b.x, a.y - b.y) < 1e-2) o.push(k); }
+    else if (e.t === 'arc' || e.t === 'circle') { const A = arcInfo(S, e); if (!(A.r > 1e-2)) o.push(k); } }
+  return o;
+}
+function collapses(S, before) { const now = degenerateIds(S); return now.some(k => before.indexOf(k) < 0); }
 function addConChecked(S, t, refs, v, extra) {
-  const snap = snapshotPts(S); const dof0 = rankOf(S); const c = S.addCon(t, refs, v, extra);
+  const snap = snapshotPts(S); const dof0 = rankOf(S); const deg0 = degenerateIds(S); const c = S.addCon(t, refs, v, extra);
   const r = solve(S, null);
+  if (r.ok && collapses(S, deg0)) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Bu ilişki/ölçü bir elemanı sıfır boyuta indirir (geçersiz)' }; }
   if (!r.ok) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Çelişkili veya aşırı tanımlı: bu ilişki eklenemedi' }; }
   if (rankOf(S) >= dof0) {   // yeni kisit serbestligi azaltmiyor: zaten saglaniyor (fazla tanimli)
     if (isDim(c)) { c.ref = true; refreshRefs(S); return { ok: true, con: c, ref: true }; }
@@ -6534,8 +6548,8 @@ function addConChecked(S, t, refs, v, extra) {
 }
 function setDimValue(S, c, v) {
   if (c.ref) return false;
-  const snap = snapshotPts(S); const old = c.v; c.v = v; const r = solve(S, null);
-  if (!r.ok) { c.v = old; restorePts(S, snap); solve(S, null); return false; } return true;
+  const snap = snapshotPts(S); const old = c.v; const deg0 = degenerateIds(S); c.v = v; const r = solve(S, null);
+  if (!r.ok || collapses(S, deg0)) { c.v = old; restorePts(S, snap); solve(S, null); return false; } return true;
 }
 function removeCon(S, id) { const i = S.cons.findIndex(c => c.id === id); if (i >= 0) S.cons.splice(i, 1); }
 function deleteEntity(S, id) {
@@ -6669,7 +6683,7 @@ function fillet(S, idA, idB, R) {
   const eA = S.ents[idA], eB = S.ents[idB]; if (!eA || !eB || eA === eB) return { ok: false, err: 'İki farklı eleman seçin' };
   if (!['line', 'arc'].includes(eA.t) || !['line', 'arc'].includes(eB.t)) return { ok: false, err: 'Fillet çizgi/yay için' };
   const k = findCorner(S, eA, eB); if (!k) return { ok: false, err: 'Elemanlar bir köşede birleşmeli' };
-  const P = S.pts[k.pa];
+  const P = S.pts[k.pa]; const deg0 = degenerateIds(S);
   const cand = [];
   offsetCurves(S, eA, R).forEach(u => offsetCurves(S, eB, R).forEach(v => intersectOff(u, v).forEach(c => {
     const ta = footOn(S, eA, c.x, c.y), tb = footOn(S, eB, c.x, c.y);
@@ -6696,12 +6710,13 @@ function fillet(S, idA, idB, R) {
   S.addCon('coin', [k.pa, aEnd]); S.addCon('coin', [k.pb, bEnd]);
   S.addCon('tan', [idA, arc], undefined, { mode: 'ext' }); S.addCon('tan', [idB, arc], undefined, { mode: 'ext' });
   S.addCon('rad', [arc], R);
-  const r = solve(S, null); return { ok: r.ok, arc, err: r.ok ? null : 'Fillet çözülemedi' };
+  const r = solve(S, null); if (r.ok && collapses(S, deg0)) return { ok: false, err: 'Fillet yarıçapı eleman boyuna sığmıyor (eleman sıfıra iniyor)' };
+  return { ok: r.ok, arc, err: r.ok ? null : 'Fillet çözülemedi' };
 }
 function chamfer(S, idA, idB, d) {
   const eA = S.ents[idA], eB = S.ents[idB]; if (!eA || !eB || eA.t !== 'line' || eB.t !== 'line') return { ok: false, err: 'Pah için iki çizgi seçin' };
   const k = findCorner(S, eA, eB); if (!k) return { ok: false, err: 'Çizgiler bir köşede birleşmeli' };
-  const P = S.pts[k.pa]; const otherA = S.pts[k.pa === eA.a ? eA.b : eA.a], otherB = S.pts[k.pb === eB.a ? eB.b : eB.a];
+  const P = S.pts[k.pa]; const deg0 = degenerateIds(S); const otherA = S.pts[k.pa === eA.a ? eA.b : eA.a], otherB = S.pts[k.pb === eB.a ? eB.b : eB.a];
   const la = hyp(otherA.x - P.x, otherA.y - P.y), lb = hyp(otherB.x - P.x, otherB.y - P.y);
   if (d >= la - 1e-9 || d >= lb - 1e-9) return { ok: false, err: 'Pah mesafesi çizgiden kısa olmalı' };
   const ta = { x: P.x + (otherA.x - P.x) / la * d, y: P.y + (otherA.y - P.y) / la * d }, tb = { x: P.x + (otherB.x - P.x) / lb * d, y: P.y + (otherB.y - P.y) / lb * d };
@@ -6710,7 +6725,8 @@ function chamfer(S, idA, idB, d) {
   S.pts[k.pa].x = ta.x; S.pts[k.pa].y = ta.y; S.pts[k.pb].x = tb.x; S.pts[k.pb].y = tb.y;
   const p1 = S.addPoint(ta.x, ta.y), p2 = S.addPoint(tb.x, tb.y), ln = S.addLine(p1, p2);
   S.addCon('coin', [k.pa, p1]); S.addCon('coin', [k.pb, p2]);
-  const r = solve(S, null); return { ok: r.ok, line: ln, err: r.ok ? null : 'Pah çözülemedi' };
+  const r = solve(S, null); if (r.ok && collapses(S, deg0)) return { ok: false, err: 'Pah mesafesi çizgi boyuna sığmıyor (çizgi sıfıra iniyor)' };
+  return { ok: r.ok, line: ln, err: r.ok ? null : 'Pah çözülemedi' };
 }
 
 /* ---------- KIRP / UZAT ---------- */
@@ -6743,7 +6759,7 @@ function trim(S, id, cx, cy) {
     const oldRad = S.cons.filter(k => k.t === 'rad' && k.refs[0] === id); oldRad.forEach(k => k.refs[0] = arc);
     S.cons.forEach(k => { for (let i = 0; i < k.refs.length; i++) if (k.refs[i] === id) k.refs[i] = arc; });
     S.cons = S.cons.filter(k => !(k.t === 'coin' && k.refs.includes(e.a)));
-    delete S.ents[id]; delete S.pts[e.a];
+    delete S.ents[id]; delete S.pts[e.a]; purgeDangling(S);
     S.addCon('ponent', [pa, A.other]); S.addCon('ponent', [pb, B.other]);
     return { ok: true };
   }
@@ -6809,7 +6825,8 @@ function connectedChain(S, startId) {   // coin ile bagli tum cizgi/yaylar
   return [...seen];
 }
 function offsetEntities(S, ids, dist, side) {   // side=+1: sol normal tarafi (dogrularda), yaylarda disari(+)
-  const d = dist * side; const out = [];
+  const d = dist * side; const out = []; const deg0 = degenerateIds(S);
+  for (const id of ids) { const e = S.ents[id]; if (e && (e.t === 'arc' || e.t === 'circle') && arcInfo(S, e).r + d <= 1e-3) return { ok: false, err: 'Ofset mesafesi yarıçaptan büyük: yay ters dönerdi' }; }
   const map = {};  // eski nokta -> yeni nokta konumu icin
   const f = coinGroups(S);
   const items = ids.map(id => S.ents[id]);
@@ -6840,7 +6857,8 @@ function offsetEntities(S, ids, dist, side) {   // side=+1: sol normal tarafi (d
       const ne = S.ents[created[e.id]], no = S.ents[created[o.id]]; const qa = pe === e.a ? ne.a : ne.b, qb = po === o.a ? no.a : no.b; S.addCon('coin', [qa, qb]); } })); }));
   // arc/line teget iliskilerini kopyala
   S.cons.slice().forEach(k => { if (k.t === 'tan' && k.refs.every(r => created[r])) S.addCon('tan', k.refs.map(r => created[r]), undefined, { mode: k.mode }); });
-  const r = solve(S, null); return { ok: r.ok, created: Object.values(created), err: r.ok ? null : 'Ofset çözülemedi' };
+  const r = solve(S, null); if (r.ok && collapses(S, deg0)) return { ok: false, err: 'Ofset bir elemanı sıfır boyuta indiriyor' };
+  return { ok: r.ok, created: Object.values(created), err: r.ok ? null : 'Ofset çözülemedi' };
 }
 function mirrorEntities(S, ids, axisId) {
   const ax = S.ents[axisId]; if (!ax || ax.t !== 'line') return { ok: false, err: 'Ayna ekseni bir çizgi olmalı' };
@@ -6951,7 +6969,7 @@ function fromContour(S, start, els) {
   return true;
 }
 
-const API = { Sketch, solve, analyze, rankOf, refreshRefs, addConChecked, setDimValue, removeCon, deleteEntity, relationsFor, applyRelation, addRect, addSlot, fillet, chamfer, trim, extend, offsetEntities, mirrorEntities, connectedChain, extractProfile, fromContour, arcInfo, lineInfo, paramOn, pointAt, distToEnt, curveIntersect, inRange, paramRange, coinGroups, fixedPoints, isDim, snapshotPts, restorePts, mod2pi, endpointNear, findCorner };
+const API = { purgeDangling, degenerateIds, Sketch, solve, analyze, rankOf, refreshRefs, addConChecked, setDimValue, removeCon, deleteEntity, relationsFor, applyRelation, addRect, addSlot, fillet, chamfer, trim, extend, offsetEntities, mirrorEntities, connectedChain, extractProfile, fromContour, arcInfo, lineInfo, paramOn, pointAt, distToEnt, curveIntersect, inRange, paramRange, coinGroups, fixedPoints, isDim, snapshotPts, restorePts, mod2pi, endpointNear, findCorner };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.SK = API;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -6987,9 +7005,12 @@ function pushHist(before) { hist.push(before); if (hist.length > 120) hist.shift
 function refreshAfter(save) { const r = K.solve(S, null); AN = K.analyze(S); AN.conflict = !r.ok; if (save !== false) autosave(); updateStatus(); renderPM(); draw(); }
 // tx: degisiklik ver; false/ok:false donerse geri al
 function tx(fn, quiet) {
-  const before = snapshot(); let r;
+  const before = snapshot(); let r; const deg0 = K.degenerateIds(S); const wasOk = !AN.conflict;
   try { r = fn(); } catch (e) { console.error(e); S.restore(before); toast('İşlem yapılamadı: ' + e.message); refreshAfter(false); return false; }
   if (r === false || (r && r.ok === false)) { S.restore(before); if (r && r.err && !quiet) toast(r.err); refreshAfter(false); return false; }
+  K.purgeDangling(S); const rs = K.solve(S, null);
+  if ((wasOk && !rs.ok) || Object.values(S.pts).some(p => !isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1e5 || Math.abs(p.y) > 1e5)) { S.restore(before); if (!quiet) toast('İşlem mevcut ilişkilerle çelişiyor / çözülemedi, iptal edildi'); refreshAfter(false); return false; }
+  if (K.degenerateIds(S).some(k => deg0.indexOf(k) < 0)) { S.restore(before); if (!quiet) toast('İşlem bir elemanı (0.01 mm altında) sıfır boyuta indirirdi, iptal edildi'); refreshAfter(false); return false; }
   pushHist(before); refreshAfter(); return r === undefined ? true : r;
 }
 function undo() { if (!hist.length) return; redoS.push(snapshot()); S.restore(hist.pop()); st.sel = st.sel.filter(exists); cancelTool(); refreshAfter(); }
@@ -7629,7 +7650,7 @@ cv.addEventListener('pointermove', e => {
   updateHover(m);
   if (st.tool === 'select' && down.moved) {
     if (st.drag && !st.drag.started) {
-      const ref = st.drag.ref; st.drag.started = true; st.drag.before = snapshot();
+      const ref = st.drag.ref; st.drag.started = true; st.drag.before = snapshot(); st.drag.deg0 = K.degenerateIds(S);
       if (ref[0] === 'd') { st.drag.kind = 'dim'; st.drag.con = S.cons.find(c => c.id === ref.slice(1)); }
       else { st.drag.kind = 'geo'; st.drag.targets = dragTargets(ref, st.drag.w0); }
     }
@@ -7658,6 +7679,7 @@ function pointerEnd(e) {
       if (dr.kind === 'dim') { pushHist(dr.before); refreshAfter(); return; }
       const r = K.solve(S, null);
       if (!r.ok) { S.restore(dr.before); toast('Sürükleme ilişkilerle çelişiyor, geri alındı'); refreshAfter(false); return; }
+      if (K.degenerateIds(S).some(k => (dr.deg0 || []).indexOf(k) < 0)) { S.restore(dr.before); toast('Sürükleme bir elemanı sıfır boyuta indirdi, geri alındı'); refreshAfter(false); return; }
       pushHist(dr.before); refreshAfter(); return;
     }
     st.drag = null;
@@ -7900,7 +7922,7 @@ function importContour() {
 function skOpen() { root.classList.add('show'); resize(); setTool('select'); refreshAfter(false); if (Object.values(S.ents).filter(e => !e.ax).length) fit(); else { V.sc = 14; V.ox = V.w * 0.72; V.oy = V.h * 0.62; draw(); } }
 function skClose() { cancelTool(true); root.classList.remove('show'); autosave(); }
 window.skOpen = skOpen; window.skClose = skClose;
-window.SKUI = { get S() { return S; }, tx, setTool, st, V, toS, toW, TOOLS, snapAt, refreshAfter, fit, makeContour, importContour, pickAt, OPTS, opt, newSketch() { S = new K.Sketch(); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); }, load(j) { S = K.Sketch.fromJSON(j); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); } };
+window.SKUI = { get S() { return S; }, get AN() { return AN; }, get hist() { return hist; }, get redoS() { return redoS; }, updateHover, commitDimEdit, undo, redo, cancelTool, deleteSelection, hideDimEdit, tx, setTool, st, V, toS, toW, TOOLS, snapAt, refreshAfter, fit, makeContour, importContour, pickAt, OPTS, opt, newSketch() { S = new K.Sketch(); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); }, load(j) { S = K.Sketch.fromJSON(j); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); } };
 window.addEventListener('resize', () => { if (root.classList.contains('show')) resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if (root.classList.contains('show')) resize(); }).observe(cv.parentElement);
 
@@ -8013,6 +8035,15 @@ const SELFTESTS = [
       const a = stLines()[0], b = stLines()[1]; H.chk('çözüm geçerli', r.ok, r.maxRes);
       H.chk('yatay/dikey korundu', near(a.a[1], a.b[1], 1e-4) && near(b.a[0], b.b[0], 1e-4), '');
       H.chk('30 ölçüsü korundu', near(a.len, 30, 1e-3), a.len);
+  } },
+  { title: 'Geçersiz (sıfır boyutlu) sonuçlar reddedilir', run(H) {
+      H.poly([[-40, 5], [-10, 5]]); const l = stLines()[0]; const r1 = K.applyRelation(S, 'mid', [S.ents[l.id].a, l.id]);
+      H.chk('çizginin ucu kendi orta noktasına bağlanamaz', !r1.ok, r1.err);
+      H.chk('çizgi bozulmadı', near(stLines()[0].len, 30, 1e-3), stLines()[0].len);
+      S = new K.Sketch(); H.poly([[-50, 10], [-20, 10], [-20, 13]]); const n0 = stLines().length; OPTS.filletR = 50; H.tool('fillet'); H.click(-20, 10);
+      H.chk('çok büyük fillet R reddedildi (geometri aynı)', stArcs().length === 0 && stLines().length === n0, stArcs().length + '/' + stLines().length);
+      S = new K.Sketch(); H.tool('circle'); H.click(-30, 15); H.click(-25, 15); const ci = Object.values(S.ents).find(e => e.t === 'circle');
+      const ro = K.offsetEntities(S, [ci.id], 8, -1); H.chk('yarıçaptan büyük iç ofset reddedildi', !ro.ok, ro.err);
   } },
   { title: 'Geri al / ileri al', run(H) {
       H.poly([[-40, 5], [-10, 5]]); const n0 = S.cons.length; H.dim([[-25, 5]], [-25, 9], 25); const n1 = S.cons.length; undo(); const n2 = S.cons.length; redo(); const n3 = S.cons.length;
