@@ -6092,13 +6092,14 @@ function _refreshInputModeButtons() {
 <!-- ===== ESKIZ MODULU (SolidWorks tarzi) ===== -->
 <style>
 #sk-root{
-  --bg:#080c12; --panel:#0e141c; --panel2:#141c27; --panel3:#1b2533;
-  --accent:#38bdf8; --accent-2:#0ea5e9; --green:#34d399; --orange:#fb923c;
-  --red:#f87171; --purple:#a78bfa; --text:#e6edf5; --muted:#8a99ad; --dim:#5b6b80;
-  --border:#212c3b; --border-2:#2c3a4e; --grid:#141c27;
-  --ui:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  --mono:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,'Courier New',monospace;
-  --r:10px; --tap:44px;
+  --bg:#0b0d0f; --panel:#13161a; --panel2:#1a1d22; --panel3:#2a2f38;
+  --accent:#00aaff; --accent-2:#0090dd; --green:#27ae60; --orange:#ff9500;
+  --red:#e74c3c; --purple:#9b59b6; --text:#e8e8e8; --muted:#9aa0a8; --dim:#666c75;
+  --border:#2a2d33; --border-2:#3a3f48; --grid:#1a1d22;
+  --ui:'Courier New',monospace;
+  --mono:'Courier New',monospace;
+  --r:4px; --tap:44px;
+  --rail:98px; --topH:44px;
 }
 /* ================= ESKIZ (SolidWorks tarzi) ================= */
 #sk-root{position:fixed;inset:0;z-index:9500;display:none;flex-direction:column;background:var(--bg);color:var(--text);font-family:var(--ui);font-size:13px;user-select:none;-webkit-user-select:none;touch-action:none;}
@@ -6158,24 +6159,107 @@ function _refreshInputModeButtons() {
 #sk-status .st{font-weight:800;} .st.under{color:#60a5fa;} .st.full{color:#e6edf5;} .st.over{color:var(--red);}
 #sk-toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:9;background:#2a1215;border:1px solid var(--red);color:#fecaca;border-radius:10px;padding:9px 16px;font-size:13px;display:none;max-width:90%;}
 #sk-toast.info{background:#0e2a1f;border-color:var(--green);color:#bbf7d0;}
-@media (max-width:760px){
-  #sk-hint{bottom:auto;top:8px;font-size:11.5px;padding:5px 12px;max-width:78%;} #sk-hint .lg{display:none;} #sk-zoom{bottom:10px;}
-  #sk-main{flex-direction:column;} #sk-pm{width:auto;height:36%;border-left:0;border-top:1px solid var(--border);}
-  .skb{width:52px;height:50px;} #sk-top .ttl i{display:none;} .skbtn .lb{display:none;}
-}
-@media (max-height:480px){ #sk-pm{width:240px;} .skb{height:46px;} .skg-t{display:none;} #sk-top{height:42px;} }
 
+/* ====== TEMA: ana uygulama ile ayni gorunum (Courier New, #0b0d0f, #00aaff, kose 4px) ====== */
+#sk-root,#sk-root button,#sk-root input,#sk-root select{font-family:'Courier New',monospace;}
+#sk-root{font-size:12px;}
+#sk-top{height:var(--topH);background:#0d0f12;border-bottom:1px solid var(--border);gap:6px;}
+#sk-top .ttl{font-weight:700;letter-spacing:1px;}
+#sk-top .ttl b{color:var(--accent);letter-spacing:1px;}
+.skbtn{height:32px;border-radius:4px;background:#1e2228;border:1px solid var(--border);font-size:12px;font-weight:700;padding:0 10px;}
+.skbtn:hover{background:#2a2f38;border-color:var(--accent);}
+.skbtn.ok{background:linear-gradient(135deg,#1a4a2a,#0d6633);border-color:#27ae60;color:#fff;}
+.skbtn.x{color:var(--red);border-color:rgba(231,76,60,.55);background:#1e2228;}
+.skbtn.on{background:#0d2040;border-color:var(--accent);color:var(--accent);}
+.skbtn.sq{width:32px;}
+#sk-pm-t,#sk-rail-t{display:none;}
+#sk-ribbon{background:#0d0f12;border-bottom:1px solid var(--border);padding:3px 6px;}
+.skg{padding:0 6px;}
+.skg-t{font-size:9px;letter-spacing:1px;color:var(--dim);font-weight:700;}
+.skb{width:60px;height:52px;border-radius:4px;border:1px solid var(--border);background:#13161a;margin:0 1px;gap:1px;font-size:8.5px;font-weight:700;color:#aab0b8;letter-spacing:.2px;}
+.skb svg{width:24px;height:24px;stroke-width:1.6;}
+.skb:hover{background:#1e2228;color:var(--text);border-color:#3a3f48;}
+.skb.on{background:#0d2040;border-color:var(--accent);color:var(--accent);}
+.skb.tg.on{background:#1a2a1a;border-color:var(--green);color:#2ecc71;}
+#sk-view{background:#000;}
+#sk-hint{border-radius:4px;background:rgba(13,15,18,.93);border:1px solid var(--border);font-size:12px;}
+#sk-zoom button{border-radius:4px;background:rgba(13,15,18,.9);border:1px solid var(--border);}
+#sk-zoom button:hover{border-color:var(--accent);}
+#sk-coord{border-radius:3px;background:rgba(0,0,0,.55);color:#8a8f98;font-size:11px;}
+#sk-dim-edit{border-radius:4px;background:var(--panel);border-color:var(--accent);box-shadow:0 6px 22px rgba(0,0,0,.7);}
+#sk-dim-edit input{border-radius:3px;background:#0b0d0f;color:#e8e8e8;font-size:16px;}
+#sk-dim-edit button{border-radius:3px;background:#1e2228;}
+#sk-dim-edit button.ok{background:linear-gradient(135deg,#1a4a2a,#0d6633);border-color:#27ae60;color:#fff;}
+#sk-pm{background:var(--panel);border-left:1px solid var(--border);}
+.pmg{border-radius:4px;background:#13161a;border:1px solid var(--border);}
+.pmg h5{color:var(--accent);font-size:10px;letter-spacing:1px;}
+.pm-row input[type=text],.pm-row input[type=number]{border-radius:3px;background:#0b0d0f;border-color:var(--border);color:#e8e8e8;font-size:13px;font-weight:700;}
+.pm-row input:focus{border-color:var(--accent);}
+.pmb{border-radius:3px;background:#1e2228;border-color:var(--border);font-size:11px;font-weight:700;}
+.pmb:hover{background:#2a2f38;border-color:var(--accent);}
+.pmb.del{color:var(--red);border-color:rgba(231,76,60,.5);}
+.pm-rel{border-radius:3px;background:#0b0d0f;}
+.pm-rel .g{border-radius:3px;}
+.pm-tag{border-radius:3px;}
+#sk-status{background:#0d0f12;border-top:1px solid var(--border);font-size:11px;white-space:nowrap;overflow:hidden;}
+#sk-toast{border-radius:4px;}
+
+#sk-qopt{display:none;position:absolute;left:8px;bottom:26px;z-index:6;align-items:center;gap:6px;padding:3px 6px;background:rgba(13,15,18,.94);border:1px solid var(--accent);border-radius:4px;font-size:11px;color:var(--muted);}
+#sk-qopt input{width:62px;height:26px;background:#0b0d0f;border:1px solid var(--border);border-radius:3px;color:#e8e8e8;font-size:12px;font-weight:700;text-align:right;padding:0 6px;user-select:text;-webkit-user-select:text;}
+#sk-qopt input:focus{border-color:var(--accent);outline:none;} #sk-qopt label{color:var(--accent);font-weight:700;} #sk-qopt .pmb{height:26px;}
+@media (max-height:520px){ #sk-qopt.show{display:flex;} }
+/* ====== Duyarli yerlesim ====== */
+/* dikey telefon / dar ekran: panel altta */
+@media (max-width:760px) and (min-height:521px){
+  #sk-hint{bottom:auto;top:8px;font-size:11px;padding:5px 10px;max-width:78%;} #sk-hint .lg{display:none;} #sk-zoom{bottom:10px;}
+  #sk-main{flex-direction:column;} #sk-pm{width:auto;height:34%;border-left:0;border-top:1px solid var(--border);}
+  .skb{width:50px;height:48px;} #sk-top .ttl i{display:none;} .skbtn .lb{display:none;}
+}
+/* yatay telefon / alçak ekran: arac seridi solda dikey ray, ozellikler paneli acilir cekmece, durum cubugu cizimin ustunde */
+@media (max-height:520px){
+  #sk-root{--topH:34px;}
+  #sk-top{padding:0 6px;gap:4px;}
+  #sk-top .ttl{gap:5px;font-size:12px;} #sk-top .ttl i{display:none;}
+  .skbtn{height:26px;padding:0 7px;font-size:11px;} .skbtn.sq{width:28px;} .skbtn .lb{display:none;}
+  .skbtn.ok .lb{display:inline;}
+  #sk-pm-t,#sk-rail-t{display:inline-flex;}
+  #sk-ribbon{position:absolute;left:0;top:var(--topH);bottom:0;width:var(--rail);z-index:5;flex-direction:column;overflow-y:auto;overflow-x:hidden;padding:3px;border-bottom:0;border-right:1px solid var(--border);scrollbar-width:thin;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+  .skg{flex-direction:column;padding:2px 0 3px;border-right:0;border-bottom:1px solid var(--border);}
+  .skg:last-child{border-bottom:0;}
+  .skg-row{flex-wrap:wrap;gap:2px;justify-content:flex-start;}
+  .skg-t{display:none;}
+  .skb{width:44px;height:40px;margin:0;padding:1px;} .skb svg{width:25px;height:25px;} .skb span{display:none;}
+  #sk-root.rail-off #sk-ribbon{display:none;}
+  #sk-main{margin-left:var(--rail);flex-direction:row;}
+  #sk-root.rail-off #sk-main{margin-left:0;}
+  #sk-pm{position:absolute;right:0;top:var(--topH);bottom:0;width:min(250px,48vw);z-index:7;border-left:1px solid var(--accent);transform:translateX(102%);transition:transform .18s ease;box-shadow:-8px 0 24px rgba(0,0,0,.55);padding:8px;gap:8px;height:auto;}
+  #sk-root.pm-open #sk-pm{transform:translateX(0);}
+  #sk-status{position:absolute;left:calc(var(--rail) + 6px);top:calc(var(--topH) + 3px);height:auto;padding:1px 7px;border:1px solid var(--border);border-radius:3px;background:rgba(13,15,18,.82);font-size:10px;gap:8px;z-index:4;pointer-events:none;max-width:60%;white-space:nowrap;overflow:hidden;}
+  #sk-root.rail-off #sk-status{left:6px;}
+  #sk-hint{bottom:auto;top:calc(var(--topH) + 4px);font-size:10.5px;padding:3px 9px;max-width:42%;left:auto;right:8px;transform:none;opacity:.92;}
+  #sk-hint .lg{display:none;}
+  #sk-coord{bottom:4px;left:6px;font-size:10px;padding:1px 5px;}
+  #sk-zoom{right:8px;bottom:8px;gap:4px;} #sk-zoom button{width:34px;height:34px;font-size:17px;}
+  #sk-root.pm-open #sk-zoom{right:calc(min(250px,48vw) + 8px);}
+  #sk-root.pm-open #sk-hint{right:calc(min(250px,48vw) + 8px);}
+  #sk-toast{top:calc(var(--topH) + 4px);font-size:12px;padding:5px 12px;}
+  .pm-row{grid-template-columns:78px minmax(0,1fr) 18px;margin-bottom:4px;} .pm-row input[type=text],.pm-row input[type=number]{height:30px;font-size:12px;}
+  .pmb{height:28px;font-size:10.5px;padding:0 8px;} .pmg{padding:8px;}
+}
+@media (max-height:520px) and (max-width:700px){ #sk-root{--rail:50px;} .skg-row{justify-content:center;} .skb{width:42px;} }
 </style>
 <!-- ESKIZ -->
-<div id="sk-root">
+<div id="sk-root" lang="tr">
   <div id="sk-top">
     <div class="ttl"><span>✎</span><span><b>ESKİZ</b></span><i id="sk-ttl-sub">Kontur eskizi</i></div>
     <span class="sp"></span>
+    <button class="skbtn sq" id="sk-rail-t" title="Araç şeridini göster/gizle">▤</button>
     <button class="skbtn sq" id="sk-undo" title="Geri al (Ctrl+Z)">↩</button>
     <button class="skbtn sq" id="sk-redo" title="İleri al (Ctrl+Y)">↪</button>
     <button class="skbtn" id="sk-import" title="Mevcut konturu eskize aktar">⤓ <span class="lb">Konturdan Al</span></button>
     <button class="skbtn ok" id="sk-make" title="Eskizden kontur (G01/G02/G03) oluştur">✓ <span class="lb">Konturu Oluştur</span></button>
     <button class="skbtn" id="sk-test" title="Otomatik eskiz testleri (ölçü / ilişki)">🧪 <span class="lb">Test</span></button>
+    <button class="skbtn sq" id="sk-pm-t" title="Özellikler / ilişkiler paneli">☰</button>
     <button class="skbtn x" id="sk-close" title="Eskizi kapat (çizim saklanır)">✕ <span class="lb">Kapat</span></button>
   </div>
   <div id="sk-ribbon"></div>
@@ -6183,6 +6267,7 @@ function _refreshInputModeButtons() {
     <div id="sk-view">
       <canvas id="sk-cv"></canvas>
       <div id="sk-toast"></div>
+      <div id="sk-qopt"></div>
       <div id="sk-hint"></div>
       <div id="sk-coord">Z 0.000  Ø 0.000</div>
       <div id="sk-zoom"><button id="sk-zin">+</button><button id="sk-zout">−</button><button id="sk-zfit" class="t">FIT</button></div>
@@ -6524,6 +6609,9 @@ function restorePts(S, snap) { for (const k in snap) if (S.pts[k]) { S.pts[k].x 
 function purgeDangling(S) {   // silinmis nokta/elemana bagli kalan iliskileri temizle
   const n0 = S.cons.length;
   S.cons = S.cons.filter(c => c.refs.every(r => (r[0] === 'p' ? !!S.pts[r] : !!S.ents[r])));
+  for (const id in S.pts) { const p = S.pts[id]; if (!p.vs) continue;   // sanal kose: iki cizgiye bagli degilse kaldir
+    const live = S.cons.filter(c => c.t === 'ponent' && c.refs[0] === id).length;
+    if (live < 2) { delete S.pts[id]; S.cons = S.cons.filter(c => !c.refs.includes(id)); } }
   return n0 - S.cons.length;
 }
 function degenerateIds(S) {   // sifir uzunluklu cizgi / sifir yaricapli yay-daire
@@ -6538,6 +6626,11 @@ function addConChecked(S, t, refs, v, extra) {
   const snap = snapshotPts(S); const dof0 = rankOf(S); const deg0 = degenerateIds(S); const c = S.addCon(t, refs, v, extra);
   const r = solve(S, null);
   if (r.ok && collapses(S, deg0)) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Bu ilişki/ölçü bir elemanı sıfır boyuta indirir (geçersiz)' }; }
+  if (!r.ok && isDim(c) && !c.ref) {   // olcu mevcut iliski/olculerle celisiyor: SolidWorks gibi referans (suruculuk yapmayan) olcu olarak ekle
+    restorePts(S, snap); c.ref = true; const r2 = solve(S, null);
+    if (r2.ok) { refreshRefs(S); return { ok: true, con: c, ref: true, conflict: true }; }
+    S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Çelişkili veya aşırı tanımlı: bu ölçü eklenemedi' };
+  }
   if (!r.ok) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Çelişkili veya aşırı tanımlı: bu ilişki eklenemedi' }; }
   if (rankOf(S) >= dof0) {   // yeni kisit serbestligi azaltmiyor: zaten saglaniyor (fazla tanimli)
     if (isDim(c)) { c.ref = true; refreshRefs(S); return { ok: true, con: c, ref: true }; }
@@ -6679,6 +6772,18 @@ function footOn(S, e, cx, cy) {   // merkez c'den e uzerine dik iz dusumu (teget
   const A = arcInfo(S, e); const d = hyp(cx - A.cx, cy - A.cy) || 1; const ux = (cx - A.cx) / d, uy = (cy - A.cy) / d;
   const x = A.cx + ux * A.r, y = A.cy + uy * A.r; return { x, y, p: mod2pi(Math.atan2(y - A.cy, x - A.cx) - A.a0) };
 }
+function virtualSharp(S, k, idA, idB, force) {   // kose noktasina bagli olcu/iliskileri 'sanal kose'ye tasi (SolidWorks virtual sharp)
+  const f = coinGroups(S); const g = f(k.pa); const grp = new Set([k.pa, k.pb]);
+  for (const id in S.pts) if (f(id) === g) grp.add(id);
+  for (const id of [...grp]) if (S.pts[id].hid || S.pts[id].vs) grp.delete(id);
+  if (!grp.size && !force) return null;
+  const users = S.cons.filter(c => c.t !== 'coin' && c.refs.some(r => grp.has(r)));
+  if (!users.length && !force) return null;
+  const P = S.pts[k.pa]; const vs = S.addPoint(P.x, P.y); S.pts[vs].vs = 1;
+  users.forEach(c => { c.refs = c.refs.map(r => grp.has(r) ? vs : r); });
+  S.addCon('ponent', [vs, idA]); S.addCon('ponent', [vs, idB]);
+  return vs;
+}
 function fillet(S, idA, idB, R) {
   const eA = S.ents[idA], eB = S.ents[idB]; if (!eA || !eB || eA === eB) return { ok: false, err: 'İki farklı eleman seçin' };
   if (!['line', 'arc'].includes(eA.t) || !['line', 'arc'].includes(eB.t)) return { ok: false, err: 'Fillet çizgi/yay için' };
@@ -6702,6 +6807,7 @@ function fillet(S, idA, idB, R) {
   const ps = S.addPoint(s.x, s.y), pe = S.addPoint(e2.x, e2.y);
   const arc = S.addArc(cp, ps, pe);
   // koseyi kisalt: A ve B'nin kose uclarini teget noktalarina tasi, coin(A-B) kaldir
+  virtualSharp(S, k, idA, idB);
   const f = coinGroups(S);
   S.cons = S.cons.filter(c => !(c.t === 'coin' && ((f(c.refs[0]) === f(k.pa)) && (c.refs.includes(k.pa) || c.refs.includes(k.pb)))));
   // k.pa / k.pb ile esdeger tum noktalarin coin'leri silindi: uc noktalari ayri ayri tasinir
@@ -6720,11 +6826,13 @@ function chamfer(S, idA, idB, d) {
   const la = hyp(otherA.x - P.x, otherA.y - P.y), lb = hyp(otherB.x - P.x, otherB.y - P.y);
   if (d >= la - 1e-9 || d >= lb - 1e-9) return { ok: false, err: 'Pah mesafesi çizgiden kısa olmalı' };
   const ta = { x: P.x + (otherA.x - P.x) / la * d, y: P.y + (otherA.y - P.y) / la * d }, tb = { x: P.x + (otherB.x - P.x) / lb * d, y: P.y + (otherB.y - P.y) / lb * d };
+  const vsp = virtualSharp(S, k, idA, idB, true);
   const f = coinGroups(S);
   S.cons = S.cons.filter(c => !(c.t === 'coin' && f(c.refs[0]) === f(k.pa) && (c.refs.includes(k.pa) || c.refs.includes(k.pb))));
   S.pts[k.pa].x = ta.x; S.pts[k.pa].y = ta.y; S.pts[k.pb].x = tb.x; S.pts[k.pb].y = tb.y;
   const p1 = S.addPoint(ta.x, ta.y), p2 = S.addPoint(tb.x, tb.y), ln = S.addLine(p1, p2);
   S.addCon('coin', [k.pa, p1]); S.addCon('coin', [k.pb, p2]);
+  if (vsp) { S.addCon('dist', [vsp, p1], d, { off: 7 }); S.addCon('dist', [vsp, p2], d, { off: -7 }); }
   const r = solve(S, null); if (r.ok && collapses(S, deg0)) return { ok: false, err: 'Pah mesafesi çizgi boyuna sığmıyor (çizgi sıfıra iniyor)' };
   return { ok: r.ok, line: ln, err: r.ok ? null : 'Pah çözülemedi' };
 }
@@ -7002,7 +7110,7 @@ function toast(msg, info) { const t = $('sk-toast'); t.textContent = msg; t.clas
 /* ---------- gecmis ---------- */
 function snapshot() { return S.json(); }
 function pushHist(before) { hist.push(before); if (hist.length > 120) hist.shift(); redoS = []; }
-function refreshAfter(save) { const r = K.solve(S, null); AN = K.analyze(S); AN.conflict = !r.ok; if (save !== false) autosave(); updateStatus(); renderPM(); draw(); }
+function refreshAfter(save) { st.sel = st.sel.filter(exists); const r = K.solve(S, null); AN = K.analyze(S); AN.conflict = !r.ok; if (save !== false) autosave(); updateStatus(); renderPM(); draw(); }
 // tx: degisiklik ver; false/ok:false donerse geri al
 function tx(fn, quiet) {
   const before = snapshot(); let r; const deg0 = K.degenerateIds(S); const wasOk = !AN.conflict;
@@ -7040,9 +7148,9 @@ function zoomAt(f, sx, sy) { const w = toW(sx, sy); V.sc = Math.max(0.5, Math.mi
 
 /* ---------- renk / varlik durumu ---------- */
 function entColor(e) {
-  if (AN.conflict) return '#f87171';
+  if (AN.conflict) return '#e74c3c';
   if (e.ax) return '#64748b';
-  return AN.ents[e.id] ? '#e6edf5' : '#5db3ff';
+  return AN.ents[e.id] ? '#e8e8e8' : '#00aaff';
 }
 function entPolyline(e, n) {   // ekran noktalarinda polyline (yay icin)
   if (e.t === 'line') { const a = P(e.a), b = P(e.b); return [toS(a.x, a.y), toS(b.x, b.y)]; }
@@ -7150,22 +7258,24 @@ function draw() {
     const e = S.ents[id]; if (e.ax || e.t === 'point') continue;
     const isSel = selSet.has(id) || (e.t !== 'point' && S.entPts(e).some(p => selSet.has(p) && false));
     let col = entColor(e), lw = 2;
-    if (e.con) { col = AN.conflict ? '#f87171' : '#fb923c'; }
+    if (e.con) { col = AN.conflict ? '#e74c3c' : '#ff9500'; }
     if (e.center) { col = '#a3e635'; }
     if (id === hov) { col = '#fbbf24'; lw = 3; }
-    if (isSel) { col = '#34d399'; lw = 3; }
+    if (isSel) { col = '#2ecc71'; lw = 3; }
     ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.setLineDash(e.center ? [14, 4, 2, 4] : e.con ? [7, 4] : []);
     const pl = entPolyline(e); ctx.beginPath(); pl.forEach((q, i) => i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke(); ctx.setLineDash([]);
   }
   // nokta varliklari
-  for (const id in S.ents) { const e = S.ents[id]; if (e.t !== 'point') continue; const p = toS(P(e.a).x, P(e.a).y); ctx.strokeStyle = selSet.has(id) ? '#34d399' : '#fb923c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x - 5, p.y); ctx.lineTo(p.x + 5, p.y); ctx.moveTo(p.x, p.y - 5); ctx.lineTo(p.x, p.y + 5); ctx.stroke(); }
+  for (const id in S.ents) { const e = S.ents[id]; if (e.t !== 'point') continue; const p = toS(P(e.a).x, P(e.a).y); ctx.strokeStyle = selSet.has(id) ? '#2ecc71' : '#ff9500'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x - 5, p.y); ctx.lineTo(p.x + 5, p.y); ctx.moveTo(p.x, p.y - 5); ctx.lineTo(p.x, p.y + 5); ctx.stroke(); }
   // merkez isaretleri
-  for (const id in S.ents) { const e = S.ents[id]; if (e.t !== 'arc' && e.t !== 'circle') continue; const c = P(e.c), q = toS(c.x, c.y); ctx.strokeStyle = e.con ? '#fb923c' : 'rgba(148,163,184,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(q.x - 4, q.y); ctx.lineTo(q.x + 4, q.y); ctx.moveTo(q.x, q.y - 4); ctx.lineTo(q.x, q.y + 4); ctx.stroke(); }
+  for (const id in S.ents) { const e = S.ents[id]; if (e.t !== 'arc' && e.t !== 'circle') continue; const c = P(e.c), q = toS(c.x, c.y); ctx.strokeStyle = e.con ? '#ff9500' : 'rgba(148,163,184,.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(q.x - 4, q.y); ctx.lineTo(q.x + 4, q.y); ctx.moveTo(q.x, q.y - 4); ctx.lineTo(q.x, q.y + 4); ctx.stroke(); }
   // noktalar
   for (const id in S.pts) {
-    const p = S.pts[id]; if (p.hid) continue; const q = toS(p.x, p.y); const owner = S.pointOwner(id); if (!owner) continue;
+    const p = S.pts[id]; if (p.hid) continue; const q = toS(p.x, p.y); const owner = S.pointOwner(id);
+    if (!owner && p.vs) { const sl = selSet.has(id), hv = id === hov; ctx.strokeStyle = sl ? '#2ecc71' : hv ? '#fbbf24' : '#ff9500'; ctx.lineWidth = 1.5; ctx.strokeRect(q.x - 3.5, q.y - 3.5, 7, 7); continue; }
+    if (!owner) continue;
     const isSel = selSet.has(id), isHov = id === hov;
-    ctx.fillStyle = isSel ? '#34d399' : isHov ? '#fbbf24' : (AN.conflict ? '#f87171' : AN.definedPts.has(id) ? '#e6edf5' : '#5db3ff');
+    ctx.fillStyle = isSel ? '#2ecc71' : isHov ? '#fbbf24' : (AN.conflict ? '#e74c3c' : AN.definedPts.has(id) ? '#e8e8e8' : '#00aaff');
     const r = isSel || isHov ? 4.5 : 3; ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, TAU); ctx.fill();
   }
   if (opt.showRel) drawRelGlyphs();
@@ -7173,7 +7283,7 @@ function draw() {
   // arac onizlemesi
   if (st.t && TOOLS[st.tool] && TOOLS[st.tool].draw) TOOLS[st.tool].draw(ctx);
   drawSnap();
-  if (st.box) { const b = st.box; ctx.fillStyle = 'rgba(56,189,248,.10)'; ctx.strokeStyle = 'rgba(56,189,248,.8)'; ctx.lineWidth = 1; ctx.setLineDash([5, 3]); ctx.fillRect(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1), Math.abs(b.x1 - b.x0), Math.abs(b.y1 - b.y0)); ctx.strokeRect(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1), Math.abs(b.x1 - b.x0), Math.abs(b.y1 - b.y0)); ctx.setLineDash([]); }
+  if (st.box) { const b = st.box; ctx.fillStyle = 'rgba(0,170,255,.10)'; ctx.strokeStyle = 'rgba(0,170,255,.8)'; ctx.lineWidth = 1; ctx.setLineDash([5, 3]); ctx.fillRect(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1), Math.abs(b.x1 - b.x0), Math.abs(b.y1 - b.y0)); ctx.strokeRect(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1), Math.abs(b.x1 - b.x0), Math.abs(b.y1 - b.y0)); ctx.setLineDash([]); }
 }
 function drawGrid() {
   const g = Math.max(0.1, parseFloat((document.getElementById('pGridStep') || {}).value) || 5); const step = g * V.sc;
@@ -7189,15 +7299,15 @@ function drawAxes() {
   ctx.strokeStyle = 'rgba(148,163,184,.30)'; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(o.x, 0); ctx.lineTo(o.x, V.h); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = 'rgba(148,163,184,.7)'; ctx.font = '11px system-ui'; ctx.fillText('Torna ekseni (R=0)', 10, o.y - 6); ctx.fillText('Z=0 yüzey', o.x + 6, 14);
   // origin glifi
-  ctx.strokeStyle = '#f87171'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o.x - 10, o.y); ctx.lineTo(o.x + 10, o.y); ctx.moveTo(o.x, o.y - 10); ctx.lineTo(o.x, o.y + 10); ctx.stroke();
-  ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(o.x, o.y, 3.5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(o.x - 10, o.y); ctx.lineTo(o.x + 10, o.y); ctx.moveTo(o.x, o.y - 10); ctx.lineTo(o.x, o.y + 10); ctx.stroke();
+  ctx.fillStyle = '#e74c3c'; ctx.beginPath(); ctx.arc(o.x, o.y, 3.5, 0, TAU); ctx.fill();
   // +Z / +R oklari
   ctx.fillStyle = 'rgba(148,163,184,.6)'; ctx.fillText('+Z →', V.w - 40, o.y + 14); 
 }
 function drawSnap() {
   const s = st.snap; if (!s || st.tool === 'select') return;
   if (s.guides) { ctx.strokeStyle = 'rgba(251,191,36,.7)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); s.guides.forEach(g => { const a = toS(g.a.x, g.a.y), b = toS(g.b.x, g.b.y); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }); ctx.setLineDash([]); }
-  const q = toS(s.x, s.y); const col = { pt: '#fbbf24', mid: '#a78bfa', int: '#f472b6', on: '#38bdf8', hv: '#34d399', grid: '#94a3b8', none: '#94a3b8' }[s.kind] || '#fff';
+  const q = toS(s.x, s.y); const col = { pt: '#fbbf24', mid: '#9b59b6', int: '#f472b6', on: '#00aaff', hv: '#2ecc71', grid: '#94a3b8', none: '#94a3b8' }[s.kind] || '#fff';
   ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
   if (s.kind === 'pt') { ctx.strokeRect(q.x - 6, q.y - 6, 12, 12); }
   else if (s.kind === 'mid') { ctx.beginPath(); ctx.moveTo(q.x, q.y - 7); ctx.lineTo(q.x + 7, q.y + 6); ctx.lineTo(q.x - 7, q.y + 6); ctx.closePath(); ctx.stroke(); }
@@ -7220,7 +7330,7 @@ function drawRelGlyphs() {
     if (K.isDim(c) || !REL_GLYPH[c.t] || c.t === 'ponent') return; const m = conMid(c); if (!m) return;
     const q = toS(m.x, m.y); const key = Math.round(q.x / 20) + ',' + Math.round(q.y / 20); const n = stack[key] = (stack[key] || 0) + 1;
     const x = q.x + 8 + (n - 1) * 20, y = q.y - 20; const sel = st.sel.includes(c.id), hov = st.hover === c.id;
-    ctx.fillStyle = sel ? '#34d399' : hov ? '#fbbf24' : '#14532d'; ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1;
+    ctx.fillStyle = sel ? '#2ecc71' : hov ? '#fbbf24' : '#14532d'; ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1;
     ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, 18, 18, 4); else ctx.rect(x, y, 18, 18); ctx.fill(); ctx.stroke();
     ctx.fillStyle = (sel || hov) ? '#04130c' : '#bbf7d0'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center'; ctx.fillText(REL_GLYPH[c.t], x + 9, y + 13); ctx.textAlign = 'left';
     relBoxes.push({ id: c.id, x0: x, y0: y, x1: x + 18, y1: y + 18 });
@@ -7243,7 +7353,7 @@ function dimText(txt, x, y, c, ang) {
   ctx.font = '600 12.5px ui-monospace,Menlo,Consolas,monospace'; const w = ctx.measureText(txt).width + 10; const h = 18;
   ctx.save(); ctx.translate(x, y); if (ang !== undefined) { let a = ang; if (a > Math.PI / 2) a -= Math.PI; if (a < -Math.PI / 2) a += Math.PI; ctx.rotate(a); }
   ctx.fillStyle = 'rgba(8,12,18,.9)'; ctx.fillRect(-w / 2, -h / 2, w, h);
-  const sel = st.sel.includes('d' + c.id) || st.hover === 'd' + c.id; ctx.fillStyle = sel ? '#34d399' : '#fcd34d'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, 0, 1); ctx.restore(); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  const sel = st.sel.includes('d' + c.id) || st.hover === 'd' + c.id; ctx.fillStyle = sel ? '#2ecc71' : '#fcd34d'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, 0, 1); ctx.restore(); ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
   if (!dimNoBox) dimBoxes.push({ id: 'd' + c.id, x0: x - w / 2 - 2, x1: x + w / 2 + 2, y0: y - h / 2 - 2, y1: y + h / 2 + 2 });
 }
 function dimGeom(c, mouse) {   // cizim icin gerekli noktalar (ekran)
@@ -7277,7 +7387,7 @@ function dimGeom(c, mouse) {   // cizim icin gerekli noktalar (ekran)
 }
 function drawDimGeom(g) {
   const c = g.c; const hl = st.sel.includes('d' + c.id) || st.hover === 'd' + c.id;
-  const col = hl ? '#34d399' : (c.ref ? '#94a3b8' : '#fcd34d'); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.2;
+  const col = hl ? '#2ecc71' : (c.ref ? '#94a3b8' : '#fcd34d'); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1.2;
   if (g.angdim) {
     ctx.beginPath(); ctx.arc(g.I.x, g.I.y, g.rr, -g.a1, -(g.a1 + g.da), g.da > 0); ctx.stroke();
     const e1 = { x: g.I.x + Math.cos(g.a1) * g.rr, y: g.I.y - Math.sin(g.a1) * g.rr }, e2 = { x: g.I.x + Math.cos(g.a1 + g.da) * g.rr, y: g.I.y - Math.sin(g.a1 + g.da) * g.rr };
@@ -7304,7 +7414,7 @@ function setTool(id) {
   if (id === 'mirror' || id === 'offset') { st.t.d.ents = st.sel.filter(r => r[0] === 'e' && !S.ents[r].ax && S.ents[r].t !== 'point'); }
   if (id === 'mirror' && st.t.d.ents.length) st.t.step = 1;
   if (id === 'offset' && st.t.d.ents.length) st.t.step = 1;
-  buildRibbonState(); updateHint(); renderPM(); draw();
+  buildRibbonState(); updateHint(); renderPM(); updateQOpt(); draw();
   cv.style.cursor = id === 'select' ? 'default' : 'crosshair';
 }
 function cancelTool(silent) { st.t = { step: 0, d: {} }; hideDimEdit(); if (!silent) { updateHint(); draw(); } }
@@ -7318,7 +7428,7 @@ function relPt(pid, s) {
 }
 const mkP = (x, y) => S.addPoint(x, y);
 function previewText(x, y, txt) { ctx.font = '600 12px ui-monospace,Menlo,Consolas,monospace'; const w = ctx.measureText(txt).width + 10; ctx.fillStyle = 'rgba(8,12,18,.88)'; ctx.fillRect(x, y, w, 18); ctx.fillStyle = '#7dd3fc'; ctx.fillText(txt, x + 5, y + 13); }
-function rubber(ptsFn) { ctx.strokeStyle = 'rgba(56,189,248,.9)'; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); ctx.beginPath(); ptsFn(); ctx.stroke(); ctx.setLineDash([]); }
+function rubber(ptsFn) { ctx.strokeStyle = 'rgba(0,170,255,.9)'; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); ctx.beginPath(); ptsFn(); ctx.stroke(); ctx.setLineDash([]); }
 const cur = () => st.t.d.cur || st.snap;
 
 /* ---- cizgi / orta cizgi ---- */
@@ -7507,6 +7617,11 @@ function dimCandidate(sel, m) {   // m: dunya konumu (fare); donus: {t,refs,v,..
   sel = sel.filter(r => r[0] === 'p' ? S.pts[r] : S.ents[r]); if (!sel.length) return null;
   const w = m; const ent = r => S.ents[r];
   const lineEnds = e => [e.a, e.b];
+  const onAxisPt = pid => {   // nokta eksende mi? (p0 / eksen uzerinde kisitli / p0 ile cakisik)
+    if (pid === 'p0') return true; const f = K.coinGroups(S);
+    return f(pid) === f('p0') || S.cons.some(c => c.t === 'ponent' && c.refs[1] === 'e0' && f(c.refs[0]) === f(pid));
+  };
+  const isAxisLine = e => !!e && (e.id === 'e0' || (e.t === 'line' && onAxisPt(e.a) && onAxisPt(e.b) && Math.abs(P(e.a).y) < 1e-6 && Math.abs(P(e.b).y) < 1e-6));   // eksen ya da eksene oturmus cizgi
   const pick2pts = (a, b) => {
     const A = P(a), B = P(b); const mnx = Math.min(A.x, B.x), mxx = Math.max(A.x, B.x), mny = Math.min(A.y, B.y), mxy = Math.max(A.y, B.y);
     const px = 14 / V.sc; let t = 'dist';
@@ -7515,7 +7630,7 @@ function dimCandidate(sel, m) {   // m: dunya konumu (fare); donus: {t,refs,v,..
     const c = { t, refs: [a, b] };
     if (t === 'dist') { c.v = hyp(B.x - A.x, B.y - A.y); const a_s = toS(A.x, A.y), b_s = toS(B.x, B.y), m_s = toS(w.x, w.y); const L = hyp(b_s.x - a_s.x, b_s.y - a_s.y) || 1; c.off = ((m_s.x - a_s.x) * (-(b_s.y - a_s.y) / L) + (m_s.y - a_s.y) * ((b_s.x - a_s.x) / L)) / V.sc; }
     else if (t === 'hdist') { c.v = B.x - A.x; c.off = w.y; } else { c.v = B.y - A.y; c.off = w.x; }
-    if (t === 'vdist' && opt.dia && (a === 'p0' || b === 'p0' || Math.abs(A.y) < 1e-7 || Math.abs(B.y) < 1e-7)) c.dia = true;
+    if (t === 'vdist' && opt.dia && (onAxisPt(a) || onAxisPt(b))) c.dia = true;
     return c;
   };
   if (sel.length === 1) {
@@ -7526,7 +7641,7 @@ function dimCandidate(sel, m) {   // m: dunya konumu (fare); donus: {t,refs,v,..
     const [r1, r2] = sel; const pts = sel.filter(r => r[0] === 'p'), es = sel.filter(r => r[0] === 'e');
     if (pts.length === 2) return pick2pts(pts[0], pts[1]);
     if (pts.length === 1 && es.length === 1) { const p = pts[0], e = ent(es[0]);
-      if (e.id === 'e0') { const c = { t: 'vdist', refs: ['p0', p], v: P(p).y, off: w.x, dia: opt.dia }; return c; }
+      if (isAxisLine(e)) { const c = { t: 'vdist', refs: ['p0', p], v: P(p).y, off: w.x, dia: opt.dia }; return c; }
       if (e.id === 'e1') { const c = { t: 'hdist', refs: ['p0', p], v: P(p).x, off: w.y }; return c; }
       if (e.t === 'line') { if (e.a === p || e.b === p) return null; const L = K.lineInfo(S, e), q = P(p); const v = ((q.x - L.ax) * L.dy - (q.y - L.ay) * L.dx) / L.len; return { t: 'pldist', refs: [p, es[0]], v }; } }
     const cur = es.filter(r => ent(r).t === 'arc' || ent(r).t === 'circle');
@@ -7534,14 +7649,14 @@ function dimCandidate(sel, m) {   // m: dunya konumu (fare); donus: {t,refs,v,..
     if (pts.length === 0 && cur.length === 1 && es.length === 2) {   // yay/daire merkezi - cizgi
       const o = ent(es.find(r => !cur.includes(r))), cc = ent(cur[0]).c, q = P(cc);
       if (o.t === 'line') {
-        if (o.id === 'e0') return { t: 'vdist', refs: ['p0', cc], v: q.y, off: w.x, dia: opt.dia };
+        if (isAxisLine(o)) return { t: 'vdist', refs: ['p0', cc], v: q.y, off: w.x, dia: opt.dia };
         if (o.id === 'e1') return { t: 'hdist', refs: ['p0', cc], v: q.x, off: w.y };
         const L = K.lineInfo(S, o); return { t: 'pldist', refs: [cc, o.id], v: ((q.x - L.ax) * L.dy - (q.y - L.ay) * L.dx) / L.len };
       }
     }
     if (es.length === 2 && ent(es[0]).t === 'line' && ent(es[1]).t === 'line') {
       const A = K.lineInfo(S, ent(es[0])), B = K.lineInfo(S, ent(es[1])); const den = A.dx * B.dy - A.dy * B.dx;
-      if (Math.abs(den) / (A.len * B.len) < 1e-6) { const q = S.pts[ent(es[1]).a]; const v = ((q.x - A.ax) * A.dy - (q.y - A.ay) * A.dx) / A.len; return { t: 'pldist', refs: [ent(es[1]).a, es[0]], v, dia: opt.dia && (es[0] === 'e0' || es[1] === 'e0') }; }
+      if (Math.abs(den) / (A.len * B.len) < 1e-6) { const q = S.pts[ent(es[1]).a]; const v = ((q.x - A.ax) * A.dy - (q.y - A.ay) * A.dx) / A.len; return { t: 'pldist', refs: [ent(es[1]).a, es[0]], v, dia: opt.dia && (isAxisLine(ent(es[0])) || isAxisLine(ent(es[1]))) }; }
       const tt = ((B.ax - A.ax) * B.dy - (B.ay - A.ay) * B.dx) / den; const I = { x: A.ax + A.dx * tt, y: A.ay + A.dy * tt };
       const s1 = ((w.x - I.x) * A.dx + (w.y - I.y) * A.dy) >= 0 ? 1 : -1, s2 = ((w.x - I.x) * B.dx + (w.y - I.y) * B.dy) >= 0 ? 1 : -1;
       const x1 = A.dx * s1, y1 = A.dy * s1, x2 = B.dx * s2, y2 = B.dy * s2; const v = Math.atan2(x1 * y2 - y1 * x2, x1 * x2 + y1 * y2);
@@ -7566,9 +7681,9 @@ TOOLS.dim = {
     openDimEdit(labelFor(cand), dimValueToUser(Object.assign({}, cand, { v: cand.v })), val => {
       const c = Object.assign({}, cand); c.v = dimValueFromUser(cand, val);
       const extra = {}; ['off', 'dia', 'angle', 's1', 's2'].forEach(k => { if (c[k] !== undefined) extra[k] = c[k]; });
-      let isRef = false;
-      const ok = tx(() => { const r = K.addConChecked(S, c.t, c.refs, c.v, extra); if (!r.ok) return { ok: false, err: 'Bu ölçü mevcut ilişkilerle çelişiyor (aşırı tanımlı)' }; isRef = !!r.ref; return true; });
-      if (ok) { st.sel = []; d.sel = []; updateHint(); if (isRef) toast('Bu ölçü zaten tanımlı: referans ölçü (parantezli) olarak eklendi, değeri değiştirilemez', true); }
+      let isRef = false, confl = false;
+      const ok = tx(() => { const r = K.addConChecked(S, c.t, c.refs, c.v, extra); if (!r.ok) return { ok: false, err: 'Bu ölçü mevcut ilişkilerle çelişiyor (aşırı tanımlı)' }; isRef = !!r.ref; confl = !!r.conflict; return true; });
+      if (ok) { st.sel = []; d.sel = []; updateHint(); if (isRef) toast(confl ? 'Bu ölçü mevcut ölçü/ilişkilerle çelişiyor: referans ölçü (parantezli) olarak eklendi, gerçek değeri gösterir' : 'Bu ölçü zaten tanımlı: referans ölçü (parantezli) olarak eklendi, değeri değiştirilemez', true); }
     }, pos, isSignedDim(cand));
     d.sel = []; st.sel = []; updateHint();
   },
@@ -7711,7 +7826,7 @@ function boxSelect(b, add) {
     if (hit && !sel.includes(id)) sel.push(id); }
   st.sel = sel;
 }
-function bboxCross(e, x0, y0, x1, y1) { const pl = entPolyline(e); return pl.some(q => q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1); }
+function bboxCross(e, x0, y0, x1, y1) { if (e.t === 'point') return false; const pl = entPolyline(e); return pl.some(q => q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1); }
 
 /* ===== PART 3: serit, panel, durum, entegrasyon ===== */
 const IC = {
@@ -7793,6 +7908,7 @@ function renderPM() {
   h += '<div class="pmg"><h5>İpuçları</h5><div class="pm-info">• Eksenin (R=0) üstünde çizin; dikey ölçüler Ø olarak girilir.<br>• Profili tek zincir yapın, sonra <b>✓ Konturu Oluştur</b>.<br>• Mavi: eksik tanımlı · Beyaz: tam tanımlı · Kırmızı: çelişki.<br>• Esc: aracı bitir · Del: sil.</div></div>';
   const active = document.activeElement; const keep = active && pm.contains(active) ? active.dataset.f : null;
   pm.innerHTML = h; if (keep) { const n = pm.querySelector('[data-f="' + keep + '"]'); if (n) n.focus(); }
+  const tb = $('sk-pm-t'); if (tb) { tb.textContent = sel.length ? '☰' + sel.length : '☰'; tb.style.width = sel.length ? 'auto' : ''; tb.style.padding = sel.length ? '0 7px' : ''; }
 }
 function findDim(t, refs) { return S.cons.find(c => c.t === t && c.refs.length === refs.length && c.refs.every((r, i) => r === refs[i])); }
 function selectionPM(sel) {
@@ -7953,7 +8069,7 @@ const SELFTESTS = [
       H.dim([[-25, 20]], [-25, 24], 30); H.dim([[-25, 5]], [-25, 9], 30);
       H.chk('ikinci ölçü referans (parantezli)', S.cons.filter(c => c.ref).length === 1, JSON.stringify(S.cons.filter(c => K.isDim(c)).map(c => c.ref)));
   } },
-  { title: 'Çelişkili ölçü reddi', run(H) {
+  { title: 'Çelişkili ölçü → referans (gerçek değeri gösterir)', run(H) {
       H.poly([[-40, 5], [-10, 5]]); H.dim([[-25, 5]], [-25, 9], 30);
       const n0 = S.cons.length; const r = K.addConChecked(S, 'dist', [stLines()[0].id ? S.ents[stLines()[0].id].a : null, S.ents[stLines()[0].id].b], 55, {});
       H.chk('çelişen ölçü eklenmedi', !r.ok || r.ref, JSON.stringify(r.ok) + '/' + !!r.ref);
@@ -7999,11 +8115,14 @@ const SELFTESTS = [
       if (rc) { tx(() => K.setDimValue(S, rc, 7)); const a2 = stArcs()[0]; H.chk('R7 → teğet korunuyor', near(a2.r, 7, 1e-3), a2.r);
         const L = stLines().find(l => near(l.a[1], l.b[1], 1e-6)); const d = Math.abs((a2.c[0] - L.a[0]) * (L.b[1] - L.a[1]) - (a2.c[1] - L.a[1]) * (L.b[0] - L.a[0])) / L.len; H.chk('çizgi merkezden R uzaklıkta', near(d, 7, 1e-3), d); }
   } },
-  { title: 'Pah + açı ölçüsü', run(H) {
+  { title: 'Pah: otomatik ölçüler + sanal köşe', run(H) {
       H.poly([[-50, 10], [-20, 10], [-20, 25]]); OPTS.chamferD = 3; H.tool('chamfer'); H.click(-20, 10);
       const ch = stLines().find(l => near(l.len, Math.hypot(3, 3), 1e-3)); H.chk('pah çizgisi (3x3)', !!ch, stLines().map(l => l.len.toFixed(2)).join(','));
-      if (ch) { const m = [(ch.a[0] + ch.b[0]) / 2, (ch.a[1] + ch.b[1]) / 2]; H.dim([m, [-35, 10]], [-27, 6], 30);
-        const c2 = stLines().find(l => l.id === ch.id); const ang = Math.abs(Math.atan2(c2.b[1] - c2.a[1], c2.b[0] - c2.a[0]) * 180 / Math.PI) % 180; H.chk('pah açısı 30°', near(ang, 30, 0.01) || near(ang, 150, 0.01), ang); }
+      const vs = Object.values(S.pts).filter(p => p.vs); H.chk('sanal köşe noktası oluştu', vs.length === 1 && near(vs[0].x, -20, 1e-3) && near(vs[0].y, 10, 1e-3), vs.length);
+      const dd = S.cons.filter(c => c.t === 'dist' && !c.ref); H.chk('2 otomatik pah ölçüsü (sürücü)', dd.length === 2, dd.length);
+      if (dd.length) { tx(() => K.setDimValue(S, dd[0], 6)); H.chk('bir bacak 6 → asimetrik pah', !!(stFindLine(-26, 10, -20, 13) || stFindLine(-20, 16, -20, 10) || stFindLine(-20, 13, -26, 10) || stLines().some(l => near(l.len, Math.hypot(6, 3), 1e-3))), stLines().map(l => l.len.toFixed(3)).join(',')); }
+      const m = stLines().find(l => near(l.len, Math.hypot(6, 3), 1e-3)); if (m) { H.dim([[(m.a[0] + m.b[0]) / 2, (m.a[1] + m.b[1]) / 2], [-40, 10]], [-30, 6], 30); const c = S.cons.filter(k => k.t === 'ang').pop(); H.chk('tam tanımlı pahta açı ölçüsü referans olur', c && c.ref, c ? c.ref : 'yok'); }
+      H.chk('profil çıkıyor', K.extractProfile(S, []).ok, '');
   } },
   { title: 'Açı ölçüsü (4 yön)', run(H) {
       const cases = [[[-30, 10], [-10, 20]], [[-10, 10], [-30, 20]], [[-30, 20], [-10, 10]], [[-10, 20], [-30, 10]]]; let okAll = true, info = '';
@@ -8045,6 +8164,11 @@ const SELFTESTS = [
       S = new K.Sketch(); H.tool('circle'); H.click(-30, 15); H.click(-25, 15); const ci = Object.values(S.ents).find(e => e.t === 'circle');
       const ro = K.offsetEntities(S, [ci.id], 8, -1); H.chk('yarıçaptan büyük iç ofset reddedildi', !ro.ok, ro.err);
   } },
+  { title: 'Ø sadece eksene bağlı noktada (tesadüfen y=0 yetmez)', run(H) {
+      const a = S.addPoint(-30, 0), b = S.addPoint(-30, 12); const l = S.addLine(a, b); S.addCon('ver', [l]); K.solve(S, null); refreshAfter(false);
+      H.dim([[-30, 6]], [-22, 6], 12); const ln = stLines()[0]; H.chk('eksene bağlı olmayan dikey çizgi: Ø değil, uzunluk 12', near(ln.len, 12, 1e-3), ln.len);
+      S = new K.Sketch(); H.poly([[-30, 0], [-30, 12]]); H.dim([[-30, 6]], [-22, 6], 24); const l2 = stLines()[0]; H.chk('eksenden başlayan çizgi: Ø24 → R12', near(Math.max(l2.a[1], l2.b[1]), 12, 1e-3), l2.a[1] + '/' + l2.b[1]);
+  } },
   { title: 'Geri al / ileri al', run(H) {
       H.poly([[-40, 5], [-10, 5]]); const n0 = S.cons.length; H.dim([[-25, 5]], [-25, 9], 25); const n1 = S.cons.length; undo(); const n2 = S.cons.length; redo(); const n3 = S.cons.length;
       H.chk('ölçü: ekle → geri al → ileri al', n1 === n0 + 1 && n2 === n0 && n3 === n1, [n0, n1, n2, n3].join(','));
@@ -8070,7 +8194,7 @@ async function skSelfTest() {
     dim(sel, place, v) { setTool('dim'); sel.forEach(p => H.click(p[0], p[1])); H.click(place[0], place[1]); if (!$('sk-dim-edit').classList.contains('show')) { setTool('select'); return false; } $('sk-de-i').value = String(v); commitDimEdit(); setTool('select'); return true; },
   };
   try {
-    toast('Otomatik test başladı…', true); setTool('select');
+    toast('Otomatik test başladı…', true); setTool('select'); root.classList.add('pm-open');
     for (const t of SELFTESTS) {
       sc = t; S = new K.Sketch(); hist = []; redoS = []; st.sel = []; cancelTool(true); opt.dia = true; opt.snap = true; opt.multi = false; OPTS.offD = '';
       V.sc = 9; V.ox = V.w * 0.85; V.oy = V.h * 0.7; $('sk-ttl-sub').textContent = 'TEST: ' + t.title;
@@ -8089,6 +8213,24 @@ async function skSelfTest() {
 window.skSelfTest = skSelfTest;
 
 $('sk-test').onclick = () => skSelfTest();
+/* ---------- yatay/alcak ekran: arac seridi + cekmece + hizli secenek cubugu ---------- */
+const isShort = () => window.matchMedia && window.matchMedia('(max-height:520px)').matches;
+function updateQOpt() {
+  const q = $('sk-qopt'); if (!q) return; let h = '';
+  if (st.tool === 'fillet') h = '<label>R</label><input type="text" inputmode="decimal" data-f="o-filletR" value="' + fmt(OPTS.filletR) + '"><span>mm</span>';
+  else if (st.tool === 'chamfer') h = '<label>PAH</label><input type="text" inputmode="decimal" data-f="o-chamferD" value="' + fmt(OPTS.chamferD) + '"><span>mm</span>';
+  else if (st.tool === 'offset') h = '<label>OFSET</label><input type="text" inputmode="decimal" data-f="o-offD" value="' + esc(OPTS.offD) + '" placeholder="tıkla"><span>mm</span>';
+  else if (st.tool === 'mirror') h = '<button class="pmb" data-act="mirror-axis">Ayna eksenini seç →</button>';
+  if (q.dataset.k !== h) { const act = document.activeElement; if (!(act && q.contains(act))) { q.innerHTML = h; q.dataset.k = h; } }
+  q.classList.toggle('show', !!h);
+}
+$('sk-qopt').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && e.target.dataset && e.target.dataset.f) { e.preventDefault(); applyField(e.target.dataset.f, e.target.value); e.target.blur(); } });
+$('sk-qopt').addEventListener('change', e => { if (e.target.dataset && e.target.dataset.f) applyField(e.target.dataset.f, e.target.value); });
+$('sk-qopt').addEventListener('click', e => { const b = e.target.closest('[data-act="mirror-axis"]'); if (b) { if (!(st.t.d.ents || []).length) { toast('Önce yansıtılacak elemanları seçin'); return; } st.t.step = 1; updateHint(); renderPM(); } });
+$('sk-pm-t').onclick = () => { root.classList.toggle('pm-open'); $('sk-pm-t').classList.toggle('on', root.classList.contains('pm-open')); try { localStorage.setItem('knt_sk_pm', root.classList.contains('pm-open') ? '1' : '0'); } catch (e) {} };
+$('sk-rail-t').onclick = () => { root.classList.toggle('rail-off'); $('sk-rail-t').classList.toggle('on', root.classList.contains('rail-off')); try { localStorage.setItem('knt_sk_rail', root.classList.contains('rail-off') ? '0' : '1'); } catch (e) {} setTimeout(() => { resize(); draw(); }, 30); };
+try { if (localStorage.getItem('knt_sk_pm') === '1') { root.classList.add('pm-open'); $('sk-pm-t').classList.add('on'); } if (localStorage.getItem('knt_sk_rail') === '0') { root.classList.add('rail-off'); $('sk-rail-t').classList.add('on'); } } catch (e) {}
+
 autoload(); buildRibbon(); AN = K.analyze(S);
 
 
