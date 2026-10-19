@@ -6622,10 +6622,26 @@ function degenerateIds(S) {   // sifir uzunluklu cizgi / sifir yaricapli yay-dai
   return o;
 }
 function collapses(S, before) { const now = degenerateIds(S); return now.some(k => before.indexOf(k) < 0); }
+// bir olcu/iliski elemani sifira indiriyorsa: serbest yaricapli yay/daireleri gecici sabitleyip yeniden dene (SolidWorks gibi boyut korunur)
+function solveKeepSizes(S, deg0) {
+  const driven = new Set(S.cons.filter(k => k.t === 'rad' && !k.ref).map(k => k.refs[0]));
+  const pins = [];
+  for (const k in S.ents) { const e = S.ents[k]; if ((e.t === 'arc' || e.t === 'circle') && !driven.has(k)) { const A = arcInfo(S, e); if (A.r > 1e-2) pins.push(S.addCon('rad', [k], A.r, {})); } }
+  const drop = () => { S.cons = S.cons.filter(k => pins.indexOf(k) < 0); };
+  if (!pins.length) return false;
+  const r = solve(S, null);
+  const good = r.ok && !collapses(S, deg0); drop();
+  return good;   // sabitler kalkinca cozum zaten gecerli: yeniden cozmek yariCapi yeniden kucultebilir
+}
 function addConChecked(S, t, refs, v, extra) {
   const snap = snapshotPts(S); const dof0 = rankOf(S); const deg0 = degenerateIds(S); const c = S.addCon(t, refs, v, extra);
   const r = solve(S, null);
-  if (r.ok && collapses(S, deg0)) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Bu ilişki/ölçü bir elemanı sıfır boyuta indirir (geçersiz)' }; }
+  if (r.ok && collapses(S, deg0)) {
+    restorePts(S, snap);
+    if (!solveKeepSizes(S, deg0)) { S.cons.splice(S.cons.indexOf(c), 1); restorePts(S, snap); solve(S, null); return { ok: false, err: 'Bu ilişki/ölçü bir elemanı sıfır boyuta indirir (geçersiz)' }; }
+    if (rankOf(S) >= dof0 && isDim(c)) { c.ref = true; refreshRefs(S); return { ok: true, con: c, ref: true }; }
+    return { ok: true, con: c };
+  }
   if (!r.ok && isDim(c) && !c.ref) {   // olcu mevcut iliski/olculerle celisiyor: SolidWorks gibi referans (suruculuk yapmayan) olcu olarak ekle
     restorePts(S, snap); c.ref = true; const r2 = solve(S, null);
     if (r2.ok) { refreshRefs(S); return { ok: true, con: c, ref: true, conflict: true }; }
@@ -6642,7 +6658,9 @@ function addConChecked(S, t, refs, v, extra) {
 function setDimValue(S, c, v) {
   if (c.ref) return false;
   const snap = snapshotPts(S); const old = c.v; const deg0 = degenerateIds(S); c.v = v; const r = solve(S, null);
-  if (!r.ok || collapses(S, deg0)) { c.v = old; restorePts(S, snap); solve(S, null); return false; } return true;
+  if (r.ok && collapses(S, deg0)) { restorePts(S, snap); if (solveKeepSizes(S, deg0)) return true; }
+  else if (r.ok) return true;
+  c.v = old; restorePts(S, snap); solve(S, null); return false;
 }
 function removeCon(S, id) { const i = S.cons.findIndex(c => c.id === id); if (i >= 0) S.cons.splice(i, 1); }
 function deleteEntity(S, id) {
@@ -7409,9 +7427,15 @@ function drawDims() { S.cons.forEach(c => { if (!K.isDim(c)) return; const g = d
 const TOOLS = {};
 const OPTS = { filletR: 2, chamferD: 1, offD: '', offChain: true, offSide: 0 };
 function setTool(id) {
+  const prevTool = st.tool;
   cancelTool(true); st.tool = id; st.t = { step: 0, d: {} };
   if (id !== 'select' && id !== 'dim' && id !== 'offset' && id !== 'mirror' && id !== 'fillet' && id !== 'chamfer') st.sel = [];
   if (id === 'mirror' || id === 'offset') { st.t.d.ents = st.sel.filter(r => r[0] === 'e' && !S.ents[r].ax && S.ents[r].t !== 'point'); }
+  if (id === 'dim') {   // onceden secili 1-2 eleman varsa dogrudan olculendirmeye hazirla (SolidWorks gibi)
+    const pre = st.sel.filter(r => (r[0] === 'p' || r[0] === 'e') && (r[0] === 'p' ? S.pts[r] : S.ents[r])).slice(0, 2);
+    let ok = false; try { ok = prevTool !== 'dim' && pre.length > 0 && !!dimCandidate(pre, toW(V.w / 2, V.h / 2)); } catch (e) { ok = false; }
+    if (ok) { st.t.d.sel = pre.slice(); st.sel = pre.slice(); } else st.sel = [];
+  }
   if (id === 'mirror' && st.t.d.ents.length) st.t.step = 1;
   if (id === 'offset' && st.t.d.ents.length) st.t.step = 1;
   buildRibbonState(); updateHint(); renderPM(); updateQOpt(); draw();
@@ -7645,6 +7669,11 @@ function dimCandidate(sel, m) {   // m: dunya konumu (fare); donus: {t,refs,v,..
       if (e.id === 'e1') { const c = { t: 'hdist', refs: ['p0', p], v: P(p).x, off: w.y }; return c; }
       if (e.t === 'line') { if (e.a === p || e.b === p) return null; const L = K.lineInfo(S, e), q = P(p); const v = ((q.x - L.ax) * L.dy - (q.y - L.ay) * L.dx) / L.len; return { t: 'pldist', refs: [p, es[0]], v }; } }
     const cur = es.filter(r => ent(r).t === 'arc' || ent(r).t === 'circle');
+    if (pts.length === 1 && cur.length === 1) {   // nokta - yay/daire merkezi
+      const e = ent(cur[0]), p = pts[0]; if (p === e.c || e.a === p || e.b === p) return null;
+      const A0 = P(p), C0 = P(e.c); if (hyp(A0.x - C0.x, A0.y - C0.y) < 1e-9) return null;
+      return pick2pts(p, e.c);
+    }
     if (pts.length === 0 && cur.length === 2) return pick2pts(ent(cur[0]).c, ent(cur[1]).c);   // merkez - merkez
     if (pts.length === 0 && cur.length === 1 && es.length === 2) {   // yay/daire merkezi - cizgi
       const o = ent(es.find(r => !cur.includes(r))), cc = ent(cur[0]).c, q = P(cc);
@@ -8038,7 +8067,7 @@ function importContour() {
 function skOpen() { root.classList.add('show'); resize(); setTool('select'); refreshAfter(false); if (Object.values(S.ents).filter(e => !e.ax).length) fit(); else { V.sc = 14; V.ox = V.w * 0.72; V.oy = V.h * 0.62; draw(); } }
 function skClose() { cancelTool(true); root.classList.remove('show'); autosave(); }
 window.skOpen = skOpen; window.skClose = skClose;
-window.SKUI = { get S() { return S; }, get AN() { return AN; }, get hist() { return hist; }, get redoS() { return redoS; }, updateHover, commitDimEdit, undo, redo, cancelTool, deleteSelection, hideDimEdit, tx, setTool, st, V, toS, toW, TOOLS, snapAt, refreshAfter, fit, makeContour, importContour, pickAt, OPTS, opt, newSketch() { S = new K.Sketch(); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); }, load(j) { S = K.Sketch.fromJSON(j); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); } };
+window.SKUI = { get S() { return S; }, dimDisplay, dimBoxes, dimValueToUser, get deCbOpen() { return !!deCb; }, get AN() { return AN; }, get hist() { return hist; }, get redoS() { return redoS; }, updateHover, commitDimEdit, undo, redo, cancelTool, deleteSelection, hideDimEdit, tx, setTool, st, V, toS, toW, TOOLS, snapAt, refreshAfter, fit, makeContour, importContour, pickAt, OPTS, opt, newSketch() { S = new K.Sketch(); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); }, load(j) { S = K.Sketch.fromJSON(j); hist = []; redoS = []; st.sel = []; cancelTool(true); refreshAfter(false); } };
 window.addEventListener('resize', () => { if (root.classList.contains('show')) resize(); });
 if (window.ResizeObserver) new ResizeObserver(() => { if (root.classList.contains('show')) resize(); }).observe(cv.parentElement);
 
@@ -8074,6 +8103,17 @@ const SELFTESTS = [
       const n0 = S.cons.length; const r = K.addConChecked(S, 'dist', [stLines()[0].id ? S.ents[stLines()[0].id].a : null, S.ents[stLines()[0].id].b], 55, {});
       H.chk('çelişen ölçü eklenmedi', !r.ok || r.ref, JSON.stringify(r.ok) + '/' + !!r.ref);
       H.chk('geometri bozulmadı', near(stLines()[0].len, 30), stLines()[0].len);
+  } },
+  { title: 'Nokta–daire/yay ölçüsü: merkeze mesafe, daire boyutu korunur', run(H) {
+      const p1 = S.addPoint(-60, 5), p2 = S.addPoint(-45, 15); S.addLine(p1, p2);
+      const cc = S.addPoint(-30, 12), cr = S.addPoint(-26, 12), ce = S.addCircle(cc, cr);
+      const cand = dimCandidate([p1, ce], { x: -45, y: 20 });
+      H.chk('nokta + daire için ölçü önerisi var', !!cand && cand.refs.includes(cc) && cand.refs.includes(p1), JSON.stringify(cand));
+      const r = K.addConChecked(S, 'hdist', [p1, cc], 38, {});
+      const A = K.arcInfo(S, S.ents[ce]);
+      H.chk('ölçü kabul edildi', r.ok && !r.ref, JSON.stringify(r));
+      H.chk('daire sıfıra çökmedi (R=4 korundu)', near(A.r, 4, 1e-3), A.r);
+      H.chk('Z mesafesi 38', near(S.pts[cc].x - S.pts[p1].x, 38, 1e-3), S.pts[cc].x - S.pts[p1].x);
   } },
   { title: 'Mil profili (otomatik H/V) + 4 ölçü → tam tanımlı', run(H) {
       H.poly([[0, 0], [0, 10], [-20, 10], [-20, 15], [-50, 15], [-50, 0], [0, 0]]);
