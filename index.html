@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kontur Auto NC  Fanuc CNC Editör</title>
+<title>Kontur Auto NC</title>
 <style>
 :root {
   --bg:#0b0d0f; --panel:#13161a; --panel2:#1a1d22;
@@ -559,12 +559,14 @@ td.type-PAH{color:#ffff00;}
 
 
 <!-- ÖĞRETİCİ OVERLAY -->
+<style>#ver-badge{display:none;position:fixed;right:5px;bottom:3px;font:10px/1 sans-serif;color:#7dd3fc;opacity:.6;z-index:50;pointer-events:none}@media (max-width:760px){#ver-badge{display:block}}</style>
+<div id="ver-badge"><span class="app-ver">v3.2</span></div>
 <div id="tutorial-overlay" style="display:none">
   <div id="tutorial-box">
     <div id="tutorial-header">
       <div>
-        <div class="logo">- KONTUR AUTO NC</div>
-        <div class="sub">Fanuc Uyumlu Torna CNC G-Kod Editörü  Başlangıç Rehberi</div>
+        <div class="logo">KONTUR AUTO NC <span class="app-ver" style="font-size:.6em;opacity:.7">v3.2</span></div>
+        <div class="sub">Başlangıç Rehberi</div>
       </div>
     </div>
 
@@ -695,7 +697,7 @@ td.type-PAH{color:#ffff00;}
     <button id="dim-mode-toggle" onclick="toggleDimMode()" title="Ölçülendirme Modu">📐 ÖLÇ</button>
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-    <span style="color:#00aaff;font-weight:bold;font-size:clamp(10px,1.2vw,16px);letter-spacing:2px;white-space:nowrap;">  KonturAutoNC</span>
+    <span style="color:#00aaff;font-weight:bold;font-size:clamp(10px,1.2vw,16px);letter-spacing:2px;white-space:nowrap;">KONTUR AUTO NC <span class="app-ver" style="font-size:0.7em;letter-spacing:0;font-weight:normal;color:#7dd3fc;opacity:.85">v3.2</span></span>
   </div>
   <div id="tabs" style="display:flex;align-items:center;gap:0.3vw;flex-shrink:0;background:transparent;border:none;padding:0;">
     <div style="width:1px;height:16px;background:#2a2d33;margin:0 0.3vw;"></div>
@@ -3585,7 +3587,24 @@ function _buildGCode(payload) {
     const parallelDot = nInQuick.x * nOutQuick.x + nInQuick.z * nOutQuick.z;
     let ex, ez;
     if (parallelDot > 1 - 2e-4) {
-      { const tp = _gc_tipOffset(pt, nInQuick, toolR); ex = tp.x; ez = tp.z; }
+      let done = false;
+      // DUZELTME: teget gecisle yaya girerken (silindir -> R -> omuz, yuz -> R -> silindir) uc noktasi sabit-uc kuralina gore
+      // merkez - (toolR,toolR) olmali; eski 'pt' kisayolu yay baslangicini toolR kadar kaydirip yayi oyuyor/eksik birakiyordu.
+      if (nextEl && (nextEl.type === "G02" || nextEl.type === "G03") && arcFits(nextEl) && nextIdx === ptIdx + 1 && Math.abs(nextEl.r) > 1e-10) {
+        const pa = pts[ptIdx], pb = pts[ptIdx + 1];
+        const Ra = Math.abs(nextEl.r), Roff = nextEl.type === "G02" ? Ra - toolR : Ra + toolR, sgA = nextEl.type === "G02" ? 1 : -1;
+        let cxa, cza;
+        if (nextEl._cx !== undefined) { cxa = nextEl._cx; cza = nextEl._cz; }
+        else {
+          const dxa = pb.x - pa.x, dza = pb.z - pa.z, La = Math.sqrt(dxa * dxa + dza * dza);
+          if (La > 1e-10) { const ha = Math.sqrt(Math.max(0, Ra * Ra - (La / 2) ** 2)); cxa = (pa.x + pb.x) / 2 + sgA * ha * (-dza / La); cza = (pa.z + pb.z) / 2 + sgA * ha * (dxa / La); }
+        }
+        if (cxa !== undefined && Roff > 1e-9) {
+          const ux = pa.x - cxa, uz = pa.z - cza, ul = Math.sqrt(ux * ux + uz * uz);
+          if (ul > 1e-10) { ex = cxa + ux / ul * Roff - toolR; ez = cza + uz / ul * Roff - toolR; done = true; }
+        }
+      }
+      if (!done) { const tp = _gc_tipOffset(pt, nInQuick, toolR); ex = tp.x; ez = tp.z; }
     } else {
       const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_outerNormal);
       const sx = (c.x >= bisRef.x - 1e-6) ? 1 : -1;
@@ -3629,7 +3648,10 @@ function _buildGCode(payload) {
           // "-toolR" duzeltmesi (genel acili kose formulunun bir parcasi) burada
           // uygulanmamali: dogru cevap basit nokta-offsettir, izole duz segmentlerle
           // ayni mantik (pt + nNext*toolR).
-          { const tp = _gc_tipOffset(pt, nNext, toolR); ex = tp.x; ez = tp.z; }
+          // DUZELTME: yayin bitisi sonraki elemana teget: uc = (yay offset merkez noktasi) - (toolR,toolR)
+          const ux = pt.x - arc_cx, uz = pt.z - arc_cz, ul = Math.sqrt(ux * ux + uz * uz);
+          if (ul > 1e-10) { ex = arc_cx + ux / ul * R_off - toolR; ez = arc_cz + uz / ul * R_off - toolR; }
+          else { const tp = _gc_tipOffset(pt, nNext, toolR); ex = tp.x; ez = tp.z; }
         }
       }
     }
@@ -4984,6 +5006,8 @@ function resetAll() {
 
 /* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   ÖĞRETİCİ MANTI~I
 "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
+/* SURUM: her teslimde artir. Gorunen metinler (class=app-ver, 3 yer) ayni numarayi tasimali: grep 'class="app-ver"' */
+const APP_VERSION = '3.2';
 const TUTORIAL_KEY = 'konturAutoNC_tutorialDone_v1';
 let tutorialStep = 0;
 const TUTORIAL_TOTAL = 7;
@@ -6276,7 +6300,7 @@ function _refreshInputModeButtons() {
 <!-- ESKIZ -->
 <div id="sk-root" lang="tr">
   <div id="sk-top">
-    <div class="ttl"><span>✎</span><span><b>ESKİZ</b></span><i id="sk-ttl-sub">Kontur eskizi</i></div>
+    <div class="ttl"><span>✎</span><span><b>ESKİZ</b></span><i id="sk-ttl-sub">Kontur eskizi</i><i class="app-ver" style="opacity:.55;font-size:.8em;margin-left:6px">v3.2</i></div>
     <span class="sp"></span>
     <button class="skbtn sq" id="sk-rail-t" title="Araç şeridini göster/gizle">▤</button>
     <button class="skbtn sq" id="sk-undo" title="Geri al (Ctrl+Z)">↩</button>
@@ -6334,7 +6358,16 @@ Sketch.prototype._axes = function () {
   this.ents.e0 = { id: 'e0', t: 'line', a: 'p0', b: 'p0a', ax: 1 };   // eksen (Z ekseni)
   this.ents.e1 = { id: 'e1', t: 'line', a: 'p0', b: 'p0b', ax: 1 };   // Z=0 yuzu
 };
-Sketch.prototype.nid = function (p) { return p + (this.seq++); };
+Sketch.prototype.nid = function (p) {   // benzersiz kimlik: seq eksik/eski olsa bile mevcut bir nokta/eleman/ilişkinin üzerine yazmaz
+  if (!isFinite(this.seq) || this.seq < 1) this.normSeq();
+  let id; do { id = p + (this.seq++); } while (this.pts[id] || this.ents[id] || (p === 'c' && this.cons.some(c => c.id === id)));
+  return id;
+};
+Sketch.prototype.normSeq = function () {   // seq'i mevcut en büyük kimlik sayısının üstüne çek (eski/dışarıdan gelen eskizler)
+  let m = 0; const f = id => { const r = /^[a-z]+(\d+)/i.exec(String(id)); if (r) m = Math.max(m, +r[1]); };
+  for (const k in this.pts) f(k); for (const k in this.ents) f(k); this.cons.forEach(c => f(c.id));
+  this.seq = Math.max(isFinite(this.seq) ? this.seq : 1, m + 1); return this.seq;
+};
 Sketch.prototype.addPoint = function (x, y) { const id = this.nid('p'); this.pts[id] = { id, x, y }; return id; };
 Sketch.prototype.addLine = function (a, b, o) { const id = this.nid('e'); this.ents[id] = Object.assign({ id, t: 'line', a, b }, o || {}); return id; };
 Sketch.prototype.addArc = function (c, a, b, o) { const id = this.nid('e'); this.ents[id] = Object.assign({ id, t: 'arc', c, a, b }, o || {}); return id; };
@@ -6346,9 +6379,9 @@ Sketch.prototype.addCon = function (t, refs, v, extra) {
   this.cons.push(c); return c;
 };
 Sketch.prototype.json = function () { return JSON.stringify({ pts: this.pts, ents: this.ents, cons: this.cons, seq: this.seq }); };
-Sketch.fromJSON = function (s) { const o = typeof s === 'string' ? JSON.parse(s) : s; const S = new Sketch(); S.pts = o.pts; S.ents = o.ents; S.cons = o.cons; S.seq = o.seq; return S; };
+Sketch.fromJSON = function (s) { const o = typeof s === 'string' ? JSON.parse(s) : s; const S = new Sketch(); S.pts = o.pts; S.ents = o.ents; S.cons = o.cons; S.seq = o.seq; S.normSeq(); return S; };
 Sketch.prototype.clone = function () { return Sketch.fromJSON(this.json()); };
-Sketch.prototype.restore = function (json) { const o = JSON.parse(json); this.pts = o.pts; this.ents = o.ents; this.cons = o.cons; this.seq = o.seq; };
+Sketch.prototype.restore = function (json) { const o = JSON.parse(json); this.pts = o.pts; this.ents = o.ents; this.cons = o.cons; this.seq = o.seq; this.normSeq(); };
 Sketch.prototype.P = function (id) { return this.pts[id]; };
 Sketch.prototype.entPts = function (e) {
   e = typeof e === 'string' ? this.ents[e] : e;
@@ -6431,6 +6464,20 @@ function curveIntersect(S, e, f) {
 
 /* ---------- KISITLAR: kalinti fonksiyonlari ---------- */
 function resLine(S, ref) { const e = S.ents[ref]; return lineInfo(S, e); }
+// iliskisel ofset: refs [yeni, kaynak]; v = ofset mesafesi (>0), k = yon isareti (+1/-1); fa/fb: serbest uc kaynagin ucuyla ayni konumda
+function ofsRes(S, c, o) {
+  const N = S.ents[c.refs[0]], R = S.ents[c.refs[1]]; if (!N || !R) return; const D = c.v * (c.k || 1);
+  if (N.t === 'line' && R.t === 'line') {
+    const A = S.pts[R.a], B = S.pts[R.b], dx = B.x - A.x, dy = B.y - A.y, len = Math.max(hyp(dx, dy), 1e-12), nx = -dy / len, ny = dx / len;
+    const Na = S.pts[N.a], Nb = S.pts[N.b];
+    o.push((Na.x - A.x) * nx + (Na.y - A.y) * ny - D, (Nb.x - A.x) * nx + (Nb.y - A.y) * ny - D);
+    if (c.fa) o.push(((Na.x - A.x) * dx + (Na.y - A.y) * dy) / len);
+    if (c.fb) o.push(((Nb.x - B.x) * dx + (Nb.y - B.y) * dy) / len);
+  } else if (N.t !== 'line' && R.t !== 'line') {
+    const cN = S.pts[N.c], cR = S.pts[R.c]; o.push(cN.x - cR.x, cN.y - cR.y, arcInfo(S, N).r - arcInfo(S, R).r - D);
+    if (N.t === 'arc' && R.t === 'arc') for (const w of ['a', 'b']) if (c['f' + w]) { const pn = S.pts[N[w]], pr = S.pts[R[w]], rn = Math.max(hyp(pn.x - cN.x, pn.y - cN.y), 1e-9); o.push(((pn.x - cN.x) * (pr.y - cR.y) - (pn.y - cN.y) * (pr.x - cR.x)) / rn); }
+  }
+}
 const RES = {
   coin(S, c, o) { const p = S.pts[c.refs[0]], q = S.pts[c.refs[1]]; o.push(p.x - q.x, p.y - q.y); },
   hor(S, c, o) { if (c.refs[0][0] === 'e') { const L = resLine(S, c.refs[0]); o.push(L.ay - L.by); } else { o.push(S.pts[c.refs[0]].y - S.pts[c.refs[1]].y); } },
@@ -6485,6 +6532,7 @@ const RES = {
   hdist(S, c, o) { o.push(S.pts[c.refs[1]].x - S.pts[c.refs[0]].x - c.v); },
   vdist(S, c, o) { o.push(S.pts[c.refs[1]].y - S.pts[c.refs[0]].y - c.v); },
   rad(S, c, o) { o.push(arcInfo(S, S.ents[c.refs[0]]).r - c.v); },
+  ofs: ofsRes, ofsm: ofsRes,
   asw(S, c, o) { const e = S.ents[c.refs[0]]; if (e && e.t === 'arc') o.push(arcInfo(S, e).sw - c.v); },
   ang(S, c, o) {
     const A = resLine(S, c.refs[0]), B = resLine(S, c.refs[1]); const s1 = c.s1 || 1, s2 = c.s2 || 1;
@@ -6498,7 +6546,7 @@ const RES = {
   pldist(S, c, o) { const p = S.pts[c.refs[0]], L = resLine(S, c.refs[1]); o.push(((p.x - L.ax) * L.dy - (p.y - L.ay) * L.dx) / Math.max(L.len, 1e-12) - c.v); },
   fix() {}
 };
-const DIM_TYPES = new Set(['dist', 'hdist', 'vdist', 'rad', 'ang', 'pldist', 'asw']);
+const DIM_TYPES = new Set(['dist', 'hdist', 'vdist', 'rad', 'ang', 'pldist', 'asw', 'ofs']);
 function isDim(c) { return DIM_TYPES.has(c.t); }
 
 function fixedPoints(S) {
@@ -6730,20 +6778,53 @@ function sigSign(S, g) {
   return Math.abs(cr) / (sc || 1) > 0.05 ? Math.sign(cr) : 0;
 }
 function sigFlips(S, sig) { let n = 0; sig.forEach(g => { if (!g.s) return; const c = sigSign(S, g); if (c !== 0 && c !== g.s) n++; }); return n; }
+// iliskisel ofsetlerin gecerliligi: ofset egrileri kaynaklarindan 'D'den yakin olmamali (topoloji degisti / kendini kesiyor)
+let lastErr = '';
+function ofsValid(S) {
+  const prim = S.cons.filter(k => k.t === 'ofs'); if (!prim.length) return true;
+  for (const pc of prim) {
+    const mem = S.cons.filter(k => (k.t === 'ofs' || k.t === 'ofsm') && k.grp === pc.grp); const D = pc.v, tol = Math.max(0.01, D * 0.01);
+    const src = mem.map(k => S.ents[k.refs[1]]).filter(Boolean); if (src.length !== mem.length) continue;
+    (pc.cs || []).forEach(id => { if (S.ents[id]) src.push(S.ents[id]); });
+    const crossing = new Set();
+    src.forEach(s1 => { if (s1.t === 'circle') return; const rng = paramRange(S, s1)[1]; splitParams(S, s1).forEach(q => { if (q.p > 1e-6 && q.p < rng - 1e-6 && src.some(t => t.id === q.other)) { crossing.add(s1.id + '|' + q.other); crossing.add(q.other + '|' + s1.id); } }); });
+    for (const k of mem) { const ne = S.ents[k.refs[0]]; if (!ne) continue; const n = 16;
+      for (let i = 0; i <= n; i++) { let p;
+        if (ne.t === 'line') { const a = S.pts[ne.a], b = S.pts[ne.b]; p = { x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n }; }
+        else if (ne.t === 'arc') { const A = arcInfo(S, ne); const t = A.a0 + A.sw * i / n; p = { x: A.cx + A.r * Math.cos(t), y: A.cy + A.r * Math.sin(t) }; }
+        else { const A = arcInfo(S, ne); const t = TAU * i / n; p = { x: A.cx + A.r * Math.cos(t), y: A.cy + A.r * Math.sin(t) }; }
+        for (const t of src) { if (t.id === k.refs[1] || crossing.has(k.refs[1] + '|' + t.id)) continue; if (distToEnt(S, t, p.x, p.y).d < D - tol) return false; } } }
+  }
+  return true;
+}
 function setDimValue(S, c, v) {
+  lastErr = ''; const hadOfs = S.cons.some(k => k.t === 'ofs'); const validBefore = hadOfs ? ofsValid(S) : true; const snap0 = hadOfs ? snapshotPts(S) : null;
+  const oldVals = hadOfs ? S.cons.filter(k => k === c || (c.t === 'ofs' && c.grp && k.grp === c.grp)).map(k => [k, k.v]) : [];
+  const r = setDimValue0(S, c, v);
+  if (r && hadOfs && validBefore && !ofsValid(S)) {
+    restorePts(S, snap0); oldVals.forEach(([k, x]) => { k.v = x; }); solve(S, null);
+    lastErr = 'Bu değişiklik ofset konturun yapısını bozuyor (bir eleman yutuluyor ya da yeniden beliriyor). Ofset ölçüsünü silip bağı çözebilir veya ofseti yeniden oluşturabilirsiniz.';
+    return false;
+  }
+  return r;
+}
+function setDimValue0(S, c, v) {
   if (c.ref) return false;
+  if (c.t === 'ofs' && !(v > 1e-9)) return false;
+  const grp = (c.t === 'ofs' && c.grp) ? S.cons.filter(k => (k.t === 'ofs' || k.t === 'ofsm') && k.grp === c.grp) : [c];
+  const setV = x => { grp.forEach(k => { k.v = x; }); };
   const snap = snapshotPts(S); const old = c.v; const deg0 = degenerateIds(S); const sig = orientSig(S);
-  const direct = () => { c.v = v; const r = solve(S, null); if (r.ok && collapses(S, deg0)) { restorePts(S, snap); return solveKeepSizes(S, deg0); } return r.ok; };
+  const direct = () => { setV(v); const r = solve(S, null); if (r.ok && collapses(S, deg0)) { restorePts(S, snap); return solveKeepSizes(S, deg0); } return r.ok; };
   let ok = direct(); let flips = ok ? sigFlips(S, sig) : -1;
   if (ok && flips === 0) return true;
   // surekli (adim adim) yol: eski degerden yeni degere; her adim oncekinin cozumunden baslar
   const keep = ok ? snapshotPts(S) : null;
-  restorePts(S, snap); c.v = old; let sok = true; const N = Math.min(24, Math.max(8, Math.ceil(Math.abs(v - old) / Math.max(1e-9, Math.abs(old) || 1) * 4)));
-  for (let i = 1; i <= N && sok; i++) { c.v = old + (v - old) * i / N; const r = solve(S, null); if (!r.ok) sok = false; }
-  if (sok) { c.v = v; const r = solve(S, null); sok = r.ok && !collapses(S, deg0); }
+  restorePts(S, snap); setV(old); let sok = true; const N = Math.min(24, Math.max(8, Math.ceil(Math.abs(v - old) / Math.max(1e-9, Math.abs(old) || 1) * 4)));
+  for (let i = 1; i <= N && sok; i++) { setV(old + (v - old) * i / N); const r = solve(S, null); if (!r.ok) sok = false; }
+  if (sok) { setV(v); const r = solve(S, null); sok = r.ok && !collapses(S, deg0); }
   if (sok && (!ok || sigFlips(S, sig) < flips)) return true;
-  if (ok) { restorePts(S, keep); c.v = v; solve(S, null); return true; }
-  c.v = old; restorePts(S, snap); solve(S, null); return false;
+  if (ok) { restorePts(S, keep); setV(v); solve(S, null); return true; }
+  setV(old); restorePts(S, snap); solve(S, null); return false;
 }
 // profil uclari: acik (hicbir egriye degmiyor), bagsiz (yalniz konumla degiyor - olcu degisince kopar), bosluk (acik ama yakinda baska egri var)
 function looseEnds(S, gapTol) {
@@ -6762,9 +6843,18 @@ function looseEnds(S, gapTol) {
   }
   return out;
 }
-function removeCon(S, id) { const i = S.cons.findIndex(c => c.id === id); if (i >= 0) S.cons.splice(i, 1); }
+function removeCon(S, id) {
+  const i = S.cons.findIndex(c => c.id === id); if (i < 0) return;
+  const c = S.cons[i]; if (c.t === 'ofs' && c.grp) { S.cons = S.cons.filter(k => !((k.t === 'ofs' || k.t === 'ofsm') && k.grp === c.grp)); return; }
+  S.cons.splice(i, 1);
+}
+// bir elemanin ofset bagini (grubunu) koparir: kirpma/uzatma/fillet/silme gibi yapiyi bozan islemler oncesi
+function dropOfsFor(S, id) {
+  const g = new Set(S.cons.filter(k => (k.t === 'ofs' || k.t === 'ofsm') && k.refs.includes(id)).map(k => k.grp)); if (!g.size) return;
+  S.cons = S.cons.filter(k => !((k.t === 'ofs' || k.t === 'ofsm') && g.has(k.grp)));
+}
 function deleteEntity(S, id) {
-  const e = S.ents[id]; if (!e || e.ax) return;
+  const e = S.ents[id]; if (!e || e.ax) return; dropOfsFor(S, id);
   const pts = S.entPts(e); delete S.ents[id];
   S.cons = S.cons.filter(c => !c.refs.includes(id));
   pts.forEach(p => {
@@ -6948,6 +7038,7 @@ function virtualSharp(S, k, idA, idB, force) {   // kose noktasina bagli olcu/il
 }
 function fillet(S, idA, idB, R) {
   const eA = S.ents[idA], eB = S.ents[idB]; if (!eA || !eB || eA === eB) return { ok: false, err: 'İki farklı eleman seçin' };
+  dropOfsFor(S, idA); dropOfsFor(S, idB);
   if (!['line', 'arc'].includes(eA.t) || !['line', 'arc'].includes(eB.t)) return { ok: false, err: 'Fillet çizgi/yay için' };
   const k = findCorner(S, eA, eB); if (!k) return { ok: false, err: 'Elemanlar bir köşede birleşmeli' };
   const P = S.pts[k.pa]; const deg0 = degenerateIds(S);
@@ -6983,6 +7074,7 @@ function fillet(S, idA, idB, R) {
 }
 function chamfer(S, idA, idB, d) {
   const eA = S.ents[idA], eB = S.ents[idB]; if (!eA || !eB || eA.t !== 'line' || eB.t !== 'line') return { ok: false, err: 'Pah için iki çizgi seçin' };
+  dropOfsFor(S, idA); dropOfsFor(S, idB);
   const k = findCorner(S, eA, eB); if (!k) return { ok: false, err: 'Çizgiler bir köşede birleşmeli' };
   const P = S.pts[k.pa]; const deg0 = degenerateIds(S); const otherA = S.pts[k.pa === eA.a ? eA.b : eA.a], otherB = S.pts[k.pb === eB.a ? eB.b : eB.a];
   const la = hyp(otherA.x - P.x, otherA.y - P.y), lb = hyp(otherB.x - P.x, otherB.y - P.y);
@@ -7014,6 +7106,7 @@ function splitParams(S, e, skipIds) {   // e uzerindeki diger elemanlarla kesisi
 }
 function trim(S, id, cx, cy) {
   const e = S.ents[id]; if (!e || e.ax || e.t === 'point') return { ok: false, err: 'Kırpılamaz' };
+  dropOfsFor(S, id);
   const hit = distToEnt(S, e, cx, cy); const pc = hit.p !== undefined ? hit.p : paramOn(S, e, cx, cy);
   const rng = paramRange(S, e)[1]; const isCirc = e.t === 'circle'; const tol = 1e-6;
   let ints = splitParams(S, e).filter(q => isCirc ? true : (q.p > tol && q.p < rng - tol)).sort((a, b) => a.p - b.p);
@@ -7066,6 +7159,7 @@ function movePointKeep(S, pid, q, e, which) {
 }
 function extend(S, id, cx, cy) {
   const e = S.ents[id]; if (!e || (e.t !== 'line' && e.t !== 'arc')) return { ok: false, err: 'Uzatılamaz' };
+  dropOfsFor(S, id);
   const ends = [e.a, e.b]; const pa = S.pts[e.a], pb = S.pts[e.b];
   const end = hyp(cx - pa.x, cy - pa.y) < hyp(cx - pb.x, cy - pb.y) ? 'a' : 'b'; const pid = e[end];
   const rng = paramRange(S, e)[1];
@@ -7159,17 +7253,36 @@ function offsetEntities(S, ids, dist, side, pickId) {   // side=+1: secilen (pic
   // 4) olustur
   const created = {}; const out = [];
   items.forEach(e => {
-    if (e.t === 'line') { if (consumed.has(e.id)) return; const a = ends[e.id].a, b = ends[e.id].b; const pa = S.addPoint(a.x, a.y), pb = S.addPoint(b.x, b.y); const id = S.addLine(pa, pb, { con: e.con }); created[e.id] = id; S.addCon('par', [e.id, id]); }
-    else if (e.t === 'arc') { if (consumed.has(e.id)) return; const a = ends[e.id].a, b = ends[e.id].b; const g = newGeom[e.id]; const c = S.addPoint(g.cx, g.cy), pa = S.addPoint(a.x, a.y), pb = S.addPoint(b.x, b.y); const id = S.addArc(c, pa, pb, { con: e.con }); created[e.id] = id; S.addCon('conc', [e.id, id]); }
-    else { const g = newGeom[e.id]; const c = S.addPoint(g.cx, g.cy), pa = S.addPoint(g.cx + g.r, g.cy); const id = S.addCircle(c, pa, { con: e.con }); created[e.id] = id; S.addCon('conc', [e.id, id]); }
+    if (e.t === 'line') { if (consumed.has(e.id)) return; const a = ends[e.id].a, b = ends[e.id].b; const pa = S.addPoint(a.x, a.y), pb = S.addPoint(b.x, b.y); const id = S.addLine(pa, pb, { con: e.con }); created[e.id] = id; }
+    else if (e.t === 'arc') { if (consumed.has(e.id)) return; const a = ends[e.id].a, b = ends[e.id].b; const g = newGeom[e.id]; const c = S.addPoint(g.cx, g.cy), pa = S.addPoint(a.x, a.y), pb = S.addPoint(b.x, b.y); const id = S.addArc(c, pa, pb, { con: e.con }); created[e.id] = id; }
+    else { const g = newGeom[e.id]; const c = S.addPoint(g.cx, g.cy), pa = S.addPoint(g.cx + g.r, g.cy); const id = S.addCircle(c, pa, { con: e.con }); created[e.id] = id; }
   });
   // komsu yeni uclari birlestir (yutulanlarin uzerinden de)
   uf.clear(); consumed.forEach(cid => { const c = S.ents[cid]; const ra = find(f(c.a)), rb = find(f(c.b)); if (ra !== rb) uf.set(ra, rb); });
   const clusters = new Map();
   items.forEach(e => { if (e.t === 'circle' || consumed.has(e.id)) return; ['a', 'b'].forEach(end => { const k = rep(e[end]); if (!clusters.has(k)) clusters.set(k, []); clusters.get(k).push(S.ents[created[e.id]][end]); }); });
   clusters.forEach(list => { for (let i = 1; i < list.length; i++) S.addCon('coin', [list[0], list[i]]); });
-  // arc/line teget iliskilerini kopyala
-  S.cons.slice().forEach(k => { if (k.t === 'tan' && k.refs.every(r => created[r])) S.addCon('tan', k.refs.map(r => created[r]), undefined, { mode: k.mode }); });
+  // iliskisel baglanti: her yeni eleman kaynagina 'ofs' ile baglanir (kaynak degisince ofset takip eder); mesafe tek olcu (ilk eleman), digerleri 'ofsm'
+  const ownEnds = {}; clusters.forEach(list => { if (list.length === 1) ownEnds[list[0]] = true; });
+  const pr = created[pick.id] ? pick : items.find(e => created[e.id]); let primary = null; const gid = 'og' + S.seq;
+  items.forEach(e => { const cid = created[e.id]; if (!cid) return; const ne = S.ents[cid];
+    let k = 1;
+    if (e.t === 'line') { const L = lineInfo(S, e), a = S.pts[ne.a]; k = Math.sign((a.x - L.ax) * (-L.dy / L.len) + (a.y - L.ay) * (L.dx / L.len)) || 1; }
+    else { k = Math.sign(arcInfo(S, ne).r - arcInfo(S, e).r) || 1; }
+    const extra = { k, grp: gid }; if (e.t !== 'circle') { if (ownEnds[ne.a]) extra.fa = true; if (ownEnds[ne.b]) extra.fb = true; }
+    const c = S.addCon(e === pr ? 'ofs' : 'ofsm', [cid, e.id], dist, extra); if (e === pr) { primary = c; if (e.t === 'arc' || e.t === 'circle') c.angle = Math.PI / 4; if (consumed.size) c.cs = [...consumed]; } });
+  // teget iliskileri kopyalanir (teget birlesimde 'ofs' tek basina uc konumunu belirlemez: cift kok)
+  const tanDone = new Set(); const tanAt = (e, end) => { const p = S.pts[e[end]];
+    if (e.t === 'line') { const q = S.pts[e[end === 'a' ? 'b' : 'a']]; const L = hyp(p.x - q.x, p.y - q.y) || 1; return { x: (p.x - q.x) / L, y: (p.y - q.y) / L }; }
+    const A = arcInfo(S, e), th = end === 'a' ? A.a0 : A.a0 + A.sw, t = { x: -Math.sin(th), y: Math.cos(th) }; return end === 'a' ? { x: -t.x, y: -t.y } : t; };
+  items.forEach(e1 => items.forEach(e2 => { if (e1.id >= e2.id || e1.t === 'circle' || e2.t === 'circle' || !created[e1.id] || !created[e2.id]) return;
+    for (const w1 of ['a', 'b']) for (const w2 of ['a', 'b']) { if (f(e1[w1]) !== f(e2[w2])) continue;
+      const t1 = tanAt(e1, w1), t2 = tanAt(e2, w2); const dot = t1.x * (-t2.x) + t1.y * (-t2.y);   // dis dogrultular: devam ediyorsa t1 = -t2'nin dis yonu
+      if (Math.abs(t1.x * t2.y - t1.y * t2.x) > 1e-4) continue;   // teget degil
+      const key = e1.id + '|' + e2.id; if (tanDone.has(key)) continue; tanDone.add(key);
+      let mode = 'ext'; if (e1.t === 'arc' && e2.t === 'arc') { const p = S.pts[e1[w1]], c1 = arcInfo(S, e1), c2 = arcInfo(S, e2); const s1 = Math.sign(t1.x * (c1.cy - p.y) - t1.y * (c1.cx - p.x)), s2 = Math.sign(t1.x * (c2.cy - p.y) - t1.y * (c2.cx - p.x)); mode = s1 === s2 ? 'int' : 'ext'; }
+      S.addCon('tan', [created[e1.id], created[e2.id]], undefined, { mode }); } }));
+  S.cons.slice().forEach(k => { if (k.t === 'tan' && k.refs.every(r => created[r]) && !tanDone.has(k.refs[0] + '|' + k.refs[1]) && !tanDone.has(k.refs[1] + '|' + k.refs[0])) S.addCon('tan', k.refs.map(r => created[r]), undefined, { mode: k.mode }); });
   // 5) gecerlilik: ofset egrileri kaynaktan 'dist'ten yakin olmamali (kendini kesen / oyan ofset)
   const tol = Math.max(0.01, dist * 0.01); let gouge = false;
   items.forEach(s => { const cid = created[s.id]; if (!cid || gouge) return; const ce = S.ents[cid];
@@ -7330,7 +7443,7 @@ function fromContour(S, start, els) {
   return true;
 }
 
-const API = { looseEnds, addPolygon, circPattern, purgeDangling, degenerateIds, Sketch, solve, analyze, rankOf, refreshRefs, addConChecked, setDimValue, removeCon, deleteEntity, relationsFor, applyRelation, addRect, addSlot, fillet, chamfer, trim, extend, offsetEntities, mirrorEntities, moveEntities, connectedChain, extractProfile, fromContour, arcInfo, lineInfo, paramOn, pointAt, distToEnt, curveIntersect, inRange, paramRange, coinGroups, fixedPoints, isDim, snapshotPts, restorePts, mod2pi, endpointNear, findCorner };
+const API = { looseEnds, ofsValid, getLastErr: () => lastErr, addPolygon, circPattern, purgeDangling, degenerateIds, Sketch, solve, analyze, rankOf, refreshRefs, addConChecked, setDimValue, removeCon, deleteEntity, relationsFor, applyRelation, addRect, addSlot, fillet, chamfer, trim, extend, offsetEntities, mirrorEntities, moveEntities, connectedChain, extractProfile, fromContour, arcInfo, lineInfo, paramOn, pointAt, distToEnt, curveIntersect, inRange, paramRange, coinGroups, fixedPoints, isDim, snapshotPts, restorePts, mod2pi, endpointNear, findCorner };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.SK = API;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -7349,7 +7462,7 @@ const V = { sc: 12, ox: 300, oy: 300, w: 600, h: 400, dpr: 1 };
 const opt = { snap: true, showRel: true, dia: true, grid: false, multi: false };
 const st = { tool: 'select', sel: [], hover: null, snap: null, mouse: { x: 0, y: 0 }, t: null, drag: null, box: null, over: false, editDim: null };
 const dimBoxes = [], relBoxes = []; let dimNoBox = false;
-const REL_NAME = { coin: 'Çakışık', hor: 'Yatay', ver: 'Dikey', ponent: 'Üzerinde', mid: 'Orta Nokta', par: 'Paralel', perp: 'Dik', eqlen: 'Eşit Uzunluk', eqrad: 'Eşit Yarıçap', col: 'Doğrusal', conc: 'Eş Merkezli', tan: 'Teğet', sym: 'Simetrik', fix: 'Sabit', dist: 'Mesafe', hdist: 'Yatay Mesafe', vdist: 'Düşey Mesafe', rad: 'Yarıçap', ang: 'Açı', pldist: 'Dik Mesafe', rot: 'Dairesel Çoğaltma' };
+const REL_NAME = { coin: 'Çakışık', hor: 'Yatay', ver: 'Dikey', ponent: 'Üzerinde', mid: 'Orta Nokta', par: 'Paralel', perp: 'Dik', eqlen: 'Eşit Uzunluk', eqrad: 'Eşit Yarıçap', col: 'Doğrusal', conc: 'Eş Merkezli', tan: 'Teğet', sym: 'Simetrik', fix: 'Sabit', dist: 'Mesafe', hdist: 'Yatay Mesafe', vdist: 'Düşey Mesafe', rad: 'Yarıçap', ang: 'Açı', pldist: 'Dik Mesafe', rot: 'Dairesel Çoğaltma', ofs: 'Ofset Mesafesi', ofsm: 'Ofset (kaynağa bağlı)', asw: 'Yay Açısı' };
 const REL_GLYPH = { hor: 'H', ver: 'V', par: '∥', perp: '⊥', eqlen: '=', eqrad: '=', col: '∕', conc: '◎', tan: 'T', mid: 'M', sym: '⇋', fix: '⚓', ponent: '•' };
 const toS = (x, y) => ({ x: V.ox + x * V.sc, y: V.oy - y * V.sc });
 const toW = (sx, sy) => ({ x: (sx - V.ox) / V.sc, y: (V.oy - sy) / V.sc });
@@ -7366,19 +7479,26 @@ function pushHist(before) { hist.push(before); if (hist.length > 120) hist.shift
 function refreshAfter(save) { st.sel = st.sel.filter(exists); const r = K.solve(S, null); AN = K.analyze(S); AN.conflict = !r.ok; if (save !== false) autosave(); updateStatus(); renderPM(); draw(); }
 // tx: degisiklik ver; false/ok:false donerse geri al
 function tx(fn, quiet) {
-  const before = snapshot(); let r; const deg0 = K.degenerateIds(S); const wasOk = !AN.conflict;
+  const before = snapshot(); let r; const deg0 = K.degenerateIds(S); const wasOk = !AN.conflict; sanitizeView(); const bad0 = Object.values(S.pts).filter(p => !isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1e5 || Math.abs(p.y) > 1e5).length;
   try { r = fn(); } catch (e) { console.error(e); S.restore(before); toast('İşlem yapılamadı: ' + e.message); refreshAfter(false); return false; }
   if (r === false || (r && r.ok === false)) { S.restore(before); if (r && r.err && !quiet) toast(r.err); refreshAfter(false); return false; }
   K.purgeDangling(S); const rs = K.solve(S, null);
-  if ((wasOk && !rs.ok) || Object.values(S.pts).some(p => !isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1e5 || Math.abs(p.y) > 1e5)) { S.restore(before); if (!quiet) toast('İşlem mevcut ilişkilerle çelişiyor / çözülemedi, iptal edildi'); refreshAfter(false); return false; }
+  const badPts = () => Object.values(S.pts).filter(p => !isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1e5 || Math.abs(p.y) > 1e5).length;
+  const bad1 = badPts();
+  if ((wasOk && !rs.ok) || bad1 > bad0) {
+    S.restore(before); if (!quiet) toast(!isFinite(V.sc) || !isFinite(V.ox) || !isFinite(V.oy) ? 'Görünüm bozuldu, yeniden sığdırıldı — tekrar deneyin' : (bad1 > bad0 ? 'İşlem geçersiz koordinat üretti, iptal edildi' : 'İşlem mevcut ilişkilerle çelişiyor / çözülemedi, iptal edildi'));
+    if (!isFinite(V.sc) || !isFinite(V.ox) || !isFinite(V.oy)) fit();
+    if (++txFails >= 2 && repairSketch(S)) { txFails = 0; toast('Eskizdeki bozuk veri onarıldı — tekrar deneyin', true); }   // üst üste başarısız: kayıtlı eskiz bozuk olabilir
+    refreshAfter(false); return false; }
   if (K.degenerateIds(S).some(k => deg0.indexOf(k) < 0)) { S.restore(before); if (!quiet) toast('İşlem bir elemanı (0.01 mm altında) sıfır boyuta indirirdi, iptal edildi'); refreshAfter(false); return false; }
-  pushHist(before); refreshAfter(); return r === undefined ? true : r;
+  txFails = 0; pushHist(before); refreshAfter(); return r === undefined ? true : r;
 }
+let txFails = 0;
 function undo() { if (!hist.length) return; redoS.push(snapshot()); S.restore(hist.pop()); st.sel = st.sel.filter(exists); cancelTool(); refreshAfter(); }
 function redo() { if (!redoS.length) return; hist.push(snapshot()); S.restore(redoS.pop()); st.sel = st.sel.filter(exists); cancelTool(); refreshAfter(); }
 const exists = r => r[0] === 'p' ? !!S.pts[r] : r[0] === 'e' ? !!S.ents[r] : r[0] === 'c' ? S.cons.some(c => c.id === r) : r[0] === 'd' ? S.cons.some(c => c.id === r.slice(1)) : false;
 function autosave() { try { localStorage.setItem('knt_sketch_v1', S.json()); } catch (e) {} }
-function autoload() { try { const j = localStorage.getItem('knt_sketch_v1'); if (j) { S = K.Sketch.fromJSON(j); } } catch (e) {} }
+function autoload() { try { const j = localStorage.getItem('knt_sketch_v1'); if (j) { S = K.Sketch.fromJSON(j); if (repairSketch(S)) { try { setTimeout(() => toast('Kayıtlı eskizde bozuk veri vardı, düzeltildi', true), 600); } catch (e2) { } } } } catch (e) { S = new K.Sketch(); } }
 
 /* ---------- gorunum ---------- */
 function resize() {
@@ -7399,7 +7519,15 @@ function fit() {
   V.sc = Math.max(1, Math.min((V.w * 0.8) / w, (V.h * 0.75) / h, 200));
   V.ox = V.w / 2 - ((x0 + x1) / 2) * V.sc; V.oy = V.h / 2 + ((y0 + y1) / 2) * V.sc; draw();
 }
-function zoomAt(f, sx, sy) { const w = toW(sx, sy); V.sc = Math.max(0.5, Math.min(V.sc * f, 3000)); V.ox = sx - w.x * V.sc; V.oy = sy + w.y * V.sc; draw(); }
+let _sanV = false;
+function sanitizeView() { if (_sanV) return false; if (!isFinite(V.sc) || V.sc <= 0 || !isFinite(V.ox) || !isFinite(V.oy)) { _sanV = true; try { V.sc = 14; V.ox = V.w * 0.72; V.oy = V.h * 0.62; fit(); if (!isFinite(V.sc) || !isFinite(V.ox) || !isFinite(V.oy)) { V.sc = 14; V.ox = V.w * 0.72; V.oy = V.h * 0.62; } } catch (e) { } finally { _sanV = false; } return true; } return false; }
+function repairSketch(T) {   // bozuk (NaN/sonsuz/dev) koordinatlı nokta ve eksik referanslı eleman temizliği; düzeltme yapıldıysa true
+  let n = 0;
+  for (const id in T.pts) { const p = T.pts[id]; if (!p || !isFinite(p.x) || !isFinite(p.y) || Math.abs(p.x) > 1e5 || Math.abs(p.y) > 1e5) { if (p) { p.x = 0; p.y = 0; } else delete T.pts[id]; n++; } }
+  for (const id in T.ents) { const e = T.ents[id]; if (e.ax) continue; if (T.entPts(e).some(q => !T.pts[q])) { delete T.ents[id]; n++; } }
+  n += K.purgeDangling(T); T.normSeq(); return n > 0;
+}
+function zoomAt(f, sx, sy) { if (!isFinite(f) || f <= 0) return; sanitizeView(); const w = toW(sx, sy); V.sc = Math.max(0.5, Math.min(V.sc * f, 3000)); V.ox = sx - w.x * V.sc; V.oy = sy + w.y * V.sc; draw(); }
 
 /* ---------- renk / varlik durumu ---------- */
 function entColor(e) {
@@ -7504,6 +7632,7 @@ function snapAt(sx, sy, o) {
 
 /* ---------- cizim ---------- */
 function draw() {
+  sanitizeView();
   ctx.setTransform(V.dpr, 0, 0, V.dpr, 0, 0); ctx.clearRect(0, 0, V.w, V.h);
   dimBoxes.length = 0; relBoxes.length = 0;
   drawGrid(); drawAxes();
@@ -7641,6 +7770,13 @@ function dimGeom(c, mouse) {   // cizim icin gerekli noktalar (ekran)
   if (c.t === 'pldist') {
     const p = P(c.refs[0]), e = S.ents[c.refs[1]]; if (!p || !e) return null; const L = K.lineInfo(S, e); const t = ((p.x - L.ax) * L.dx + (p.y - L.ay) * L.dy) / (L.len * L.len); const f = { x: L.ax + L.dx * t, y: L.ay + L.dy * t };
     const a = toS(p.x, p.y), b = toS(f.x, f.y); g.l1 = a; g.l2 = b; g.ext = [[b, toS(L.ax + L.dx * t, L.ay + L.dy * t)]]; g.tx = (a.x + b.x) / 2 + 14; g.ty = (a.y + b.y) / 2; g.ang = Math.atan2(b.y - a.y, b.x - a.x); g.perp = true; return g;
+  }
+  if (c.t === 'ofs') {   // ofset mesafesi: yeni eleman ile kaynağı arasında (çizgide dik, yayda radyal)
+    const ne = S.ents[c.refs[0]], se = S.ents[c.refs[1]]; if (!ne || !se) return null; let a, b;
+    if (ne.t === 'line' && se.t === 'line') { const N = K.lineInfo(S, ne), Sx = K.lineInfo(S, se); const m = { x: N.ax + N.dx / 2, y: N.ay + N.dy / 2 }; const t = ((m.x - Sx.ax) * Sx.dx + (m.y - Sx.ay) * Sx.dy) / (Sx.len * Sx.len); a = toS(Sx.ax + Sx.dx * t, Sx.ay + Sx.dy * t); b = toS(m.x, m.y); }
+    else if (ne.t !== 'line' && se.t !== 'line') { const An = K.arcInfo(S, ne), As = K.arcInfo(S, se); let ang = c.angle !== undefined ? c.angle : Math.PI / 4; if (ne.t === 'arc') { const q = An.a0 + An.sw / 2; if (c.angle === undefined) ang = q; } const ux = Math.cos(ang), uy = Math.sin(ang); a = toS(As.cx + As.r * ux, As.cy + As.r * uy); b = toS(An.cx + An.r * ux, An.cy + An.r * uy); }
+    else return null;
+    g.l1 = a; g.l2 = b; g.ext = []; g.tx = (a.x + b.x) / 2 + 14; g.ty = (a.y + b.y) / 2 - 8; g.ang = Math.atan2(b.y - a.y, b.x - a.x); g.perp = true; return g;
   }
   if (c.t === 'rad') {
     const e = S.ents[c.refs[0]]; if (!e) return null; const A = K.arcInfo(S, e); const ang = c.angle !== undefined ? c.angle : Math.PI / 4;
@@ -8046,12 +8182,12 @@ TOOLS.dim = {
   },
   draw() { const d = st.t.d; if (!d.sel || !d.sel.length) return; const cand = dimCandidate(d.sel, toW(st.mouse.x, st.mouse.y)); if (!cand) return; const g = dimGeom(Object.assign({ id: 'tmp' }, cand)); if (g) { ctx.globalAlpha = .75; dimNoBox = true; drawDimGeom(g); dimNoBox = false; ctx.globalAlpha = 1; } }
 };
-const labelFor = c => c.t === 'rad' ? (c.dia ? 'Çap Ø' : 'Yarıçap R') : c.t === 'ang' ? 'Açı °' : c.t === 'asw' ? 'Yay açısı °' : c.t === 'hdist' ? 'Yatay (Z)' : c.t === 'vdist' ? (c.dia ? 'Çap Ø' : 'Düşey') : c.t === 'pldist' ? 'Dik mesafe' : 'Mesafe';
+const labelFor = c => c.t === 'rad' ? (c.dia ? 'Çap Ø' : 'Yarıçap R') : c.t === 'ang' ? 'Açı °' : c.t === 'asw' ? 'Yay açısı °' : c.t === 'hdist' ? 'Yatay (Z)' : c.t === 'vdist' ? (c.dia ? 'Çap Ø' : 'Düşey') : c.t === 'pldist' ? 'Dik mesafe' : c.t === 'ofs' ? 'Ofset mesafesi' : 'Mesafe';
 function openEditExisting(cid) {
   const c = S.cons.find(k => k.id === cid); if (!c) return; const g = dimGeom(c); const pos = g ? { x: g.tx, y: g.ty } : { x: 200, y: 200 };
   if (c.ref) { toast('Referans ölçü: değeri geometriden hesaplanır, değiştirilemez (sağ panelden silebilirsiniz)', true); return; }
   openDimEdit(labelFor(c), dimValueToUser(c), val => {
-    const nv = dimValueFromUser(c, val); const ok = tx(() => { if (!K.setDimValue(S, c, nv)) return { ok: false, err: 'Bu değer diğer ilişkilerle çelişiyor' }; return true; }); if (ok) toast('Ölçü güncellendi', true);
+    const nv = dimValueFromUser(c, val); const ok = tx(() => { if (!K.setDimValue(S, c, nv)) return { ok: false, err: K.getLastErr() || 'Bu değer diğer ilişkilerle çelişiyor' }; return true; }); if (ok) toast('Ölçü güncellendi', true);
   }, pos, isSignedDim(c));
 }
 
@@ -8289,7 +8425,7 @@ function selectionPM(sel) {
       if (!e.ax) h += '<label class="pm-chk"><input type="checkbox" data-o="ent-con" ' + (e.con ? 'checked' : '') + '>Yapı geometrisi (konturda kullanılmaz)</label>';
     } else if (r[0] === 'd') { const c = S.cons.find(k => k.id === r.slice(1)); if (c) {
       h += field(labelFor(c) + (c.ref ? ' (referans)' : ''), 'dim-val', fmt(dimValueToUser(c), 4), (c.t === 'ang' || c.t === 'asw') ? '°' : 'mm').replace('data-f', c.ref ? 'readonly data-x' : 'data-f');
-      h += '<label class="pm-chk"><input type="checkbox" data-o="dim-ref" data-id="' + c.id + '" ' + (c.ref ? 'checked' : '') + '>Referans ölçü (geometriyi sürmez, sadece gösterir)</label>'; } }
+      if (c.t !== 'ofs') h += '<label class="pm-chk"><input type="checkbox" data-o="dim-ref" data-id="' + c.id + '" ' + (c.ref ? 'checked' : '') + '>Referans ölçü (geometriyi sürmez, sadece gösterir)</label>'; else h += '<div class="pm-info">Bu ölçü ofset elemanlarını kaynağa bağlar: kaynak değişince ofset takip eder. Ölçüyü silmek bağı çözer.</div>'; } }
   }
   // iliski listesi
   const rels = S.cons.filter(c => sel.some(r => c.refs.includes(r) || (r[0] === 'e' && S.entPts(r).some(p => c.refs.includes(p) && c.t !== 'coin' && false)) || r === c.id || r === 'd' + c.id));
@@ -8312,14 +8448,14 @@ function applyField(f, raw) {
   if (f === 'o-mvDz') { OPTS.mvDz = String(raw).trim(); return; } if (f === 'o-mvDr') { OPTS.mvDr = String(raw).trim(); return; } if (f === 'o-mvN') { OPTS.mvN = Math.max(1, Math.min(200, Math.round(v))); return; }
   if (f === 'pt-z' || f === 'pt-d') {
     const x = f === 'pt-z'; const t = x ? 'hdist' : 'vdist'; const nv = x ? v : v / 2; const ex = findDim(t, ['p0', r]);
-    tx(() => { if (ex) { return K.setDimValue(S, ex, nv) ? true : { ok: false, err: 'Değer diğer ilişkilerle çelişiyor' }; } const res = K.addConChecked(S, t, ['p0', r], nv, t === 'vdist' ? { dia: true, off: undefined } : {}); if (!res.ok) return { ok: false, err: 'Bu konum ölçüsü mevcut ilişkilerle çelişiyor' }; if (!x) { res.con.off = undefined; } return true; });
+    tx(() => { if (ex) { return K.setDimValue(S, ex, nv) ? true : { ok: false, err: K.getLastErr() || 'Değer diğer ilişkilerle çelişiyor' }; } const res = K.addConChecked(S, t, ['p0', r], nv, t === 'vdist' ? { dia: true, off: undefined } : {}); if (!res.ok) return { ok: false, err: 'Bu konum ölçüsü mevcut ilişkilerle çelişiyor' }; if (!x) { res.con.off = undefined; } return true; });
     return;
   }
-  if (f === 'ln-len') { const e = S.ents[r]; const ex = findDim('dist', [e.a, e.b]); tx(() => { if (ex) return K.setDimValue(S, ex, v) ? true : { ok: false, err: 'Değer çelişiyor' }; const res = K.addConChecked(S, 'dist', [e.a, e.b], v, { off: undefined }); return res.ok ? true : { ok: false, err: 'Uzunluk ölçüsü çelişiyor' }; }); return; }
-  if (f === 'ln-ang') { const e = S.ents[r]; const th = -v * Math.PI / 180; const ex = S.cons.find(c => c.t === 'ang' && c.refs[0] === r && c.refs[1] === 'e0'); tx(() => { if (ex) return K.setDimValue(S, ex, th) ? true : { ok: false, err: 'Açı çelişiyor' }; const res = K.addConChecked(S, 'ang', [r, 'e0'], th, { s1: 1, s2: 1, off: 40 }); return res.ok ? true : { ok: false, err: 'Açı ölçüsü çelişiyor' }; }); return; }
-  if (f === 'ar-sw') { const ex = findDim('asw', [r]); const rv = Math.abs(v) * Math.PI / 180; if (!(rv > 1e-6 && rv <= 2 * Math.PI + 1e-9)) { toast('Yay açısı 0–360° olmalı'); return; } tx(() => { if (ex) return K.setDimValue(S, ex, rv) ? true : { ok: false, err: 'Değer çelişiyor' }; const res = K.addConChecked(S, 'asw', [r], rv, {}); return res.ok ? true : { ok: false, err: 'Yay açısı ölçüsü çelişiyor' }; }); return; }
-  if (f === 'ar-r' || f === 'ar-d') { const rv = f === 'ar-r' ? v : v / 2; const ex = findDim('rad', [r]); tx(() => { if (ex) return K.setDimValue(S, ex, rv) ? true : { ok: false, err: 'Değer çelişiyor' }; const e = S.ents[r]; const A = K.arcInfo(S, e); const res = K.addConChecked(S, 'rad', [r], rv, { dia: f === 'ar-d', angle: Math.PI / 4 }); return res.ok ? true : { ok: false, err: 'Yarıçap ölçüsü çelişiyor' }; }); return; }
-  if (f === 'dim-val') { const c = S.cons.find(k => k.id === r.slice(1)); if (c && c.ref) { toast('Referans ölçü değiştirilemez', true); return; } if (c) tx(() => K.setDimValue(S, c, dimValueFromUser(c, Math.abs(v))) ? true : { ok: false, err: 'Değer çelişiyor' }); }
+  if (f === 'ln-len') { const e = S.ents[r]; const ex = findDim('dist', [e.a, e.b]); tx(() => { if (ex) return K.setDimValue(S, ex, v) ? true : { ok: false, err: K.getLastErr() || 'Değer çelişiyor' }; const res = K.addConChecked(S, 'dist', [e.a, e.b], v, { off: undefined }); return res.ok ? true : { ok: false, err: 'Uzunluk ölçüsü çelişiyor' }; }); return; }
+  if (f === 'ln-ang') { const e = S.ents[r]; const th = -v * Math.PI / 180; const ex = S.cons.find(c => c.t === 'ang' && c.refs[0] === r && c.refs[1] === 'e0'); tx(() => { if (ex) return K.setDimValue(S, ex, th) ? true : { ok: false, err: K.getLastErr() || 'Açı çelişiyor' }; const res = K.addConChecked(S, 'ang', [r, 'e0'], th, { s1: 1, s2: 1, off: 40 }); return res.ok ? true : { ok: false, err: 'Açı ölçüsü çelişiyor' }; }); return; }
+  if (f === 'ar-sw') { const ex = findDim('asw', [r]); const rv = Math.abs(v) * Math.PI / 180; if (!(rv > 1e-6 && rv <= 2 * Math.PI + 1e-9)) { toast('Yay açısı 0–360° olmalı'); return; } tx(() => { if (ex) return K.setDimValue(S, ex, rv) ? true : { ok: false, err: K.getLastErr() || 'Değer çelişiyor' }; const res = K.addConChecked(S, 'asw', [r], rv, {}); return res.ok ? true : { ok: false, err: 'Yay açısı ölçüsü çelişiyor' }; }); return; }
+  if (f === 'ar-r' || f === 'ar-d') { const rv = f === 'ar-r' ? v : v / 2; const ex = findDim('rad', [r]); tx(() => { if (ex) return K.setDimValue(S, ex, rv) ? true : { ok: false, err: K.getLastErr() || 'Değer çelişiyor' }; const e = S.ents[r]; const A = K.arcInfo(S, e); const res = K.addConChecked(S, 'rad', [r], rv, { dia: f === 'ar-d', angle: Math.PI / 4 }); return res.ok ? true : { ok: false, err: 'Yarıçap ölçüsü çelişiyor' }; }); return; }
+  if (f === 'dim-val') { const c = S.cons.find(k => k.id === r.slice(1)); if (c && c.ref) { toast('Referans ölçü değiştirilemez', true); return; } if (c) tx(() => K.setDimValue(S, c, dimValueFromUser(c, Math.abs(v))) ? true : { ok: false, err: K.getLastErr() || 'Değer çelişiyor' }); }
 }
 $('sk-pm').addEventListener('change', e => {
   const t = e.target; if (t.dataset.f) { applyField(t.dataset.f, t.value); return; }
@@ -8639,6 +8775,32 @@ const SELFTESTS = [
       H.chk('yutulan yay için yeni yay yok', q2.ok && arcsLeft === 0, q2.err);
       H.chk('çözüm tam çözülebilir', K.solve(S, null).ok, '');
       const huge = K.offsetEntities(S.clone(), all2, 500, hit); H.chk('çok büyük ofset mantıklı sonuç ya da net hata', huge.ok || typeof huge.err === 'string', '');
+  } },
+  { title: 'Çizim kaynaklı (ilişkisel) ofset: kaynağı ve mesafeyi takip eder', run(H) {
+      S = new K.Sketch(); K.addRect(S, 0, 0, 40, 20); K.solve(S, null);
+      const src = Object.values(S.ents).filter(e => e.t === 'line' && !e.ax).map(e => e.id); H.chk('dikdörtgen 4 kenar', src.length === 4, src.length);
+      const bot = S.ents[src.find(id => { const a = S.pts[S.ents[id].a], b = S.pts[S.ents[id].b]; return Math.abs(a.y - b.y) < 1e-9 && Math.abs(a.y) < 1e-9; })];
+      const dm = K.addConChecked(S, 'dist', [bot.a, bot.b], 40, {}); H.chk('alt kenara uzunluk ölçüsü', dm.ok, '');
+      const r = K.offsetEntities(S, src, 3, 1); const flip = !r.ok ? K.offsetEntities(S, src, 3, -1) : r; const rr = r.ok ? r : flip; H.chk('ofset oluştu', rr.ok, rr.err);
+      const prim = S.cons.find(c => c.t === 'ofs'); H.chk('ofset ölçüsü (ofs) var ve ölçü sayılır', !!prim && K.isDim(prim), '');
+      const minD = () => { let m = 1e9; rr.created.forEach(id => { const e = S.ents[id]; if (!e) return; for (let i = 0; i <= 12; i++) { const a = S.pts[e.a], b = S.pts[e.b]; const x = a.x + (b.x - a.x) * i / 12, y = a.y + (b.y - a.y) * i / 12; src.forEach(sid => { m = Math.min(m, K.distToEnt(S, S.ents[sid], x, y).d); }); } }); return m; };
+      H.chk('başlangıçta mesafe 3', near(minD(), 3, 2e-3), minD());
+      H.chk('çözüm tam tanımlı (serbestlik 0 ya da kaynak kadar)', K.solve(S, null).ok, '');
+      const dm2 = S.cons.find(c => c.t === 'dist'); const ok1 = K.setDimValue(S, dm2, 60); H.chk('kaynak uzunluğu 40→60 kabul', ok1, K.getLastErr());
+      H.chk('ofset kaynağı takip etti (mesafe hâlâ 3)', near(minD(), 3, 5e-3), minD());
+      const ok2 = K.setDimValue(S, prim, 5); H.chk('ofset mesafesi 3→5 kabul', ok2, K.getLastErr());
+      H.chk('tüm ofset kenarları 5 mm', near(minD(), 5, 5e-3), minD());
+      K.removeCon(S, S.cons.find(c => c.t === 'ofs').id);
+      H.chk('ofset ölçüsü silinince bağ çözülür', !S.cons.some(c => c.t === 'ofs' || c.t === 'ofsm'), S.cons.filter(c => c.t === 'ofs' || c.t === 'ofsm').length);
+  } },
+  { title: 'Kimlik sayacı (seq) eski/eksik olsa da çizim yapılabilir; bozuk veri onarılır', run(H) {
+      const ex = SK_EXAMPLES.find(x => x.name === 'Kademeli mil (tornalama profili)') || SK_EXAMPLES[0]; const T = JSON.parse(JSON.stringify(ex.data)); T.seq = 1;
+      S = K.Sketch.fromJSON(T); const n0 = Object.keys(S.pts).length; const a = S.addPoint(5, 5), b = S.addPoint(9, 9);
+      H.chk('yeni noktalar mevcut olanların üzerine yazmadı', Object.keys(S.pts).length === n0 + 2 && a !== b, Object.keys(S.pts).length + '/' + n0);
+      K.solve(S, null); refreshAfter(false); const e0 = Object.keys(S.ents).length; H.tool('line'); H.click(-80, 35); H.click(-70, 38); H.tool('select');
+      H.chk('bu eskizde çizgi çizilebildi', Object.keys(S.ents).length > e0, Object.keys(S.ents).length + '/' + e0);
+      const bad = K.Sketch.fromJSON(JSON.parse(JSON.stringify(ex.data))); const pk = Object.keys(bad.pts).find(k => !bad.pts[k].hid); bad.pts[pk].x = NaN; delete bad.seq;
+      H.chk('bozuk koordinat tespit edilip onarıldı', repairSketch(bad) && isFinite(bad.pts[pk].x), '');
   } },
   { title: 'Uç kontrolü: açık / bağsız uç / boşluk', run(H) {
       S = new K.Sketch(); const a = S.addPoint(0, 0), b = S.addPoint(30, 0), c = S.addPoint(30, 0), d = S.addPoint(30, 20), e = S.addPoint(30, 20.1), f = S.addPoint(0, 20.1);
