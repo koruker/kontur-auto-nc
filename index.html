@@ -552,6 +552,36 @@ td.type-PAH{color:#ffff00;}
 }
 .menu-item-btn:hover { background:#1a1d22;border-color:#2a2d33; }
 
+
+#cy-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9200;font-family:'Courier New',monospace;}
+#cy-ov .cy-box{background:var(--panel);border:1px solid var(--accent);border-radius:8px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96%;max-width:680px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;}
+#cy-ov .cy-h{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+#cy-ov .cy-h b{color:var(--accent);font-size:13px;}
+#cy-ov .cy-h button{background:none;border:none;color:#777;cursor:pointer;font-size:16px;}
+#cy-ov .cy-body{overflow-y:auto;padding:8px 14px;flex:1;}
+#cy-ov .cy-sec{color:#666;font-size:10px;margin:8px 0 4px;letter-spacing:1px;}
+#cy-ov .cy-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+#cy-ov .cy-f{display:flex;flex-direction:column;gap:2px;font-size:10px;color:#9aa;min-width:0;}
+#cy-ov .cy-f.wide{grid-column:1/-1;}
+#cy-ov .cy-f input[type=number],#cy-ov .cy-f input[type=text],#cy-ov .cy-f select{background:#1e2228;border:1px solid #333;color:#00ff88;padding:4px 6px;font-size:12px;border-radius:3px;font-family:inherit;width:100%;}
+#cy-ov .cy-f select{color:#e8e8e8;}
+#cy-ov .cy-chk{flex-direction:row;align-items:center;gap:6px;color:#ccc;}
+#cy-ov .cy-types{display:flex;flex-wrap:wrap;gap:4px;}
+#cy-ov .cy-tb{padding:5px 9px;background:#111;border:1px solid #333;color:#777;border-radius:4px;font-family:inherit;font-size:11px;cursor:pointer;}
+#cy-ov .cy-tb.on{background:#0d2040;border-color:var(--accent);color:var(--accent);}
+#cy-ov .cy-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border:1px solid #23272d;border-radius:4px;margin-bottom:3px;font-size:11px;}
+#cy-ov .cy-row.cur{border-color:var(--orange);}
+#cy-ov .cy-row b{color:#ddd;} #cy-ov .cy-row i{color:#666;font-style:normal;flex:1;}
+#cy-ov .cy-row button{background:#1e2228;border:1px solid #333;color:#aaa;border-radius:3px;cursor:pointer;margin-left:3px;font-size:11px;padding:1px 6px;}
+#cy-ov .cy-empty{color:#555;font-size:11px;padding:4px;}
+#cy-ov pre#cy-prev{background:#030505;border:1px solid #1a2a1a;color:#00ff44;font-size:11px;padding:6px 8px;border-radius:4px;white-space:pre-wrap;margin:0;}
+#cy-ov #cy-warn .w{color:#ffaa33;font-size:10px;margin-top:3px;} #cy-ov #cy-warn .i{color:#778;font-size:10px;margin-top:3px;}
+#cy-ov .cy-ft{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
+#cy-ov .cy-ft button{padding:8px 12px;border-radius:5px;font-family:inherit;font-size:11px;cursor:pointer;border:1px solid #333;background:#1a1a1a;color:#888;}
+#cy-ov .cy-ft #cy-add{flex:1;background:linear-gradient(135deg,#0a2a4a,#0a5a9a);border-color:var(--accent);color:#fff;font-weight:bold;}
+#cy-ov #cy-stock{grid-template-columns:repeat(4,1fr);}
+@media (max-width:520px){#cy-ov .cy-grid{grid-template-columns:1fr 1fr;}#cy-ov #cy-stock{grid-template-columns:1fr 1fr;}}
+@media (max-height:460px){#cy-ov .cy-box{max-height:99vh;}#cy-ov .cy-h{padding:5px 12px;}#cy-ov .cy-body{padding:4px 12px;}#cy-ov .cy-sec{margin:5px 0 2px;}#cy-ov .cy-ft{padding:5px 12px;}#cy-ov .cy-f input[type=number],#cy-ov .cy-f input[type=text],#cy-ov .cy-f select{padding:2px 5px;}#cy-ov .cy-empty{display:none;}}
 </style>
 </head>
 <body>
@@ -560,12 +590,12 @@ td.type-PAH{color:#ffff00;}
 
 <!-- ÖĞRETİCİ OVERLAY -->
 <style>#ver-badge{display:none;position:fixed;right:5px;bottom:3px;font:10px/1 sans-serif;color:#7dd3fc;opacity:.6;z-index:50;pointer-events:none}@media (max-width:760px){#ver-badge{display:block}}</style>
-<div id="ver-badge"><span class="app-ver">v3.2</span></div>
+<div id="ver-badge"><span class="app-ver">v3.5</span></div>
 <div id="tutorial-overlay" style="display:none">
   <div id="tutorial-box">
     <div id="tutorial-header">
       <div>
-        <div class="logo">KONTUR AUTO NC <span class="app-ver" style="font-size:.6em;opacity:.7">v3.2</span></div>
+        <div class="logo">KONTUR AUTO NC <span class="app-ver" style="font-size:.6em;opacity:.7">v3.5</span></div>
         <div class="sub">Başlangıç Rehberi</div>
       </div>
     </div>
@@ -697,7 +727,7 @@ td.type-PAH{color:#ffff00;}
     <button id="dim-mode-toggle" onclick="toggleDimMode()" title="Ölçülendirme Modu">📐 ÖLÇ</button>
   </div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;">
-    <span style="color:#00aaff;font-weight:bold;font-size:clamp(10px,1.2vw,16px);letter-spacing:2px;white-space:nowrap;">KONTUR AUTO NC <span class="app-ver" style="font-size:0.7em;letter-spacing:0;font-weight:normal;color:#7dd3fc;opacity:.85">v3.2</span></span>
+    <span style="color:#00aaff;font-weight:bold;font-size:clamp(10px,1.2vw,16px);letter-spacing:2px;white-space:nowrap;">KONTUR AUTO NC <span class="app-ver" style="font-size:0.7em;letter-spacing:0;font-weight:normal;color:#7dd3fc;opacity:.85">v3.5</span></span>
   </div>
   <div id="tabs" style="display:flex;align-items:center;gap:0.3vw;flex-shrink:0;background:transparent;border:none;padding:0;">
     <div style="width:1px;height:16px;background:#2a2d33;margin:0 0.3vw;"></div>
@@ -911,6 +941,7 @@ td.type-PAH{color:#ffff00;}
       <div id="gcodeToolbar">
         <button class="tbtn" id="editBtn" onclick="toggleEdit()">✏ DÜZENLE</button>
         <button class="tbtn" onclick="copyGcode()">⎘ KOPYALA</button>
+        <button class="tbtn" id="cycBtn" onclick="CYC.open()" style="border-color:#ff9500;color:#ff9500;" title="G70–G76 çevrimleri ekle">⚙ ÇEVRİM EKLE<span id="cycBadge"></span></button>
         <button class="tbtn" id="gcodeApplyBtn" onclick="gcodeApplyFromEditor()" style="display:none;border-color:#27ae60;color:#27ae60;" title="Düzenlenen metni nokta listesine işle">↻ UYGULA</button>
         
         <span style="color:#333;font-size:10px;margin-left:auto;margin-right:4px;white-space:nowrap;">KOD SEÇENEĞİ:</span>
@@ -3500,6 +3531,13 @@ function _gc_tipOffset(pt, n, toolR) {
   const sx = n.x / m, sz = n.z / m;
   return { x: pt.x + n.x * toolR - sx * toolR, z: pt.z + n.z * toolR - sz * toolR };
 }
+/* DIS torna, sabit uc yonlu (merkez - (R,R)) kuralina gore teget gecis: uc = pt + n*R*(1 - nx - nz).
+   Cizgi boyunca kayma zararsiz oldugundan yalniz dik bilesen duzeltilir; eksene hizali normalde (1,0)/(0,1) pt'ye esit,
+   egik teget gecislerde eski n/max(|n|) formulunun biraktigi dik sapma (ornek 12.7 derece egimde ~0.14 mm) giderilir. */
+function _gc_tipOffsetFixed(pt, n, toolR) {
+  const f = toolR * (1 - n.x - n.z);
+  return { x: pt.x + n.x * f, z: pt.z + n.z * f };
+}
 let _gc_digits = 3;
 function _gc_fmt(n) {
   let v = parseFloat(n.toFixed(_gc_digits));
@@ -3511,7 +3549,21 @@ function _gc_fmt(n) {
 function _buildGCode(payload) {
   const { prog, tool, spin, speed, feed, retract, toolR, tnrDir, tnrOn, startPoint, elements } = payload;
 
-  let g = `${prog}\n(KONTUR AUTO NC - FANUC UYUMLU)\n`;
+  // IC (delik) torna: ucu -Z ve +X'e bakan kalem = dis tornanin X ekseninde aynasi. Hesap, profil X'te aynalanip
+  // dis torna kuraliyla yapilir (G02<->G03), sonuc geri aynalanir; boylece tum teget/kose/yay formulleri tek yerde dogru kalir.
+  let innerEps = null;
+  if (tnrDir === "inner" && tnrOn && toolR > 0 && startPoint && elements.length && !payload._mir) {
+    const mir = Object.assign({}, payload, {
+      tnrDir: "outer", _exitOnly: true, _mir: true, startPoint: { x: -startPoint.x, z: startPoint.z },
+      elements: elements.map(el => Object.assign({}, el, {
+        type: el.type === "G02" ? "G03" : el.type === "G03" ? "G02" : el.type,
+        to: { x: -el.to.x, z: el.to.z }, _cx: el._cx !== undefined ? -el._cx : undefined
+      }))
+    });
+    innerEps = _buildGCode(mir).map(q => ({ x: -q.x, z: q.z }));
+  }
+
+  let g = `${prog}\n(KONTUR AUTO NC)\n`;
   if (tnrOn && toolR > 0) g += `(TNR TELAFISI AKTIF - R${toolR} ${tnrDir === "outer" ? "DIS" : "IC"} TORNA)\n`;
   g += `G21 G40 G90 G95\n${tool} ${spin} S${speed}\n`;
 
@@ -3533,6 +3585,13 @@ function _buildGCode(payload) {
     return tnrDir === "inner" ? tnrExitPointInner(ptIdx) : tnrExitPointOuter(ptIdx);
   }
 
+  // yayin merkezi (varsa _cx/_cz, yoksa R ve uc noktalardan)
+  function _tnrArcCtr(el, pa, pb) {
+    if (el._cx !== undefined) return { x: el._cx, z: el._cz };
+    const Ra = Math.abs(el.r), dxa = pb.x - pa.x, dza = pb.z - pa.z, La = Math.sqrt(dxa * dxa + dza * dza); if (La < 1e-10 || Ra < 1e-10) return null;
+    const ha = Math.sqrt(Math.max(0, Ra * Ra - (La / 2) ** 2)), sg = el.type === "G02" ? 1 : -1;
+    return { x: (pa.x + pb.x) / 2 + sg * ha * (-dza / La), z: (pa.z + pb.z) / 2 + sg * ha * (dxa / La) };
+  }
   function tnrExitPointOuter(ptIdx) {
     const pt = pts[ptIdx];
     const prev = pts[ptIdx - 1];
@@ -3604,13 +3663,27 @@ function _buildGCode(payload) {
           if (ul > 1e-10) { ex = cxa + ux / ul * Roff - toolR; ez = cza + uz / ul * Roff - toolR; done = true; }
         }
       }
-      if (!done) { const tp = _gc_tipOffset(pt, nInQuick, toolR); ex = tp.x; ez = tp.z; }
+      if (!done) { const tp = _gc_tipOffsetFixed(pt, nInQuick, toolR); ex = tp.x; ez = tp.z; }
     } else {
       const c = _gc_bisectorCenter(bisRef, dIn, dOut, toolR, _gc_outerNormal);
       const sx = (c.x >= bisRef.x - 1e-6) ? 1 : -1;
       const sz = (c.z >= bisRef.z - 1e-6) ? 1 : -1;
       ex = c.x - sx * toolR;
       ez = c.z - sz * toolR;
+      // DUZELTME: duz cizgi -> yay (teget degil) kosede merkez = cizgi ofseti x yay ofset dairesi kesisimi
+      // (eski kisayol yayin baslangic tanjantini dogru sayiyordu).
+      if (!inSkipped && !outSkipped && nextIdx === ptIdx + 1 && prevEl && prevEl.type === "G01" && nextEl && (nextEl.type === "G02" || nextEl.type === "G03") && arcFits(nextEl)) {
+        const C2 = _tnrArcCtr(nextEl, pts[ptIdx], pts[ptIdx + 1]), R2o = nextEl.type === "G02" ? Math.abs(nextEl.r) - toolR : Math.abs(nextEl.r) + toolR;
+        if (C2 && R2o > 1e-9) {
+          const qx = pt.x + nInQuick.x * toolR, qz = pt.z + nInQuick.z * toolR, fx = qx - C2.x, fz = qz - C2.z;
+          const Bq = fx * dIn.x + fz * dIn.z, Cq = fx * fx + fz * fz - R2o * R2o, disc = Bq * Bq - Cq;
+          if (disc >= -1e-9) {
+            const sq = Math.sqrt(Math.max(0, disc)); const gx = c.x, gz = c.z; let best = null, bd = Infinity;
+            [-Bq - sq, -Bq + sq].forEach(t => { const cx2 = qx + dIn.x * t, cz2 = qz + dIn.z * t, dd = Math.hypot(cx2 - gx, cz2 - gz); if (dd < bd) { bd = dd; best = { x: cx2, z: cz2 }; } });
+            if (best) { ex = best.x - toolR; ez = best.z - toolR; }
+          }
+        }
+      }
     }
 
     const curType = elements[ptIdx - 1] ? elements[ptIdx - 1].type : "G01";
@@ -3635,7 +3708,40 @@ function _buildGCode(payload) {
         const nNext = _gc_outerNormal(dNext);
         const x_line = pt.x + nNext.x * toolR;
         const z_sq = R_off * R_off - (x_line - arc_cx) ** 2;
-        if (z_sq > 1e-6) {
+        // DUZELTME: yay -> yay gecisi: merkez = iki ofset dairenin kesisimi
+        let arcArcDone = false;
+        if (nextEl && (nextEl.type === "G02" || nextEl.type === "G03") && arcFits(nextEl) && Math.abs(nextEl.r) > 1e-10 && nextIdx === ptIdx + 1) {
+          const C2 = _tnrArcCtr(nextEl, pts[ptIdx], pts[ptIdx + 1]), R2o = nextEl.type === "G02" ? Math.abs(nextEl.r) - toolR : Math.abs(nextEl.r) + toolR;
+          if (C2 && R2o > 1e-9) {
+            const ddx = C2.x - arc_cx, ddz = C2.z - arc_cz, dd = Math.sqrt(ddx * ddx + ddz * ddz);
+            if (dd > 1e-10) {
+              const aa = (R_off * R_off - R2o * R2o + dd * dd) / (2 * dd), h2 = R_off * R_off - aa * aa;
+              const uxe = pt.x - arc_cx, uze = pt.z - arc_cz, ule = Math.sqrt(uxe * uxe + uze * uze);
+              if (h2 >= -1e-6 && ule > 1e-10) {
+                const hh = Math.sqrt(Math.max(0, h2)), mx = arc_cx + ddx / dd * aa, mz = arc_cz + ddz / dd * aa;
+                const gx = arc_cx + uxe / ule * R_off, gz = arc_cz + uze / ule * R_off; let best = null, bd = Infinity;
+                [[mx - ddz / dd * hh, mz + ddx / dd * hh], [mx + ddz / dd * hh, mz - ddx / dd * hh]].forEach(([cx2, cz2]) => { const q = Math.hypot(cx2 - gx, cz2 - gz); if (q < bd) { bd = q; best = { x: cx2, z: cz2 }; } });
+                if (best) { ex = best.x - toolR; ez = best.z - toolR; arcArcDone = true; }
+              }
+            }
+          }
+        }
+        // DUZELTME: sonraki eleman silindir degilse (yuz, pah, egik cizgi) merkez = ofset daire x ofset dogru kesisimi
+        // (eski formul x = sabit dogru varsayiyordu).
+        let genDone = false;
+        if (!arcArcDone && Math.abs(nNext.x) < 0.9999 && Math.abs(nNext.z) > 1e-4) {
+          const qx = pt.x + nNext.x * toolR, qz = pt.z + nNext.z * toolR, fx = qx - arc_cx, fz = qz - arc_cz;
+          const Bq = fx * dNext.x + fz * dNext.z, Cq = fx * fx + fz * fz - R_off * R_off, disc = Bq * Bq - Cq;
+          const uxe = pt.x - arc_cx, uze = pt.z - arc_cz, ule = Math.sqrt(uxe * uxe + uze * uze);
+          if (disc >= -1e-9 && ule > 1e-10) {
+            const sq = Math.sqrt(Math.max(0, disc)); const gx = arc_cx + uxe / ule * R_off, gz = arc_cz + uze / ule * R_off;
+            let best = null, bd = Infinity;
+            [-Bq - sq, -Bq + sq].forEach(t => { const cx2 = qx + dNext.x * t, cz2 = qz + dNext.z * t, dd = Math.hypot(cx2 - gx, cz2 - gz); if (dd < bd) { bd = dd; best = { x: cx2, z: cz2 }; } });
+            if (best) { ex = best.x - toolR; ez = best.z - toolR; genDone = true; }
+          }
+        }
+        if (arcArcDone || genDone) { /* hesaplandi */ }
+        else if (z_sq > 1e-6) {
           // sqrt isareti arc tipine bagli: G02 (saat yonu) -> arc altinda bitis,
           // G03 (saat tersi) -> arc ustunde bitis
           const zSign = (curType === "G02") ? -1 : 1;
@@ -3651,7 +3757,7 @@ function _buildGCode(payload) {
           // DUZELTME: yayin bitisi sonraki elemana teget: uc = (yay offset merkez noktasi) - (toolR,toolR)
           const ux = pt.x - arc_cx, uz = pt.z - arc_cz, ul = Math.sqrt(ux * ux + uz * uz);
           if (ul > 1e-10) { ex = arc_cx + ux / ul * R_off - toolR; ez = arc_cz + uz / ul * R_off - toolR; }
-          else { const tp = _gc_tipOffset(pt, nNext, toolR); ex = tp.x; ez = tp.z; }
+          else { const tp = _gc_tipOffsetFixed(pt, nNext, toolR); ex = tp.x; ez = tp.z; }
         }
       }
     }
@@ -3659,6 +3765,7 @@ function _buildGCode(payload) {
   }
 
   function tnrExitPointInner(ptIdx) {
+    if (innerEps && innerEps[ptIdx]) return innerEps[ptIdx];
     const pt = pts[ptIdx];
     const prev = pts[ptIdx - 1];
     let nextIdx = ptIdx + 1;
@@ -3766,6 +3873,8 @@ function _buildGCode(payload) {
     return { x: ex, z: ez };
   }
 
+  if (payload._exitOnly) return pts.map((_, i) => tnrExitPoint(i));
+
   let g00x = pts[0].x * 2;
   let g00z = pts[0].z;
   if (tnrOn && toolR > 0 && elements.length > 0) {
@@ -3858,8 +3967,8 @@ function setGcodeOption(opt) {
   generateGCode();
 }
 
-function generateGCode() {
-  const payload = {
+function _gcPayload() {
+  return {
     prog:    getParam('pProg', 'O1000'),
     tool:    getParam('pTool', 'T0101'),
     spin:    getParam('pSpin', 'M03'),
@@ -3877,10 +3986,14 @@ function generateGCode() {
       _cx: el._cx, _cz: el._cz, _ang: el._ang
     }))
   };
-
+}
+function generateGCode() {
+  const payload = _gcPayload();
   try {
     const builder = (_gcodeOption === 'fanuc') ? _buildGCodeFanuc : _buildGCode;
-    document.getElementById('gcodeDisplay').value = builder(payload);
+    let _code = builder(payload);
+    if (window.CYC) _code = window.CYC.apply(_code, payload);
+    document.getElementById('gcodeDisplay').value = _code;
   } catch(e) {
     document.getElementById('gcodeDisplay').value = '(HATA: ' + (e && e.message ? e.message : e) + ')';
   }
@@ -3893,7 +4006,7 @@ function generateGCode() {
 function _buildGCodeFanuc(payload) {
   const { prog, tool, spin, speed, feed, retract, startPoint, elements } = payload;
 
-  let g = `${prog}\n(KONTUR AUTO NC - FANUC UYUMLU)\n`;
+  let g = `${prog}\n(KONTUR AUTO NC)\n`;
   g += `(KOD SECENEGI: FANUC ,A ,R ,C - TNR FANUC TARAFINDA YAPILMALI)\n`;
   g += `G21 G40 G90 G95\n${tool} ${spin} S${speed}\n`;
 
@@ -4160,7 +4273,11 @@ function redraw() {
     }
 
     // offsetPts önce normal hesapla, sonra sışmayan arc'lar için düzelt
+    // Takim merkezi = G-kodun uc noktasi + sabit uc ofseti (G-kodla birebir ayni hesap); uc noktalar eski yaklasik yolu kullanir
+    let gcEps = null; try { if (typeof _buildGCode === 'function') gcEps = _buildGCode(Object.assign({}, _gcPayload(), { _exitOnly: true })); } catch (e) { gcEps = null; }
+    const _shx = tnrDir2 === 'inner' ? -toolR2 : toolR2;
     const offsetPts = allPts.map((pt, i) => {
+      if (gcEps && gcEps.length === allPts.length && i > 0 && i < allPts.length - 1 && gcEps[i] && isFinite(gcEps[i].x) && isFinite(gcEps[i].z)) return { x: gcEps[i].x + _shx, z: gcEps[i].z + toolR2 };
       if (i === 0) {
         const el0 = elements[0];
         const d = el0.type==='G02'||el0.type==='G03' ? arcTangentDir(el0,false) : segDir(allPts[0],allPts[1]);
@@ -5007,7 +5124,7 @@ function resetAll() {
 /* "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"   ÖĞRETİCİ MANTI~I
 "-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-"-" */
 /* SURUM: her teslimde artir. Gorunen metinler (class=app-ver, 3 yer) ayni numarayi tasimali: grep 'class="app-ver"' */
-const APP_VERSION = '3.2';
+const APP_VERSION = '3.5';
 const TUTORIAL_KEY = 'konturAutoNC_tutorialDone_v1';
 let tutorialStep = 0;
 const TUTORIAL_TOTAL = 7;
@@ -5250,6 +5367,7 @@ function gcodeImportSetDir(dir) {
 // I, K = yay merkez offsetleri (alternatif; R yoksa kullanılır)
 // Dönen: { ok, startPoint, elements, warnings }
 function parseGcode(code, toolR, dir) {
+  try { if (window._cycContourOnly) code = window._cycContourOnly(code); } catch (e) { }
   const lines = code.split('\n');
   const warnings = [];
   const pts = []; // {type, x_yari, z, r, fromRapid}
@@ -6300,7 +6418,7 @@ function _refreshInputModeButtons() {
 <!-- ESKIZ -->
 <div id="sk-root" lang="tr">
   <div id="sk-top">
-    <div class="ttl"><span>✎</span><span><b>ESKİZ</b></span><i id="sk-ttl-sub">Kontur eskizi</i><i class="app-ver" style="opacity:.55;font-size:.8em;margin-left:6px">v3.2</i></div>
+    <div class="ttl"><span>✎</span><span><b>ESKİZ</b></span><i id="sk-ttl-sub">Kontur eskizi</i><i class="app-ver" style="opacity:.55;font-size:.8em;margin-left:6px">v3.5</i></div>
     <span class="sp"></span>
     <button class="skbtn sq" id="sk-rail-t" title="Araç şeridini göster/gizle">▤</button>
     <button class="skbtn sq" id="sk-undo" title="Geri al (Ctrl+Z)">↩</button>
@@ -8802,6 +8920,35 @@ const SELFTESTS = [
       const bad = K.Sketch.fromJSON(JSON.parse(JSON.stringify(ex.data))); const pk = Object.keys(bad.pts).find(k => !bad.pts[k].hid); bad.pts[pk].x = NaN; delete bad.seq;
       H.chk('bozuk koordinat tespit edilip onarıldı', repairSketch(bad) && isFinite(bad.pts[pk].x), '');
   } },
+  { title: 'G-kod TNR: içbükey radüs (silindir → R → omuz) hedef Z doğru', run(H) {
+      const mk = (els, tR, st0) => _buildGCode({ prog: 'O1', tool: 'T0101', spin: 'M03', speed: 1200, feed: 0.15, retract: 'X200 Z100', toolR: tR, tnrDir: 'outer', tnrOn: true, startPoint: st0 || { x: 0, z: 0 }, elements: els });
+      const E = (t, x, z, r, c) => Object.assign({ type: t, comp: 'G40', c: 0, r: r || 0, to: { x, z } }, c ? { _cx: c[0], _cz: c[1] } : {});
+      const g = mk([E('G01', 6, 0), E('G01', 6, -17.38), E('G02', 8.62, -20, 2.62, [8.62, -17.38]), E('G01', 12, -20), E('G01', 12, -40), E('G01', 18, -40)], 0.8);
+      H.chk('silindir Z-18.18 (eski hata: Z-17.38)', /\nZ-18\.18\n/.test(g), g.split('\n').slice(5, 10).join(' | '));
+      H.chk('yay hedefi X15.64 Z-20 R1.82', /G02 X15\.64 Z-20 R1\.82/.test(g), '');
+      const g2 = mk([E('G01', 6, 0), E('G03', 9.38, -3.38, 3.38, [6, -3.38]), E('G01', 9.38, -20), E('G01', 15, -20)], 0.8);
+      H.chk('dış kavis (G03) bitişi silindire teğet: Z-3.38−0.8', /G03 X[\d.]+ Z-4\.18 R4\.18/.test(g2), g2.split('\n').slice(5, 9).join(' | '));
+  } },
+  { title: 'Çevrim: G71+G70 / G75 / G76 blokları ve kontur bütünlüğü', run(H) {
+      const E = (t, x, z) => ({ type: t, comp: 'G40', c: 0, r: 0, to: { x, z } });
+      const P = { prog: 'O1', tool: 'T0101', spin: 'M03', speed: 1200, feed: 0.15, retract: 'X200 Z100', toolR: 0, tnrDir: 'outer', tnrOn: false, startPoint: { x: 0, z: 0 },
+        elements: [E('G01', 10, 0), E('G01', 10, -15), E('G01', 15, -25), E('G01', 15, -40)] };
+      const base = _buildGCode(P); const sv = CYC.state();
+      CYC.setState({ stock: { d: 34, zf: 0, len: 60, clr: 2 }, list: [], seq: 1 });
+      const an = CYC.analyze(P); const L = [];
+      const c1 = CYC.defaults('G71', an); c1.id = 'a'; L.push(c1);
+      const c2 = CYC.defaults('G75', an); c2.id = 'b'; c2.sz = -10; c2.tx = 28; c2.gw = 5; c2.tw = 3; c2.q = 2.4; c2.p = 1.5; L.push(c2);
+      const c3 = CYC.defaults('G76', an); c3.id = 'c'; c3.d = 30; c3.pitch = 1.5; c3.sz = 4.5; c3.ez = -40; L.push(c3);
+      const r = CYC.build(base, P, L); const t = r.text;
+      CYC.setState(sv);
+      H.chk('G71 iki blok + P/Q', /G71 U2 R0\.5\nG71 P100 Q200 U0\.4 W0\.1 F0\.25\nN100 G00 X0\n/.test(t), '');
+      H.chk('G70 bitirme P100 Q200', /\nG70 P100 Q200\n/.test(t), '');
+      H.chk('Q bloğu omuzu hama uzatır (X38)', /\nN200 G01 X38\n/.test(t), '');
+      H.chk('kontur satırları aynen duruyor', /\nG01 X20\nZ-15\nX30 Z-25\nZ-40\n/.test(t), '');
+      H.chk('G75 Z adımı 2.4 ve bitiş Z-12', /G75 X28 Z-12 P1500 Q2400 F0\.08/.test(t), '');
+      H.chk('G76 diş dibi 28.052, derinlik 974', /G76 X28\.052 Z-40 R0 P974 Q350 F1\.5/.test(t) && /G76 P021060 Q100 R0\.05/.test(t), '');
+      H.chk('uyarı yok', r.warn.length === 0, r.warn.join(' | '));
+  } },
   { title: 'Uç kontrolü: açık / bağsız uç / boşluk', run(H) {
       S = new K.Sketch(); const a = S.addPoint(0, 0), b = S.addPoint(30, 0), c = S.addPoint(30, 0), d = S.addPoint(30, 20), e = S.addPoint(30, 20.1), f = S.addPoint(0, 20.1);
       S.addLine(a, b); S.addLine(c, d); S.addLine(e, f);
@@ -9070,5 +9217,441 @@ autoload(); buildRibbon(); AN = K.analyze(S);
 })();
 </script>
 
+
+<div id="cy-ov"><div class="cy-box">
+  <div class="cy-h"><b>⚙ ÇEVRİM EKLE (G70–G76)</b><button id="cy-close">✕</button></div>
+  <div class="cy-body">
+    <div class="cy-sec">PROGRAMDAKİ ÇEVRİMLER</div><div id="cy-list"></div>
+    <div class="cy-sec">HAM MALZEME</div><div class="cy-grid" id="cy-stock"></div>
+    <div class="cy-sec">ÇEVRİM SEÇ</div><div class="cy-types" id="cy-types"></div>
+    <div class="cy-sec" style="display:flex;justify-content:space-between">PARAMETRELER <label style="color:#555"><input type="checkbox" id="cy-adv"> gelişmiş</label></div><div class="cy-grid" id="cy-form"></div>
+    <div class="cy-sec">ÖNİZLEME</div><pre id="cy-prev"></pre>
+    <div id="cy-warn"></div>
+  </div>
+  <div class="cy-ft"><button id="cy-add">＋ ÇEVRİMİ EKLE</button><button id="cy-clear">HEPSİNİ SİL</button></div>
+</div></div>
+<script>
+/* ===== ÇEVRİM EKLE (G70–G76) ===== */
+
+/* Çevrimli (G70-G76) programdan yalnız profil bloklarını çıkarır (içe aktarma / UYGULA için) */
+window._cycContourOnly = function (code) {
+  const L = code.split('\n'), cl = l => l.replace(/\([^)]*\)/g, ' ').toUpperCase();
+  const dropCyc = arr => arr.filter(l => !/\bG7[0-6]\b/.test(cl(l)));
+  if (!/\bG7[0-6]\b/.test(cl(code))) return code;
+  let pi = -1, pn = 0, qn = 0, cx = null, cz = null;
+  for (let i = 0; i < L.length; i++) {
+    const c = cl(L[i]); const m = c.match(/\bG7[123]\b.*\bP(\d+).*\bQ(\d+)/);
+    if (m) { pi = i; pn = +m[1]; qn = +m[2]; break; }
+    const g0 = c.match(/^\s*(?:N\d+\s*)?G0?0\b.*X([-\d.]+).*Z([-\d.]+)/); if (g0) { cx = g0[1]; cz = g0[2]; }
+  }
+  if (pi < 0) return dropCyc(L).join('\n');
+  let a = -1, b = -1;
+  for (let j = pi + 1; j < L.length; j++) { const m = cl(L[j]).match(/^\s*N(\d+)\b/); if (m) { if (+m[1] === pn && a < 0) a = j; if (+m[1] === qn && a >= 0) { b = j; break; } } }
+  if (a < 0 || b < 0) return dropCyc(L).join('\n');
+  const body = L.slice(a, b + 1).map(l => l);
+  // Tip I: ilk blok tek eksen ise sonraki tek eksenli G01 giriş hareketidir (G00'a çevir)
+  const ax = l => { const c = cl(l).replace(/^\s*N\d+\s*/, ''); return { x: /X[-\d.]/.test(c), z: /Z[-\d.]/.test(c), g1: /\bG0?1\b/.test(c), c }; };
+  if (body.length > 1) {
+    const f0 = ax(body[0]), f1 = ax(body[1]);
+    if (f0.x !== f0.z && f1.g1 && f1.x !== f1.z && f1.x !== f0.x) body[1] = body[1].replace(/\bG0?1\b/i, 'G00');
+  }
+  return (cx !== null ? ['G00 X' + cx + ' Z' + cz] : []).concat(body).join('\n');
+};
+var CYC = (function () {
+  'use strict';
+  const LS = 'knt_cycles_v1';
+  const NAMES = { G71: 'G71 Boyuna Kaba', G72: 'G72 Alın Kaba', G73: 'G73 Profil Tekrarı', G74: 'G74 Alın Kanal / Gagalı Delik', G75: 'G75 Çap Kanal / Kesme', G76: 'G76 Vida' };
+  const SHORT = { G71: 'G71 Boyuna', G72: 'G72 Alın', G73: 'G73 Profil', G74: 'G74 Alın Kanal', G75: 'G75 Kanal', G76: 'G76 Vida' };
+  const CMT = { G71: 'G71 BOYUNA KABA', G72: 'G72 ALIN KABA', G73: 'G73 PROFIL TEKRARI', G74: 'G74 ALIN KANAL / GAGALI DELIK', G75: 'G75 CAP KANAL / KESME', G76: 'G76 VIDA' };
+  const TYPES = ['G71', 'G72', 'G73', 'G74', 'G75', 'G76'];
+  const CONTOUR = { G71: 1, G72: 1, G73: 1 };
+  let S = { stock: { d: 0, zf: 0, len: 0, clr: 2 }, list: [], seq: 1 };
+  let draft = null, editId = null, curType = 'G71';
+  const $ = id => document.getElementById(id);
+  const num = (v, d) => (typeof v === 'number' && isFinite(v)) ? v : d;
+  const fm = n => _gc_fmt(n);
+  const um = mm => String(Math.round(mm * 1000));
+
+  function load() { try { const j = JSON.parse(localStorage.getItem(LS) || 'null'); if (j && Array.isArray(j.list)) { S = Object.assign(S, j); S.stock = Object.assign({ d: 0, zf: 0, len: 0, clr: 2 }, S.stock || {}); } } catch (e) { } }
+  function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { } }
+
+  /* ---------- kontur analizi (yarıçap biriminde) ---------- */
+  function arcCtr(el, a, b) {
+    if (el._cx !== undefined && el._cx !== null) return { x: el._cx, z: el._cz };
+    const R = Math.abs(el.r), dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+    if (L < 1e-10 || R < 1e-10) return null;
+    const h = Math.sqrt(Math.max(0, R * R - (L / 2) ** 2)), sg = el.type === 'G02' ? 1 : -1;
+    return { x: (a.x + b.x) / 2 + sg * h * (-dz / L), z: (a.z + b.z) / 2 + sg * h * (dx / L) };
+  }
+  function analyze(P) {
+    if (!P || !P.startPoint || !P.elements || !P.elements.length) return null;
+    const sp = [{ x: P.startPoint.x, z: P.startPoint.z }];
+    P.elements.forEach(el => {
+      const a = sp[sp.length - 1], b = { x: el.to.x, z: el.to.z };
+      if (el.type === 'G02' || el.type === 'G03') {
+        const c = arcCtr(el, a, b);
+        if (c) {
+          const R = Math.hypot(a.x - c.x, a.z - c.z), a0 = Math.atan2(a.x - c.x, a.z - c.z), a1 = Math.atan2(b.x - c.x, b.z - c.z);
+          let d = a1 - a0; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+          for (let k = 1; k < 24; k++) { const t = a0 + d * k / 24; sp.push({ x: c.x + R * Math.sin(t), z: c.z + R * Math.cos(t) }); }
+        }
+      }
+      sp.push(b);
+    });
+    let maxR = -1e9, minR = 1e9, zmax = -1e9, zmin = 1e9;
+    sp.forEach(p => { maxR = Math.max(maxR, p.x); minR = Math.min(minR, p.x); zmax = Math.max(zmax, p.z); zmin = Math.min(zmin, p.z); });
+    const T = 1e-6; let xInc = true, xDec = true, zInc = true, zDec = true, xRev = 0, lastDir = 0;
+    for (let i = 1; i < sp.length; i++) {
+      const dx = sp[i].x - sp[i - 1].x, dz = sp[i].z - sp[i - 1].z;
+      if (dx < -T) xInc = false; if (dx > T) xDec = false; if (dz < -T) zInc = false; if (dz > T) zDec = false;
+      const dir = dx > T ? 1 : dx < -T ? -1 : 0; if (dir) { if (lastDir && dir !== lastDir) xRev++; lastDir = dir; }
+    }
+    const last = P.elements[P.elements.length - 1].to;
+    return { maxD: maxR * 2, minD: minR * 2, zmax, zmin, z0: P.startPoint.z, x0: P.startPoint.x * 2, xEnd: last.x * 2, zEnd: last.z, xInc, xDec, zInc, zDec, xRev };
+  }
+
+  /* ---------- şemalar ---------- */
+  const f = (k, label, o) => Object.assign({ k, label, kind: 'num' }, o || {});
+  const T_ = [f('tool', 'Takım', { kind: 'text', w: 1 }), f('s', 'Devir S', { step: 10 })];
+  const START = [f('auto', 'Başlangıç noktasını hamdan otomatik al', { kind: 'bool', w: 2 }),
+    f('sx', 'Başlangıç X (Ø)', { show: c => !c.auto }), f('sz', 'Başlangıç Z', { show: c => !c.auto })];
+  const FIN = [f('fin', 'G70 bitirme ekle', { kind: 'bool', w: 2 }),
+    f('t2', 'Bitirme takımı', { kind: 'text', show: c => c.fin }), f('s2', 'Bitirme devri S', { show: c => c.fin, step: 10 })];
+  const NB = [f('pn', 'P blok no (başlangıç)', { step: 10, adv: 1 }), f('qn', 'Q blok no (bitiş)', { step: 10, adv: 1 })];
+  const SCHEMA = {
+    G71: [...T_, f('depth', 'Kesme derinliği (yarıçapta)', { step: .1 }), f('ret', 'Geri çekilme R', { step: .1 }),
+      f('ux', 'Bitirme payı X (çapta)', { step: .05 }), f('uz', 'Bitirme payı Z', { step: .05 }),
+      f('f', 'Kaba ilerleme F', { step: .01 }), f('ff', 'Kontur / bitirme F', { step: .01 }),
+      f('tip', 'Çevrim tipi', { kind: 'sel', opts: [[1, 'Tip I (X tek yön)'], [2, 'Tip II (cepli profil)']] }),
+      f('ext', 'Son omuzu hama kadar uzat', { kind: 'bool', w: 2, show: () => curDir() !== 'inner' }),
+      ...START, ...NB, ...FIN],
+    G72: [...T_, f('depth', 'Kesme derinliği (Z yönünde)', { step: .1 }), f('ret', 'Geri çekilme R', { step: .1 }),
+      f('ux', 'Bitirme payı X (çapta)', { step: .05 }), f('uz', 'Bitirme payı Z', { step: .05 }),
+      f('f', 'Kaba ilerleme F', { step: .01 }), f('ff', 'Kontur / bitirme F', { step: .01 }),
+      f('tip', 'Çevrim tipi', { kind: 'sel', opts: [[1, 'Tip I (Z tek yön)'], [2, 'Tip II (cepli profil)']] }),
+      ...START, ...NB, ...FIN],
+    G73: [...T_, f('u', 'X toplam payı U (yarıçapta)', { step: .5 }), f('w', 'Z toplam payı W', { step: .5 }), f('r', 'Paso sayısı R', { step: 1 }),
+      f('ux', 'Bitirme payı X (çapta)', { step: .05 }), f('uz', 'Bitirme payı Z', { step: .05 }),
+      f('f', 'Kaba ilerleme F', { step: .01 }), f('ff', 'Kontur / bitirme F', { step: .01 }),
+      ...START, ...NB, ...FIN],
+    G74: [...T_, f('sx', 'Başlangıç X (Ø)'), f('sz', 'Başlangıç Z'),
+      f('tx', 'Hedef X (Ø)  (boş = sadece Z gagalı delik)', { opt: 1, w: 2 }), f('tz', 'Hedef Z (derinlik)'),
+      f('p', 'X adımı P (mm)', { step: .1, show: c => c.tx !== undefined && c.tx !== null && c.tx !== '' && !isNaN(c.tx) }), f('q', 'Z gagalama Q (mm)', { step: .1 }),
+      f('ret', 'Geri çekme R (mm)', { step: .1 }), f('f', 'İlerleme F', { step: .01 })],
+    G75: [...T_, f('sx', 'Başlangıç X (Ø, hamın dışı)'), f('sz', 'Kanal ilk kenar Z (kalem referans kenarı)'),
+      f('tx', 'Kanal dibi X (Ø)'), f('gw', 'Kanal genişliği', { step: .1 }), f('tw', 'Kalem genişliği', { step: .1 }),
+      f('p', 'Radyal paso P (mm)', { step: .1 }), f('q', 'Z adımı Q (mm)', { step: .1 }), f('ret', 'Geri çekme R (mm)', { step: .1 }), f('f', 'İlerleme F', { step: .01 })],
+    G76: [...T_, f('int', 'Vida yeri', { kind: 'sel', opts: [[0, 'Dış vida'], [1, 'İç vida']] }), f('d', 'Nominal çap Ø', { step: .5 }), f('pitch', 'Hatve (mm)', { step: .05 }),
+      f('sz', 'Başlangıç Z (girişten önce)'), f('ez', 'Bitiş Z (vida sonu)'), f('sx', 'Başlangıç X Ø (0 = otomatik)'),
+      f('h', 'Diş derinliği (yarıçapta, boş = otomatik)', { opt: 1, step: .01, w: 2 }), f('first', 'İlk paso derinliği', { step: .05 }), f('mind', 'Min paso derinliği', { step: .01 }),
+      f('fin', 'Bitirme payı', { step: .01 }), f('nf', 'Bitirme tekrarı', { step: 1 }), f('cham', 'Çıkış pahı (×hatve)', { step: .1 }), f('ang', 'Takım açısı (°)', { step: 1 }), f('taper', 'Konik R', { step: .1, adv: 1 })]
+  };
+
+  function env() {
+    return { tool: getParam('pTool', 'T0101'), s: getParamFloat('pS', 1200), ff: getParamFloat('pF', 0.15), dir: getParam('pToolDir', 'outer') };
+  }
+  function curDir() { return env().dir; }
+  function stockAuto(an) {
+    const inner = curDir() === 'inner';
+    if (!an) return inner ? 0 : 50;
+    return inner ? Math.max(0, Math.floor(an.minD) - 3) : Math.ceil(an.maxD) + 2;
+  }
+  function startAuto(inner) {
+    const st = S.stock; const c = num(st.clr, 2);
+    return { x: inner ? st.d - 2 * c : st.d + 2 * c, z: num(st.zf, 0) + c };
+  }
+  function defaults(type, an) {
+    const e = env(), st = S.stock, sa = startAuto(e.dir === 'inner'), inner = e.dir === 'inner';
+    const base = { type, tool: e.tool, s: e.s };
+    const cont = { auto: true, sx: sa.x, sz: sa.z, pn: 100, qn: 200, fin: true, t2: e.tool, s2: e.s, ff: e.ff, ux: 0.4, uz: 0.1, f: 0.25, ext: !inner, tip: 1 };
+    if (type === 'G71') return Object.assign(base, cont, { depth: 2, ret: 0.5 });
+    if (type === 'G72') return Object.assign(base, cont, { depth: 1.5, ret: 0.5 });
+    if (type === 'G73') {
+      const R = (st.d / 2) - (an ? an.minD / 2 : 0); const u = Math.max(0.5, Math.round(Math.abs(R) * 10) / 10);
+      return Object.assign(base, cont, { u, w: Math.max(0, num(st.zf, 0) - (an ? an.z0 : 0)), r: Math.max(1, Math.ceil(u / 2)) });
+    }
+    if (type === 'G74') return Object.assign(base, { sx: 0, sz: sa.z, tx: '', tz: -(st.len > 0 ? Math.min(st.len, 30) : 20) + num(st.zf, 0), p: 2, q: 5, ret: 1, f: 0.1 });
+    if (type === 'G75') return Object.assign(base, { sx: sa.x, sz: -10, tx: Math.max(1, (st.d > 0 ? st.d : (an ? an.maxD : 20)) - 6), gw: 5, tw: 3, p: 1.5, q: 2.4, ret: 0.5, f: 0.08 });
+    if (type === 'G76') return Object.assign(base, { int: inner ? 1 : 0, d: an ? Math.round(an.maxD) : 20, pitch: 1.5, sz: num(st.zf, 0) + 4.5, ez: an ? an.zEnd : -20, sx: 0, h: '', first: 0.35, mind: 0.1, fin: 0.05, nf: 2, cham: 1, ang: 60, taper: 0, s: Math.min(e.s, 800) });
+    return base;
+  }
+  function g76geo(c) {
+    const p = num(c.pitch, 0), inner = !!c.int;
+    const h = (c.h === '' || c.h === undefined || c.h === null || isNaN(c.h)) ? (inner ? 0.5413 : 0.6495) * p : c.h;
+    const d = num(c.d, 0), clr = num(S.stock.clr, 2);
+    const xEnd = inner ? d : d - 2 * h;
+    const sx = (c.sx > 0) ? c.sx : (inner ? (d - 1.0825 * p) - 2 * clr : d + 2 * clr);
+    return { h, xEnd, sx };
+  }
+
+  /* ---------- çevrim blokları ---------- */
+  function wantNum(c, keys, W, name) { keys.forEach(k => { if (!(typeof c[k] === 'number' && isFinite(c[k]))) W.push(name + ': "' + k + '" eksik'); }); }
+  function emit(c, X) { // X: {an, W, lines, retract, spin, P}
+    const L = [], W = X.W, an = X.an, inner = X.P.tnrDir === 'inner', st = S.stock;
+    const tcn = c.tool || X.P.tool;
+    if (CONTOUR[c.type]) {
+      if (!an) { W.push(c.type + ': önce kontur çizilmeli'); return L; }
+      const sa = startAuto(inner); const sx = c.auto ? sa.x : num(c.sx, sa.x), sz = c.auto ? sa.z : num(c.sz, sa.z);
+      const us = inner ? -1 : 1;
+      L.push('G00 X' + fm(sx) + ' Z' + fm(sz));
+      if (c.type === 'G71') { L.push('G71 U' + fm(num(c.depth, 1)) + ' R' + fm(num(c.ret, .5))); }
+      else if (c.type === 'G72') { L.push('G72 W' + fm(num(c.depth, 1)) + ' R' + fm(num(c.ret, .5))); }
+      else { L.push('G73 U' + fm(num(c.u, 1)) + ' W' + fm(num(c.w, 0)) + ' R' + fm(Math.max(1, Math.round(num(c.r, 1))))); }
+      L.push(c.type + ' P' + c.pn + ' Q' + c.qn + ' U' + fm(us * num(c.ux, 0)) + ' W' + fm(num(c.uz, 0)) + ' F' + fm(num(c.f, .2)));
+      X.cont = { c, sx, sz };
+      // uyarılar
+      if (!inner && st.d > 0 && an.maxD > st.d + 1e-6) W.push(c.type + ': kontur en büyük çap (' + fm(an.maxD) + ') ham çaptan (' + fm(st.d) + ') büyük');
+      if (inner && st.d > 0 && an.minD < st.d - 1e-6) W.push(c.type + ': kontur en küçük çap (' + fm(an.minD) + ') ön delik çapından (' + fm(st.d) + ') küçük');
+      if (c.type === 'G71') {
+        const okI = inner ? an.xDec : an.xInc;
+        const zOk = an.zDec; // Z azalan
+        if (c.tip === 1 && !(okI && zOk)) W.push('G71 Tip I: profil X ve Z’de tek yönlü değil (cep/girinti var) — Tip II veya G73 seçin');
+        if (c.tip === 2 && an.xRev > 1) W.push('G71 Tip II: profilde birden fazla cep var — G73 kullanın');
+        const rad = (st.d / 2) - an.minD / 2; if (c.depth > 0 && !inner) X.info.push('Tahmini paso: ' + Math.max(1, Math.ceil(Math.abs(rad) / c.depth)));
+              } else if (c.type === 'G72') {
+        if (c.tip === 1 && !((an.xInc || an.xDec) && (an.zInc || an.zDec))) W.push('G72 Tip I: profil X ve Z’de tek yönlü değil — Tip II veya G73 seçin');
+        if (c.tip === 2 && an.xRev > 1) W.push('G72 Tip II: profilde birden fazla cep var — G73 kullanın');
+      } else {
+        if (!(c.r >= 1)) W.push('G73: paso sayısı ≥ 1 olmalı');
+        X.info.push('G73 paso başına yaklaşık ' + fm(c.u / Math.max(1, c.r)) + ' mm');
+      }
+      if (!(c.depth > 0) && c.type !== 'G73') W.push(c.type + ': kesme derinliği > 0 olmalı');
+      if (!(c.f > 0)) W.push(c.type + ': kaba ilerleme > 0 olmalı');
+      if (c.pn >= c.qn) W.push(c.type + ': Q blok no P’den büyük olmalı');
+      if (c.fin) { X.fin.push(c); }
+      return L;
+    }
+    const rt = X.retract;
+    if (c.type === 'G74') {
+      wantNum(c, ['sx', 'sz', 'tz', 'q', 'f'], W, 'G74');
+      const hasX = typeof c.tx === 'number' && isFinite(c.tx);
+      L.push('G00 X' + fm(num(c.sx, 0)) + ' Z' + fm(num(c.sz, 0)));
+      L.push('G74 R' + fm(num(c.ret, 1)));
+      let s = 'G74 ' + (hasX ? 'X' + fm(c.tx) + ' ' : '') + 'Z' + fm(num(c.tz, 0)) + (hasX ? ' P' + um(num(c.p, 1)) : '') + ' Q' + um(num(c.q, 1)) + ' F' + fm(num(c.f, .1));
+      L.push(s);
+      if (num(c.tz, 0) >= num(c.sz, 0)) W.push('G74: hedef Z başlangıç Z’den daha negatif olmalı');
+      if (hasX && num(c.p, 0) <= 0) W.push('G74: X adımı P > 0 olmalı');
+      if (st.len > 0 && Math.abs(num(c.tz, 0) - num(st.zf, 0)) > st.len + 1e-6) W.push('G74: derinlik ham boydan fazla');
+      if (hasX && c.tx < c.sx) W.push('G74: hedef X başlangıç X’ten büyük olmalı');
+    } else if (c.type === 'G75') {
+      wantNum(c, ['sx', 'sz', 'tx', 'p', 'f'], W, 'G75');
+      const gw = num(c.gw, 0), tw = num(c.tw, 0), ez = num(c.sz, 0) - Math.max(0, gw - tw);
+      L.push('G00 X' + fm(num(c.sx, 0)) + ' Z' + fm(num(c.sz, 0)));
+      L.push('G75 R' + fm(num(c.ret, .5)));
+      let s = 'G75 X' + fm(num(c.tx, 0)) + (gw > tw + 1e-6 ? ' Z' + fm(ez) : '') + ' P' + um(num(c.p, 1)) + (gw > tw + 1e-6 ? ' Q' + um(num(c.q, tw * .8)) : '') + ' F' + fm(num(c.f, .08));
+      L.push(s);
+      if (gw > 0 && tw > 0 && gw < tw - 1e-6) W.push('G75: kanal genişliği kalem genişliğinden küçük');
+      if (gw > tw + 1e-6 && num(c.q, 0) > tw) W.push('G75: Z adımı Q kalem genişliğinden büyük (' + fm(tw) + ') — kanalda iz kalır');
+      if (c.tx >= c.sx) W.push('G75: kanal dibi başlangıç X’ten küçük olmalı');
+      if (st.d > 0 && c.sx < st.d) W.push('G75: başlangıç X ham çaptan küçük — çarpma riski');
+      if (!(c.p > 0)) W.push('G75: radyal paso P > 0 olmalı');
+    } else if (c.type === 'G76') {
+      wantNum(c, ['d', 'pitch', 'sz', 'ez', 'first', 'mind', 'fin', 'nf', 'cham', 'ang'], W, 'G76');
+      const g = g76geo(c), p = num(c.pitch, 0);
+      const P6 = String(Math.max(0, Math.round(num(c.nf, 2)))).padStart(2, '0') + String(Math.max(0, Math.round(num(c.cham, 1) * 10))).padStart(2, '0') + String(Math.round(num(c.ang, 60))).padStart(2, '0');
+      L.push('G00 X' + fm(g.sx) + ' Z' + fm(num(c.sz, 0)));
+      L.push('G76 P' + P6 + ' Q' + um(num(c.mind, .1)) + ' R' + fm(num(c.fin, .05)));
+      L.push('G76 X' + fm(g.xEnd) + ' Z' + fm(num(c.ez, 0)) + ' R' + fm(num(c.taper, 0)) + ' P' + um(g.h) + ' Q' + um(num(c.first, .3)) + ' F' + fm(p));
+      if (!(p > 0)) W.push('G76: hatve > 0 olmalı');
+      if (num(c.ez, 0) >= num(c.sz, 0)) W.push('G76: bitiş Z başlangıç Z’den daha negatif olmalı');
+      if (p > 0 && num(c.sz, 0) - num(st.zf, 0) < 2 * p) W.push('G76: başlangıç Z, giriş için en az 2×hatve boşluk bırakmalı');
+      if (g.h > 0 && num(c.first, 0) > g.h) W.push('G76: ilk paso derinliği diş derinliğinden büyük');
+      if (num(c.mind, 0) > num(c.first, 0)) W.push('G76: min paso ilk pasodan büyük');
+      if (!inner && c.int) W.push('G76: iç vida için delik (IC) kalemi seçili olmalı');
+      X.info.push('Diş derinliği ' + fm(g.h) + ' mm, diş dibi Ø' + fm(g.xEnd));
+    }
+    return L;
+  }
+
+  /* ---------- tüm programı kur ---------- */
+  function build(code, P, list) {
+    const R = { text: code, warn: [], info: [], blocks: {}, applied: false };
+    if (!list || !list.length) return R;
+    const lines = code.split('\n');
+    const toolLine = P.tool + ' ' + P.spin + ' S' + P.speed;
+    let iT = lines.indexOf(toolLine); if (iT < 0) iT = lines.findIndex(l => /^T\d/.test(l));
+    if (iT < 0) { R.warn.push('Program başlığı çözülemedi'); return R; }
+    const header = lines.slice(0, iT);
+    let iA = lines.findIndex((l, i) => i > iT && /^G00 X[-\d.]+ Z[-\d.]+\s*$/.test(l));
+    let iR = -1; if (iA > 0) for (let i = lines.length - 1; i > iA; i--) if (/^G00 /.test(lines[i])) { iR = i; break; }
+    const an = analyze(P);
+    let cont = [], g00x = 0, g00z = 0, haveC = iA > 0 && iR > iA && !!an;
+    if (haveC) { const m = lines[iA].match(/X([-\d.]+) Z([-\d.]+)/); g00x = parseFloat(m[1]); g00z = parseFloat(m[2]); cont = lines.slice(iA + 1, iR); }
+    const out = header.slice(); let curTool = null, curS = null;
+    const retract = P.retract; const X = { an, W: R.warn, info: R.info, retract, P, fin: [], cont: null };
+    let contourEmitted = false, contCycle = null;
+    const toolChange = (tool, s) => {
+      if (curTool !== tool) { if (curTool !== null) out.push('G00 ' + retract); out.push(tool + ' ' + P.spin + ' S' + fm(s)); curTool = tool; curS = s; }
+      else if (curS !== s) { out.push('S' + fm(s)); curS = s; }
+    };
+    list.forEach(c => {
+      if (CONTOUR[c.type] && contourEmitted) { R.warn.push('Programda yalnızca bir kaba çevrim (G71/G72/G73) olabilir: ' + c.type + ' atlandı'); return; }
+      const b0 = out.length;
+      const L = emit(c, X);
+      out.push('(' + CMT[c.type] + ')');
+      toolChange(c.tool || P.tool, num(c.s, num(P.speed, 1000)));
+      const hb = out.length;
+      if (CONTOUR[c.type] && X.an && L.length) {
+        if (!haveC) { R.warn.push(c.type + ': kontur bloğu üretilemedi'); out.splice(b0, out.length - b0); return; }
+        L.forEach(x => out.push(x));
+        const cx = X.cont;
+        // kontur blokları
+        const cl = cont.slice(); let first = [];
+        const lead = (tx, tz) => { };
+        const ff = fm(num(c.ff, num(P.feed, .15)));
+        const stripF = i => { cl[i] = cl[i].replace(/\s*F[\d.]+/, ''); };
+        let iF = cl.findIndex(l => /F[\d.]+/.test(l));
+        if (c.type === 'G71' && c.tip === 1) {
+          first.push('N' + c.pn + ' G00 X' + fm(g00x));
+          if (Math.abs(g00z - cx.sz) > 1e-4) { first.push('G01 Z' + fm(g00z) + ' F' + ff); if (iF >= 0) stripF(iF); }
+          else if (iF >= 0) cl[iF] = cl[iF].replace(/F[\d.]+/, 'F' + ff);
+        } else if (c.type === 'G72' && c.tip === 1) {
+          first.push('N' + c.pn + ' G00 Z' + fm(g00z));
+          if (Math.abs(g00x - cx.sx) > 1e-4) { first.push('G01 X' + fm(g00x) + ' F' + ff); if (iF >= 0) stripF(iF); }
+          else if (iF >= 0) cl[iF] = cl[iF].replace(/F[\d.]+/, 'F' + ff);
+        } else {
+          first.push('N' + c.pn + ' G00 X' + fm(g00x) + ' Z' + fm(g00z));
+          if (iF >= 0) cl[iF] = cl[iF].replace(/F[\d.]+/, 'F' + ff);
+        }
+        if (c.type === 'G71' && c.ext && !(P.tnrDir === 'inner') && S.stock.d > 0 && an.xEnd < S.stock.d - 1e-6) cl.push('G01 X' + fm(S.stock.d + 2 * num(S.stock.clr, 2)));
+        // Q bloğu: son hareket satırı
+        let q = -1; for (let i = cl.length - 1; i >= 0; i--) if (!/^G40|^\(/.test(cl[i])) { q = i; break; }
+        if (q >= 0) cl[q] = 'N' + c.qn + ' ' + cl[q]; else { first[first.length - 1] += '\nN' + c.qn; R.warn.push(c.type + ': kontur blok içermiyor'); }
+        const cb = first.concat(cl);
+        cb.forEach(x => out.push(x));
+        contourEmitted = true; contCycle = c;
+        R.blocks[c.id] = { head: L, contour: cb };
+        // bitirme
+        if (c.fin) {
+          out.push('G00 ' + retract);
+          const t2 = c.t2 || c.tool;
+          if (t2 !== curTool) { out.push(t2 + ' ' + P.spin + ' S' + fm(num(c.s2, num(c.s, 1000)))); curTool = t2; curS = num(c.s2, num(c.s, 1000)); }
+          else if (curS !== num(c.s2, curS)) { out.push('S' + fm(num(c.s2, curS))); curS = num(c.s2, curS); }
+          out.push('G00 X' + fm(cx.sx) + ' Z' + fm(cx.sz));
+          out.push('G70 P' + c.pn + ' Q' + c.qn);
+          R.blocks[c.id].fin = ['G70 P' + c.pn + ' Q' + c.qn];
+        }
+      } else {
+        L.forEach(x => out.push(x));
+        R.blocks[c.id] = { head: L };
+      }
+    });
+    out.push('G00 ' + retract); out.push('M30'); out.push('%');
+    R.text = out.join('\n'); R.applied = true;
+    return R;
+  }
+
+  /* ---------- dış API ---------- */
+  function currentBase(P) {
+    const builder = (typeof _gcodeOption !== 'undefined' && _gcodeOption === 'fanuc') ? _buildGCodeFanuc : _buildGCode;
+    return builder(P);
+  }
+  function apply(code, P) {
+    if (!S.list.length) return code;
+    try { const r = build(code, P, S.list); return r.text; } catch (e) { return code + '\n(CEVRIM HATASI: ' + e.message + ')'; }
+  }
+
+  /* ---------- UI ---------- */
+  function fieldVal(c, fd) { const v = c[fd.k]; return (v === undefined || v === null || (typeof v === 'number' && !isFinite(v))) ? '' : v; }
+  function renderStock() {
+    const st = S.stock, inner = curDir() === 'inner';
+    const row = (k, lab, step) => '<label class="cy-f"><span>' + lab + '</span><input type="number" step="' + step + '" data-st="' + k + '" value="' + (st[k] === undefined ? '' : st[k]) + '"></label>';
+    $('cy-stock').innerHTML = row('d', inner ? 'Ön delik çapı Ø' : 'Ham çap Ø', 1) + row('zf', 'Ham ön yüz Z', .5) + row('len', 'Ham boy (Z)', 1) + row('clr', 'Güvenlik mesafesi', .5);
+    $('cy-stock').querySelectorAll('input').forEach(i => i.oninput = () => { const v = parseFloat(i.value); S.stock[i.dataset.st] = isNaN(v) ? 0 : v; save(); refresh(); });
+  }
+  function renderTypes() {
+    $('cy-types').innerHTML = TYPES.map(t => '<button class="cy-tb' + (t === curType ? ' on' : '') + '" data-t="' + t + '">' + SHORT[t] + '</button>').join('');
+    $('cy-types').querySelectorAll('button').forEach(b => b.onclick = () => { curType = b.dataset.t; editId = null; draft = defaults(curType, analyze(_gcPayload())); renderAll(); });
+  }
+  function renderForm() {
+    const sc = SCHEMA[draft.type];
+    $('cy-form').innerHTML = sc.filter(fd => !fd.show || fd.show(draft)).map(fd => {
+      const cls = 'cy-f' + (fd.w === 2 ? ' wide' : '') + (fd.adv ? ' adv' : '');
+      const v = fieldVal(draft, fd);
+      if (fd.kind === 'bool') return '<label class="' + cls + ' cy-chk"><input type="checkbox" data-k="' + fd.k + '"' + (draft[fd.k] ? ' checked' : '') + '><span>' + fd.label + '</span></label>';
+      if (fd.kind === 'sel') return '<label class="' + cls + '"><span>' + fd.label + '</span><select data-k="' + fd.k + '">' + fd.opts.map(o => '<option value="' + o[0] + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label>';
+      if (fd.kind === 'text') return '<label class="' + cls + '"><span>' + fd.label + '</span><input type="text" data-k="' + fd.k + '" value="' + v + '"></label>';
+      return '<label class="' + cls + '"><span>' + fd.label + '</span><input type="number" step="' + (fd.step || .1) + '" data-k="' + fd.k + '" value="' + v + '"></label>';
+    }).join('');
+    $('cy-form').querySelectorAll('[data-k]').forEach(el => {
+      const k = el.dataset.k, fd = sc.find(x => x.k === k);
+      el.oninput = el.onchange = () => {
+        if (fd.kind === 'bool') draft[k] = el.checked;
+        else if (fd.kind === 'text') draft[k] = el.value.trim();
+        else if (fd.kind === 'sel') draft[k] = parseInt(el.value);
+        else { const v = parseFloat(el.value); draft[k] = isNaN(v) ? (fd.opt ? '' : NaN) : v; }
+        if (fd.kind === 'bool' || fd.kind === 'sel' || k === 'tx') { renderForm(); }
+        refresh();
+      };
+    });
+    $('cy-form').querySelectorAll('.adv').forEach(e => e.style.display = $('cy-adv').checked ? '' : 'none');
+  }
+  function renderList() {
+    $('cy-list').innerHTML = S.list.length ? S.list.map((c, i) => '<div class="cy-row' + (c.id === editId ? ' cur' : '') + '"><b>' + (i + 1) + '. ' + SHORT[c.type] + '</b><i>' + (c.tool || '') + '</i>' +
+      '<span><button data-a="up" data-i="' + i + '">▲</button><button data-a="dn" data-i="' + i + '">▼</button><button data-a="ed" data-i="' + i + '">✎</button><button data-a="rm" data-i="' + i + '">✕</button></span></div>').join('') : '<div class="cy-empty">Henüz çevrim yok. Aşağıdan seçip ekleyin.</div>';
+    $('cy-list').querySelectorAll('button').forEach(b => b.onclick = () => {
+      const i = +b.dataset.i, a = b.dataset.a;
+      if (a === 'up' && i > 0) { [S.list[i - 1], S.list[i]] = [S.list[i], S.list[i - 1]]; }
+      else if (a === 'dn' && i < S.list.length - 1) { [S.list[i + 1], S.list[i]] = [S.list[i], S.list[i + 1]]; }
+      else if (a === 'rm') { S.list.splice(i, 1); if (!S.list.some(c => c.id === editId)) editId = null; }
+      else if (a === 'ed') { const c = S.list[i]; editId = c.id; curType = c.type; draft = JSON.parse(JSON.stringify(c)); renderAll(); return; }
+      save(); commit(); renderList(); refresh();
+    });
+  }
+  function previewAndWarn() {
+    const P = _gcPayload(); const base = currentBase(P);
+    const d = Object.assign({}, draft); d.id = d.id || '__draft';
+    const list = S.list.filter(c => c.id !== d.id).slice();
+    const at = editId ? S.list.findIndex(c => c.id === editId) : -1;
+    if (at >= 0) list.splice(at, 0, d); else list.push(d);
+    const r = build(base, P, list);
+    const b = r.blocks[d.id];
+    let txt = '';
+    if (b) { txt = b.head.join('\n'); if (b.contour) txt += '\n' + b.contour[0] + '\n  … (kontur blokları) …\n' + b.contour[b.contour.length - 1]; if (b.fin) txt += '\n(bitirme)\n' + b.fin[0]; }
+    else txt = '(üretilemedi)';
+    $('cy-prev').textContent = txt;
+    const items = r.warn.map(w => '<div class="w">⚠ ' + w + '</div>').concat(r.info.map(w => '<div class="i">' + w + '</div>'));
+    $('cy-warn').innerHTML = items.join('') || '<div class="i">Uyarı yok.</div>';
+    return r;
+  }
+  function refresh() { try { previewAndWarn(); } catch (e) { $('cy-prev').textContent = 'Hata: ' + e.message; } updBadge(); }
+  function renderAll() {
+    renderStock(); renderTypes(); renderList();
+    $('cy-add').textContent = editId ? '✔ GÜNCELLE' : '＋ ÇEVRİMİ EKLE';
+    renderForm(); refresh();
+  }
+  function commit() { try { generateGCode(); redraw(); } catch (e) { } updBadge(); }
+  function updBadge() { const b = $('cycBadge'); if (b) b.textContent = S.list.length ? ' (' + S.list.length + ')' : ''; }
+  function open() {
+    load(); const an = analyze(_gcPayload());
+    if (!(S.stock.d > 0)) { S.stock.d = stockAuto(an); }
+    if (!draft || !editId) { draft = defaults(curType, an); }
+    $('cy-ov').style.display = 'block'; renderAll();
+  }
+  function close() { $('cy-ov').style.display = 'none'; }
+  function addCurrent() {
+    const bad = SCHEMA[draft.type].some(fd => fd.kind === 'num' && !fd.opt && (!fd.show || fd.show(draft)) && !fd.adv && (typeof draft[fd.k] !== 'number' || !isFinite(draft[fd.k])));
+    if (bad) { const t = $('cy-warn'); t.innerHTML = '<div class="w">⚠ Boş/geçersiz alan var, doldurun.</div>' + t.innerHTML; return; }
+    if (CONTOUR[draft.type]) {
+      const ex = S.list.find(c => CONTOUR[c.type] && c.id !== editId);
+      if (ex && !confirm('Programda zaten ' + ex.type + ' var. Yenisi onun yerine geçsin mi?')) return;
+      if (ex) S.list = S.list.filter(c => c !== ex);
+    }
+    if (editId) { const i = S.list.findIndex(c => c.id === editId); const c = JSON.parse(JSON.stringify(draft)); c.id = editId; if (i >= 0) S.list[i] = c; else S.list.push(c); }
+    else { const c = JSON.parse(JSON.stringify(draft)); c.id = 'c' + (S.seq++); S.list.push(c); }
+    save(); editId = null; draft = defaults(curType, analyze(_gcPayload())); commit(); renderAll();
+  }
+  function clearAll() { if (!S.list.length || confirm('Tüm çevrimler silinsin mi?')) { S.list = []; editId = null; save(); commit(); if ($('cy-ov').style.display === 'block') renderAll(); } }
+  function init() {
+    load(); updBadge();
+    $('cy-add').onclick = addCurrent; $('cy-close').onclick = close; $('cy-clear').onclick = clearAll;
+    $('cy-adv').onchange = () => $('cy-form').querySelectorAll('.adv').forEach(e => e.style.display = $('cy-adv').checked ? '' : 'none');
+  }
+  return { init, open, close, apply, build, analyze, state: () => S, setState: s => { S = s; save(); }, count: () => S.list.length, defaults, clearAll };
+})();
+
+CYC.init();
+try{generateGCode();}catch(e){}
+</script>
 </body>
 </html>
